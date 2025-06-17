@@ -32,7 +32,6 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
                     body.extend(result)
                 elif isinstance(result, IRNode):
                     body.append(result)
-                print(f"[SchemaOpt] use {op.__name__}")
             except RuntimeError as e:
                 print(f"[SchemaOpt] skipped {op.__name__}: {e}")
 

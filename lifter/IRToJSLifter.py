@@ -14,29 +14,28 @@ class IRToJSLifter:
     def convertLayer(layer: Layer, indent_level: int = 0):
         IRToJSLifter._current_layer = layer
         lines = []
-        stmts = layer.ir_nodes
+        nodes = layer.ir_nodes
         i = 0
 
-        while i < len(stmts):
-            stmt = stmts[i]
-
+        while i < len(nodes):
+            node = nodes[i]
             # 合并声明 + 赋值
             if (
-                i + 1 < len(stmts)
-                and isinstance(stmt, VariableDeclaration)
-                and isinstance(stmts[i + 1], AssignmentExpression)
-                and isinstance(stmts[i + 1].left, Identifier)
-                and stmts[i + 1].left.raw == stmt.name
+                i + 1 < len(nodes)
+                and isinstance(node, VariableDeclaration)
+                and isinstance(nodes[i + 1], AssignmentExpression)
+                # and isinstance(nodes[i + 1].left, Identifier)
+                # and nodes[i + 1].left.raw == nodes.name
             ):
-                rhs = IRToJSLifter._convert_node(stmts[i + 1].right, 0)
+                rhs = IRToJSLifter._convert_node(nodes[i + 1].right, 0)
                 if rhs.endswith(";"):
                     rhs = rhs[:-1]
-                line = f"{'  ' * indent_level}{stmt.kind} {stmt.name} = {rhs};"
+                line = f"{'  ' * indent_level}{node.kind} {node.name['raw']} = {rhs};"
                 lines.append(line)
                 i += 2
                 continue
 
-            lines.append(IRToJSLifter._convert_node(stmt, indent_level))
+            lines.append(IRToJSLifter._convert_node(node, indent_level))
             i += 1
 
         for child in layer.children:

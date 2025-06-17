@@ -185,6 +185,7 @@ class PipeGraph:
     def __repr__(self):
         return f"PipeGraph with {len(self.pipe_ends)} ends and {len(self.pipes)} pipes:\n" + "\n".join(repr(p) for p in self.pipes)
 
+
 if __name__ == "__main__":
     graph = PipeGraph()
     g = graph.generate_weighted_path(16, "readonly")
