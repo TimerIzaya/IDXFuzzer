@@ -1,1 +1,3 @@
-直接点main执行即可
+# keypath
+
+createObjectStore里的keypath是唯一的主键，如果没设置，那每次都要手动写key是什么，和hashmap同理的

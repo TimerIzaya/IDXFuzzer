@@ -1,108 +1,117 @@
 let db;
-const openRequest = window.indexedDB.open('str_1725', 72)
+const openRequest = window.indexedDB.open('str_7127', 9)
 openRequest.onupgradeneeded = (event) => {
   console.log('db onupgraded trigered');
   db = event.target.result;
-  var store_0 = db.createObjectStore('str_828');
-  var store_0_index_1 = store_0.createIndex('str_468', 'str_1830', {'unique': false, 'multiEntry': true});
-  store_0.indexNames
-  store_0.deleteIndex('str_4618')
-  store_0.deleteIndex('str_1916')
-  store_0.deleteIndex('str_8545')
-  var store_0_index_2 = store_0.createIndex('str_7474', 'str_7475', {'unique': false, 'multiEntry': true});
-  db.deleteObjectStore('str_7982')
-  var store_1 = db.createObjectStore('str_261');
-  var store_1_index_1 = store_0.createIndex('str_1750', 'str_3858');
-  var store_1_index_2 = store_0.createIndex('str_4938', 'str_8182', {'unique': false, 'multiEntry': false});
-  var store_1_index_3 = store_0.createIndex('str_262', 'str_3407');
-  var store_1_index_4 = store_0.createIndex('str_7223', ['str_4846', 'str_8523', 'str_8351'], {'unique': true, 'multiEntry': false});
-  var store_1_index_5 = store_1.createIndex('str_7024', ['str_5340', 'str_6663', 'str_1850', 'str_2612'], {'unique': false, 'multiEntry': false});
-  var store_2 = db.createObjectStore('str_6727', {'keyPath': 'str_4220', 'autoIncrement': true});
-  var store_2_index_1 = store_1.createIndex('str_4241', 'str_2152');
-  store_2.deleteIndex('str_2947')
-  var store_2_index_2 = store_0.createIndex('str_2190', 'str_5295');
-  store_2.deleteIndex('str_5978')
-  var store_2_index_3 = store_0.createIndex('str_5740', 'str_8899', {'unique': false, 'multiEntry': true});
-  var store_2_index_4 = store_2.createIndex('str_8834', 'str_9820', {'unique': true, 'multiEntry': true});
-  var store_2_index_5 = store_0.createIndex('str_4293', 'str_9560', {'unique': true, 'multiEntry': true});
-  db.deleteObjectStore('str_2220')
-  var store_3 = db.createObjectStore('str_6920');
-  var store_3_index_1 = store_2.createIndex('str_8137', 'str_4621', {'unique': false, 'multiEntry': false});
-  store_3.keyPath
-  db.deleteObjectStore('str_5526')
-  var store_4 = db.createObjectStore('str_8576');
-  store_1_index_4.keyPath
-  var store_5 = db.createObjectStore('str_1336', {'keyPath': ['str_4889', 'str_6434', 'str_7150'], 'autoIncrement': false});
+  var store_0 = db.createObjectStore('str_4874');
+  var store_0_index_1 = store_0.createIndex('str_8099', 'str_4114', {'unique': true, 'multiEntry': true});
+  store_0.deleteIndex('str_3227')
+  var store_0_index_2 = store_0.createIndex('str_8418', ['str_3250', 'str_3384', 'str_8092']);
+  var store_0_index_3 = store_0.createIndex('str_5177', 'str_70');
+  var store_0_index_4 = store_0.createIndex('str_3647', ['str_926'], {'unique': true, 'multiEntry': false});
+  var store_0_index_5 = store_0.createIndex('str_650', 'str_1021', {'unique': false, 'multiEntry': false});
+  db.deleteObjectStore('str_6509')
+  var store_1 = db.createObjectStore('str_7652');
+  db.deleteObjectStore('str_7464')
+  store_1.deleteIndex('str_3119')
+  var store_1_index_1 = store_0.createIndex('str_4918', 'str_3334', {'unique': true, 'multiEntry': false});
+  db.deleteObjectStore('str_7730')
+  var store_2 = db.createObjectStore('str_499');
+  db.deleteObjectStore('str_7755')
+  store_2.deleteIndex('str_6774')
+  var store_2_index_1 = store_1.createIndex('str_7737', 'str_9012');
+  store_0.deleteIndex('str_7810')
+  var store_2_index_2 = store_0.createIndex('str_8733', 'str_7021');
+  var store_2_index_3 = store_2.createIndex('str_6286', 'str_3358');
+  store_2.deleteIndex('str_3389')
+  var store_2_index_4 = store_1.createIndex('str_3015', 'str_658');
+  var store_2_index_5 = store_0.createIndex('str_5944', ['str_476', 'str_2530', 'str_8729', 'str_3848', 'str_7301']);
+  var store_2_index_6 = store_1.createIndex('str_1494', 'str_9740', {'unique': true, 'multiEntry': false});
+  var store_2_index_7 = store_1.createIndex('str_2434', 'str_3720');
+  var store_2_index_8 = store_2.createIndex('str_2534', 'str_4547', {'unique': true, 'multiEntry': false});
+  var store_2_index_9 = store_2.createIndex('str_4207', ['str_931'], {'unique': true, 'multiEntry': false});
+  db.deleteObjectStore('str_9795')
+  var store_3 = db.createObjectStore('str_9875');
+  db.deleteObjectStore('str_6521')
+  var store_4 = db.createObjectStore('str_4757');
+  store_0_index_3.unique
+  var store_4_index_1 = store_2.createIndex('str_6571', 'str_8505', {'unique': true, 'multiEntry': false});
+  store_3.deleteIndex('str_2004')
+  var store_4_index_2 = store_1.createIndex('str_398', 'str_3640');
+  store_2_index_3.keyPath
+  store_4.autoIncrement
+  store_0.deleteIndex('str_1722')
+  var store_4_index_3 = store_3.createIndex('str_6812', ['str_4521']);
 };
 openRequest.onsuccess = (event) => {
   console.log('db onsuccess triggered')
   db = openRequest.result;
-  const txn = db.transaction('store_0', 'readwrite')
-  const store = txn.objectStore('store_0')
-  var ret_getKey_0 = store.getKey(42);
-  var ret_getKey_1 = store.getKey(42);
-  var ret_getKey_2 = store.getKey(true);
-  var ret_count_3 = store.count(42);
-  var ret_openCursor_4 = store.openCursor(true);
-  var ret_put_5 = store.put(true, true);
-  var ret_openCursor_6 = store.openCursor(42);
-  var ret_delete_7 = store.delete('fallback');
-  var ret_getAllKeys_8 = store.getAllKeys(30);
-  var ret_count_9 = store.count(42);
-  var ret_count_10 = store.count(true);
-  var ret_put_11 = store.put('fallback', 42);
-  var ret_openCursor_12 = store.openCursor(None);
-  var ret_openKeyCursor_13 = store.openKeyCursor('fallback');
-  var ret_count_14 = store.count();
-  var ret_count_15 = store.count();
-  var ret_openKeyCursor_16 = store.openKeyCursor('nextunique');
-  var ret_delete_17 = store.delete('fallback');
-  var ret_openKeyCursor_18 = store.openKeyCursor('next');
-  var ret_openKeyCursor_19 = store.openKeyCursor();
-  var ret_put_20 = store.put(42, true);
-  var ret_put_21 = store.put(true, true);
-  var ret_delete_22 = store.delete('fallback');
-  var ret_getAllKeys_23 = store.getAllKeys();
-  var ret_clear_24 = store.clear();
-  var ret_put_25 = store.put('fallback');
-  var ret_get_26 = store.get('fallback');
-  var ret_get_27 = store.get('fallback');
-  var ret_get_28 = store.get(42);
-  var ret_openKeyCursor_29 = store.openKeyCursor();
-  var ret_clear_30 = store.clear();
-  var ret_put_31 = store.put(true);
-  var ret_delete_32 = store.delete(true);
-  var ret_getAll_33 = store.getAll();
-  var ret_getAll_34 = store.getAll(42, 88);
-  var ret_delete_35 = store.delete(true);
-  var ret_getKey_36 = store.getKey(42);
-  var ret_delete_37 = store.delete(true);
-  var ret_add_38 = store.add(42);
-  var ret_openKeyCursor_39 = store.openKeyCursor('fallback', 'next');
-  var ret_delete_40 = store.delete('fallback');
-  var ret_delete_41 = store.delete('fallback');
-  var ret_count_42 = store.count('fallback');
-  var ret_clear_43 = store.clear();
-  var ret_put_44 = store.put('fallback');
-  var ret_openCursor_45 = store.openCursor('nextunique');
-  var ret_clear_46 = store.clear();
-  var ret_put_47 = store.put(true);
+  const txn = db.transaction('store_4', 'readwrite')
+  const store = txn.objectStore('store_4')
+  var ret_openKeyCursor_0 = store.openKeyCursor();
+  var ret_put_1 = store.put('fallback');
+  var ret_openCursor_2 = store.openCursor('nextunique');
+  var ret_delete_3 = store.delete(42);
+  var ret_delete_4 = store.delete(42);
+  var ret_put_5 = store.put('fallback');
+  var ret_get_6 = store.get(true);
+  var ret_count_7 = store.count();
+  var ret_getAllKeys_8 = store.getAllKeys(true, 72);
+  var ret_put_9 = store.put('fallback', 'fallback');
+  var ret_getKey_10 = store.getKey(42);
+  var ret_delete_11 = store.delete('fallback');
+  var ret_getAll_12 = store.getAll();
+  var ret_add_13 = store.add(42);
+  var ret_getKey_14 = store.getKey(true);
+  var ret_openKeyCursor_15 = store.openKeyCursor(None, 'nextunique');
+  var ret_delete_16 = store.delete(true);
+  var ret_count_17 = store.count();
+  var ret_count_18 = store.count();
+  var ret_clear_19 = store.clear();
+  var ret_put_20 = store.put('fallback');
+  var ret_delete_21 = store.delete(true);
+  var ret_openCursor_22 = store.openCursor();
+  var ret_clear_23 = store.clear();
+  var ret_getAllKeys_24 = store.getAllKeys('fallback');
+  var ret_getAllKeys_25 = store.getAllKeys('fallback', 51);
+  var ret_openKeyCursor_26 = store.openKeyCursor('prev');
+  var ret_count_27 = store.count();
+  var ret_add_28 = store.add(true, 42);
+  var ret_delete_29 = store.delete(true);
+  var ret_delete_30 = store.delete('fallback');
+  var ret_count_31 = store.count();
+  var ret_openCursor_32 = store.openCursor('fallback', 'nextunique');
+  var ret_delete_33 = store.delete('fallback');
+  var ret_openCursor_34 = store.openCursor();
+  var ret_delete_35 = store.delete(42);
+  var ret_count_36 = store.count();
+  var ret_count_37 = store.count(42);
+  var ret_delete_38 = store.delete(true);
+  var ret_put_39 = store.put(42);
+  var ret_delete_40 = store.delete(42);
+  var ret_count_41 = store.count();
+  var ret_getAll_42 = store.getAll(true);
+  var ret_getAll_43 = store.getAll('fallback');
+  var ret_getAll_44 = store.getAll('fallback');
+  var ret_clear_45 = store.clear();
+  var ret_add_46 = store.add('fallback');
+  var ret_get_47 = store.get('fallback');
   var ret_clear_48 = store.clear();
-  var ret_openKeyCursor_49 = store.openKeyCursor('next');
-  var ret_put_50 = store.put(true);
-  var ret_delete_51 = store.delete(true);
-  var ret_delete_52 = store.delete('fallback');
-  var ret_add_53 = store.add(42, true);
-  var ret_getAll_54 = store.getAll();
-  var ret_count_55 = store.count('fallback');
-  var ret_getAllKeys_56 = store.getAllKeys();
-  var ret_openKeyCursor_57 = store.openKeyCursor('prevunique');
-  var ret_clear_58 = store.clear();
-  var ret_put_59 = store.put(true);
-  var ret_getAllKeys_60 = store.getAllKeys();
-  var ret_openKeyCursor_61 = store.openKeyCursor('nextunique');
-  var ret_get_62 = store.get(42);
-  var ret_count_63 = store.count('fallback');
+  var ret_add_49 = store.add(true);
+  var ret_getAll_50 = store.getAll(2);
+  var ret_clear_51 = store.clear();
+  var ret_add_52 = store.add(true);
+  var ret_delete_53 = store.delete(42);
+  var ret_count_54 = store.count();
+  var ret_add_55 = store.add(42);
+  var ret_get_56 = store.get('fallback');
+  var ret_get_57 = store.get('fallback');
+  var ret_openCursor_58 = store.openCursor('next');
+  var ret_delete_59 = store.delete(true);
+  var ret_openKeyCursor_60 = store.openKeyCursor('prev');
+  var ret_openCursor_61 = store.openCursor(42, 'prevunique');
+  var ret_openCursor_62 = store.openCursor('fallback', 'prev');
+  var ret_get_63 = store.get(42);
   txn.oncomplete = (event) => {
   console.log('Transaction completed successfully');
 };
@@ -126,7 +135,7 @@ openRequest.onblocked = (event) => {
 openRequest.onerror = (event) => {
   console.log('open db onerror triggered')
 };
-const deleteRequest = indexedDB.deleteDatabase('str_1725')
+const deleteRequest = indexedDB.deleteDatabase('str_7127')
 deleteRequest.onblocked = (event) => {
   console.log('delete db onblocked triggered')
 };
