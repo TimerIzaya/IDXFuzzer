@@ -21,7 +21,7 @@ class PipeEnd:
     def _infer_is_write(self):
         return self.name in {"put", "add", "delete", "clear"}
 
-    def generate_il(self, callee: Identifier) -> List[IRNode]:
+    def generate_il(self, store: Identifier) -> List[IRNode]:
         """
         基于 MethodInfo + IDBType + IRContext + IDBSchemaContext 生成 CallExpression。
         自动将结果注册进 irctx（使用 returns 推导类型）。
@@ -34,16 +34,16 @@ class PipeEnd:
 
         # 如果没返回值，直接返回
         if IDBTypeTool.isReturnEmpty(self.method):
-            call = CallExpression(callee, self.name, args, result_name=None)
+            call = CallExpression(store, self.name, args, result_name=None)
             nodes.append(call)
         else:
             #如果有返回值 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
             recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(self.method))
-            Global.smctx.registerIndex(recVarName)
+            Global.smctx.registerIndex(store.raw, recVarName)
             Global.irctx.register_variable(recVar)
             nodes.append(VariableDeclaration(recVar.name))
             nodes.append(
-                AssignmentExpression(recVar, CallExpression(callee, METHOD_NAME, args=args))
+                AssignmentExpression(recVar, CallExpression(store, METHOD_NAME, args=args))
             )
         return nodes
 

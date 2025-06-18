@@ -47,7 +47,7 @@ class IRParamValueGenerator:
             return None
 
         if idbType == IDBType.IDBIndex.value:
-            return Global.smctx.pick_random_index() or "idx_default"
+            return Global.smctx.pickRandomGlobalIndex() or "idx_default"
         if idbType == IDBType.IDBObjectStore.value:
             return Global.smctx.get_current_store() or "store_default"
         if idbType == IDBType.IDBKeyRange.value:

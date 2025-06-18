@@ -128,18 +128,16 @@ def create_index():
     args = IRParamValueGenerator.generateMethodArgs(m)
 
     nodes = []
-    # 如果有返回值
-    if not IDBTypeTool.isReturnEmpty(m):
-        # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
-        recVarName = Global.smctx.newIndexName()
-        recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(m))
-        Global.smctx.registerIndex(recVarName)
-        Global.irctx.register_variable(recVar)
-        nodes.append(VariableDeclaration(recVar.name))
-        nodes.append(AssignmentExpression(recVar, CallExpression(dbstore, METHOD_NAME, args=args)))
-    else:
-        nodes.append(CallExpression(dbstore, METHOD_NAME, args=args))
+    # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
+    recVarName = Global.smctx.newIndexName()
+    recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(m))
+    Global.smctx.registerIndex(dbstore.raw, recVarName)
+    Global.irctx.register_variable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(dbstore, METHOD_NAME, args=args)))
+
     return nodes
+
 
 def delete_index():
     INTERFACE_NAME = "IDBObjectStore"
@@ -153,20 +151,8 @@ def delete_index():
     m = IDBSchemaParser.getInterface(INTERFACE_NAME).getInstanceMethod(METHOD_NAME).raw()
     args = IRParamValueGenerator.generateMethodArgs(m)
 
-    nodes = []
-    # 如果有返回值
-    if not IDBTypeTool.isReturnEmpty(m):
-        # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
-        recVarName = Global.smctx.newIndexName()
-        recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(m))
-        Global.smctx.registerIndex(recVarName)
-        Global.irctx.register_variable(recVar)
-        nodes.append(VariableDeclaration(recVar.name))
-        nodes.append(AssignmentExpression(recVar, CallExpression(dbstore, METHOD_NAME, args=args)))
-    else:
-        nodes.append(CallExpression(dbstore, METHOD_NAME, args=args))
+    nodes = [CallExpression(dbstore, METHOD_NAME, args=args)]
     return nodes
-
 
 # 每个操作函数的独立权重配置
 AtomicSchemaWeights = {

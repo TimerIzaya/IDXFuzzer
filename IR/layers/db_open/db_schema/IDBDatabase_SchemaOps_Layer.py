@@ -19,7 +19,7 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
     def build() -> Layer:
         body = []
 
-        # 初始创建一个 object store 和一个 index
+        # 初始创建一个 object store 和一个 indexes
         body.extend(create_object_store())
         body.extend(create_index())
 

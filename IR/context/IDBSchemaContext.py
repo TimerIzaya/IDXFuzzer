@@ -4,9 +4,9 @@ from typing import Dict, List, Optional, Union, Literal
 
 '''
 描述完整的db数据结构供给给下文的dataOpts层使用
-db 1->n os
-os n->n txn
-os 1->n index
+db 1->n oss
+oss n->n txns
+oss 1->n indexes
 '''
 
 
@@ -42,7 +42,7 @@ class IDBTransactionInfo:
     '''
     durability: Literal["strict", "relaxed", "default"] = "default"
 
-    mode: Literal["readonly", "readwrite", "versionchange"] = "readonly"
+    mode: Literal["readonly", "readwrite"] = "readonly"
 
 
 @dataclass
@@ -58,9 +58,9 @@ class IDBObjectStoreInfo:
 
     autoIncrement: bool = False
 
-    index: dict[str, IDBIndexInfo] = field(default_factory=dict)
+    indexes: dict[str, IDBIndexInfo] = field(default_factory=dict)
 
-    txn: dict[str, IDBTransactionInfo] = field(default_factory=dict)
+    txns: dict[str, IDBTransactionInfo] = field(default_factory=dict)
 
 
 @dataclass
@@ -69,111 +69,146 @@ class IDBDataBaseInfo:
 
     version: int
 
-    os: [str, IDBObjectStoreInfo] = field(default_factory=dict)
+    oss: dict[str, IDBObjectStoreInfo] = field(default_factory=dict)
 
 
 @dataclass
 class IDBSchemaContext:
+    current_db: Union[str, None] = None
+
+    # db -> IDBDataBaseInfo instance
     ctx: Dict[str, IDBDataBaseInfo] = field(default_factory=dict)
+
 
     def registerDatabase(self, db_name: str, db_version: int):
         if db_name not in self.ctx:
             self.ctx[db_name] = IDBDataBaseInfo(db_name, db_version)
 
+
+    # 进入该db的onversionchange作用域
+    def markCurrentDB(self, db_name: str):
+        if db_name not in self.ctx:
+            raise RuntimeError(f"db_name {db_name} not registered")
+        self.current_db = self.ctx[db_name].name
+
+
+    # 退出该db的onversionchange作用域
+    def unMarkCurrentDB(self, db_name: str):
+        if db_name not in self.ctx:
+            raise RuntimeError(f"db_name {db_name} not registered")
+        self.current_db = None
+
+
     def pickRandomDBName(self) -> str:
-        if not self.current_db:
+        dbs = list(self.ctx.keys())
+        if len(dbs) == 0:
             raise RuntimeError("No active database")
-        return self.current_db.name
+        return random.choice(dbs)
+
 
     def newObjectStoreName(self) -> str:
-        """生成一个唯一的 object store 名称，并不注册，仅返回"""
-        if self.current_db is None:
-            raise RuntimeError("No active database context")
+        """生成一个全局唯一的 object store 名称，并不注册，仅返回"""
+        osnames = []
+        for db in self.ctx.keys():
+            for os in self.ctx[db].oss.keys():
+                osnames.append(os)
 
         i = 0
         while True:
-            name = f"{self.current_db.name}_store_{i}"
-            if name not in self.ctx:
+            name = f"store_{i}"
+            if name not in osnames:
                 return name
             i += 1
+
 
     def registerObjectStore(self, store_name: str):
         if self.current_db is None:
             raise RuntimeError("No active database context")
-        idbObjectStore = IDBObjectStoreInfo(store_name)
-        self.current_db.os[store_name] = idbObjectStore
-        self.current_store = idbObjectStore
+        if len(self.ctx[self.current_db].oss) is None:
+            raise RuntimeError("No active object store context")
+        self.ctx[self.current_db].oss[store_name] = IDBObjectStoreInfo(store_name)
+
 
     def newIndexName(self) -> str:
-        base = self.current_store.name + "_index"
-        if self.current_db is None or self.current_store is None:
-            raise RuntimeError("No active DB or object store for generating index name")
+        """生成一个全局唯一的 indexes 名称，并不注册，仅返回"""
+        indexNames = []
+        for dbName, db in self.ctx.items():
+            for osName, os in db.oss.items():
+                for indexName, index in os.indexes.items():
+                    indexNames.append(indexName)
 
-        indexCnt = len(self.current_store.index)
-        base += "_" + str(indexCnt + 1)
-        return base
+        i = 0
+        while True:
+            name = f"index_{i}"
+            if name not in indexNames:
+                return name
+            i += 1
 
-    def registerIndex(self, index_name: str):
+    def registerIndex(self, storeName:str, indexName: str):
         if self.current_db is None:
             raise RuntimeError("No active database context")
-        indexInfo = IDBIndexInfo(index_name)
-        self.current_store
-        # self.ctx[self.current_db][self.current_store].append(index_name)
+        self.ctx[self.current_db].oss[storeName].indexes[indexName] = IDBIndexInfo(indexName)
 
-    def get_object_stores(self) -> List[str]:
-        if self.current_db and self.current_db in self.ctx:
-            return list(self.ctx[self.current_db].keys())
-        return []
+    def getObjectStores(self) -> List[str]:
+        if self.current_db is None:
+            raise RuntimeError("No active database context")
+        if len(self.ctx[self.current_db].oss) is None:
+            raise RuntimeError("No active object store context")
 
-    def get_indexes(self, store_name: str) -> List[str]:
-        if self.current_db and store_name in self.ctx.get(self.current_db, {}):
-            return self.ctx[self.current_db][store_name]
-        return []
+        ret = []
+        for osName, os in self.ctx[self.current_db].oss.items():
+            ret.append(osName)
+        return ret
 
-    def pick_random_object_store(self) -> str:
-        stores = self.get_object_stores()
+    def getIndexes(self, store_name: str) -> List[str]:
+        if self.current_db is None:
+            raise RuntimeError("No active database context")
+        if len(self.ctx[self.current_db].oss) is None:
+            raise RuntimeError("No active object store context")
+
+        indexNames = []
+
+        for osName, os in self.ctx[self.current_db].oss[store_name].indexes.items():
+            indexNames.append(os)
+        return indexNames
+
+    def pickRandomObjectStore(self) -> str:
+        stores = self.getObjectStores()
         if not stores:
             raise RuntimeError("No object stores available in current database context")
         return random.choice(stores)
 
-    def pick_random_index(self) -> Optional[str]:
-        """从当前 object store 中随机挑选一个 index 名称"""
-        if self.current_db is None or self.current_store is None:
-            return None
-        indexes = self.ctx.get(self.current_db, {}).get(self.current_store, [])
-        if not indexes:
-            return None
-        return random.choice(indexes)
-
-    def has_object_store(self, store_name: str) -> bool:
-        """检查当前数据库中是否存在指定 object store"""
-        return self.current_db is not None and store_name in self.ctx.get(self.current_db, {})
-
-    def has_index(self, store_name: str, index_name: str) -> bool:
-        """检查某个 object store 中是否存在指定 index"""
+    def pickRandomGlobalIndex(self) -> str:
+        """从当前 object store 中随机挑选一个 indexes 名称"""
         if self.current_db is None:
-            return False
-        return index_name in self.ctx.get(self.current_db, {}).get(store_name, [])
+            raise RuntimeError("No active database context")
+        if len(self.ctx[self.current_db].oss) is None:
+            raise RuntimeError("No active object store context")
+
+        indexes = self.getIndexes(self.current_db)
+        if not indexes:
+            raise RuntimeError("No index available in current database context")
+        return random.choice(indexes)
 
     def get_current_store(self) -> Optional[str]:
         """返回当前上下文中的 object store 名称"""
         return self.current_store
 
     def get_all_indexes(self) -> List[str]:
-        """获取当前 store 下的所有 index 名称"""
+        """获取当前 store 下的所有 indexes 名称"""
         if self.current_db is None or self.current_store is None:
             return []
         return self.ctx[self.current_db][self.current_store]
 
     def unregister_object_store(self, store_name: str):
-        """从当前数据库中注销 object store（连同其所有 index）"""
+        """从当前数据库中注销 object store（连同其所有 indexes）"""
         if self.current_db and store_name in self.ctx.get(self.current_db, {}):
             del self.ctx[self.current_db][store_name]
             if self.current_store == store_name:
                 self.current_store = None
 
     def unregister_index(self, store_name: str, index_name: str):
-        """从指定 object store 中注销 index"""
+        """从指定 object store 中注销 indexes"""
         if self.current_db is None:
             return
         store = self.ctx.get(self.current_db, {}).get(store_name, [])

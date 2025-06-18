@@ -18,13 +18,13 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
     @staticmethod
     def build() -> Layer | None:
         # 如果当前上下文中没有任何 object store，则不生成该层
-        if not Global.smctx.get_object_stores():
+        if not Global.smctx.getObjectStores():
             print("[TransactionLayer] skipped: no object store available")
             return None
 
-        store_name = Global.smctx.pick_random_object_store()
+        store_name = Global.smctx.pickRandomObjectStore()
 
-        txnVarName = "txn"
+        txnVarName = "txns"
         callTX = CallExpression(
             callee_object=Identifier("db"),
             callee_method="transaction",
@@ -40,7 +40,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
             result_name=osVarName
         )
 
-        Global.irctx.register_variable(Variable("txn", IDBType.IDBTransaction))
+        Global.irctx.register_variable(Variable("txns", IDBType.IDBTransaction))
         Global.irctx.register_variable(Variable("store", IDBType.IDBObjectStore))
 
         children = list(filter(None, [
