@@ -77,9 +77,9 @@ def create_object_store():
     # 如果有返回值
     if not IDBTypeTool.isReturnEmpty(m):
         # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
-        recVarName = Global.itctx.new_object_store_name()
+        recVarName = Global.smctx.newObjectStoreName()
         recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(m))
-        Global.itctx.register_object_store(recVarName)
+        Global.smctx.registerObjectStore(recVarName)
         Global.irctx.register_variable(recVar)
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(dbIdt, "createObjectStore", args=args)))
@@ -104,9 +104,9 @@ def delete_object_store():
     # 如果有返回值
     if not IDBTypeTool.isReturnEmpty(m):
         # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
-        recVarName = Global.itctx.new_object_store_name()
+        recVarName = Global.smctx.newObjectStoreName()
         recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(m))
-        Global.itctx.register_object_store(recVarName)
+        Global.smctx.registerObjectStore(recVarName)
         Global.irctx.register_variable(recVar)
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(dbIdt, METHOD_NAME, args=args)))
@@ -131,9 +131,9 @@ def create_index():
     # 如果有返回值
     if not IDBTypeTool.isReturnEmpty(m):
         # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
-        recVarName = Global.itctx.new_index_name()
+        recVarName = Global.smctx.newIndexName()
         recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(m))
-        Global.itctx.register_index(recVarName)
+        Global.smctx.registerIndex(recVarName)
         Global.irctx.register_variable(recVar)
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(dbstore, METHOD_NAME, args=args)))
@@ -157,9 +157,9 @@ def delete_index():
     # 如果有返回值
     if not IDBTypeTool.isReturnEmpty(m):
         # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
-        recVarName = Global.itctx.new_index_name()
+        recVarName = Global.smctx.newIndexName()
         recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(m))
-        Global.itctx.register_index(recVarName)
+        Global.smctx.registerIndex(recVarName)
         Global.irctx.register_variable(recVar)
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(dbstore, METHOD_NAME, args=args)))

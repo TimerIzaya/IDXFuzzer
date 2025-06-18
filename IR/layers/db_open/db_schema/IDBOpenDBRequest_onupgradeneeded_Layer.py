@@ -1,7 +1,7 @@
 from IR.context.IRContext import IRContext, Variable
 from IR.IRNodes import AssignmentExpression, FunctionExpression, Identifier, MemberExpression, CallExpression, Literal, ConsoleLog
 from IR.layers.Globals import Global
-from IR.context.LiteralContext import LiteralContext
+from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_open.db_schema.IDBDatabase_SchemaOps_Layer import IDBDatabase_SchemaOps_Layer

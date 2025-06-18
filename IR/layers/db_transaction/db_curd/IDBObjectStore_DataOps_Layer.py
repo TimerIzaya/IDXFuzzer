@@ -20,7 +20,7 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
         body = []
 
         store_id: Identifier = Global.irctx.get_identifier_by_type(IDBType.IDBObjectStore)
-        current_store = Global.itctx.get_current_store()
+        current_store = Global.smctx.get_current_store()
 
         # 如果缺少 store 或 name，跳过该层
         if store_id is None or current_store is None:

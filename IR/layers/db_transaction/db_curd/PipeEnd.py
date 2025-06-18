@@ -23,7 +23,7 @@ class PipeEnd:
 
     def generate_il(self, callee: Identifier) -> List[IRNode]:
         """
-        基于 MethodInfo + IDBType + IRContext + LiteralContext 生成 CallExpression。
+        基于 MethodInfo + IDBType + IRContext + IDBSchemaContext 生成 CallExpression。
         自动将结果注册进 irctx（使用 returns 推导类型）。
         """
         METHOD_NAME = self.method.name
@@ -39,7 +39,7 @@ class PipeEnd:
         else:
             #如果有返回值 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
             recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(self.method))
-            Global.itctx.register_index(recVarName)
+            Global.smctx.registerIndex(recVarName)
             Global.irctx.register_variable(recVar)
             nodes.append(VariableDeclaration(recVar.name))
             nodes.append(

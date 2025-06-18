@@ -1,7 +1,7 @@
 from IR.context.IRContext import Variable
 from IR.IRNodes import CallExpression, Identifier, Literal
 from IR.layers.Globals import Global
-from IR.context.LiteralContext import LiteralContext
+from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_transaction.IDBTransaction_oncomplete_Layer import IDBTransaction_oncomplete_Layer
@@ -18,11 +18,11 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
     @staticmethod
     def build() -> Layer | None:
         # 如果当前上下文中没有任何 object store，则不生成该层
-        if not Global.itctx.get_object_stores():
+        if not Global.smctx.get_object_stores():
             print("[TransactionLayer] skipped: no object store available")
             return None
 
-        store_name = Global.itctx.pick_random_object_store()
+        store_name = Global.smctx.pick_random_object_store()
 
         txnVarName = "txn"
         callTX = CallExpression(

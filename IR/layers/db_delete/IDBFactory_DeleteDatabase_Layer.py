@@ -16,7 +16,7 @@ class IDBFactory_DeleteDatabase_Layer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer:
-        db_name = Global.itctx.get_database_name()
+        db_name = Global.smctx.pickRandomDBName()
         args = [Literal(db_name)]
 
         call = CallExpression(
