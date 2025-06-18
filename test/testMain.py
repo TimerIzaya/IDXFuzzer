@@ -1,6 +1,6 @@
 import unittest
 
-from IR.IRContext import IRContext
+from IR.context.IRContext import IRContext
 from IR.IRParamValueGenerator import IRParamValueGenerator
 from schema.IDBSchemaParser import IDBSchemaParser
 from schema.SchemaClass import IDBType, TypeInfo

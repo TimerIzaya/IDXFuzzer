@@ -1,4 +1,4 @@
-from IR.IRContext import IRContext, Variable
+from IR.context.IRContext import IRContext, Variable
 from IR.IRNodes import VariableDeclaration, Identifier
 from IR.layers.Globals import Global
 from IR.layers.Layer import Layer, LayerType

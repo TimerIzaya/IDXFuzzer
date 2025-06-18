@@ -1,5 +1,56 @@
 import random
-from typing import Dict, List, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Union
+from schema.IDBSchemaParser import IDBSchemaParser
+
+'''
+描述完整的db数据结构供给给下文的dataOpts层使用
+'''
+
+class IDBIndexInfo:
+    name: str
+    '''
+    该keypath是次级索引
+        如果是唯一的 -> put重复key报错
+        如果不是唯一 -> put重复key就把value拼成一个数组
+    '''
+    unique: bool = None
+    '''
+    用于展开数组把里面每一个元素都作为索引
+    store.createIndex("tags_index", "tags", { multiEntry: true });
+    store.put({ id: 1, tags: ["a", "b"] });
+    store.put({ id: 2, tags: ["b", "c"] });
+    此时索引变为abc
+
+    multiEntry如果false，那么随便keypath是不是数组，如果是true，那keypath必须是数组
+    '''
+    multiEntry: bool = None
+    '''
+    createIndex 用于创建次级索引，必须提供 keyPath
+    '''
+    keypath: Union[str, list[str]] = None
+
+
+class IDBObjectStoreInfo:
+    name: str
+    '''
+    该keypath是主键
+    createObjectStore是创建主键索引的唯一方式，主键索引也同时是隐式的，无法获取噢
+    1. 有keyPath就指定了主键
+    2. 无keyPath就进入key-less 模式，在put add传入任意合法值作为主键,无论哪种方式，主键索引都会被隐式建立。
+    '''
+    keypath: Union[str, list[str]]
+
+    autoIncrement: bool
+
+    indexes: list[IDBIndexInfo] = []
+
+
+@dataclass
+class IDBDataBaseInfo:
+    name: str
+    version: int
+
 
 class LiteralContext:
     def __init__(self):
@@ -111,4 +162,3 @@ class LiteralContext:
         store = self.database_map.get(self.current_db, {}).get(store_name, [])
         if index_name in store:
             store.remove(index_name)
-

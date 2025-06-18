@@ -3,7 +3,7 @@ from IR.type.IDBType import IDBType
 from IR.type.IDBTypeTool import IDBTypeTool
 from schema.IDBSchemaParser import IDBSchemaParser
 from IR.IRNodes import MemberExpression, CallExpression, Literal, VariableDeclaration, AssignmentExpression, Identifier
-from IR.IRContext import IRContext, Variable
+from IR.context.IRContext import IRContext, Variable
 from IR.IRParamValueGenerator import IRParamValueGenerator
 
 

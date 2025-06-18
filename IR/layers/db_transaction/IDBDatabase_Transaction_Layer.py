@@ -1,7 +1,7 @@
-from IR.IRContext import Variable
+from IR.context.IRContext import Variable
 from IR.IRNodes import CallExpression, Identifier, Literal
 from IR.layers.Globals import Global
-from IR.layers.LiteralContext import LiteralContext
+from IR.context.LiteralContext import LiteralContext
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_transaction.IDBTransaction_oncomplete_Layer import IDBTransaction_oncomplete_Layer

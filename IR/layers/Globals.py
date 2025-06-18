@@ -1,6 +1,6 @@
 # 完整的IR构建过程中所需要的全局变量
-from IR.IRContext import IRContext
-from IR.layers.LiteralContext import LiteralContext
+from IR.context.IRContext import IRContext
+from IR.context.LiteralContext import LiteralContext
 
 
 class Global:

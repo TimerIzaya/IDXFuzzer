@@ -1,6 +1,6 @@
 from typing import List
 
-from IR.IRContext import Variable
+from IR.context.IRContext import Variable
 from IR.IRNodes import Identifier, IRNode, VariableDeclaration, AssignmentExpression
 from IR.IRParamValueGenerator import IRParamValueGenerator
 from IR.layers.Globals import Global

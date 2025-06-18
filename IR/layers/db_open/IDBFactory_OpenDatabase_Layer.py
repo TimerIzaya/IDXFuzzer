@@ -2,9 +2,9 @@ from IR.layers.Globals import Global
 from IR.type.IDBType import IDBType
 from schema.IDBSchemaParser import IDBSchemaParser
 from IR.IRNodes import CallExpression, Identifier, Literal
-from IR.IRContext import IRContext, Variable
+from IR.context.IRContext import IRContext, Variable
 from config import FATHER
-from IR.layers.LiteralContext import LiteralContext
+from IR.context.LiteralContext import LiteralContext
 from IR.IRParamValueGenerator import IRParamValueGenerator
 from IR.layers.db_open.IDBOpenDBRequest_onblocked_Layer import IDBOpenDBRequest_onblocked_Layer
 from IR.layers.db_open.IDBOpenDBRequest_onerror_Layer import IDBOpenDBRequest_onerror_Layer
