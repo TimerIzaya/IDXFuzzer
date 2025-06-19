@@ -196,6 +196,9 @@ class IDBSchemaContext:
             raise RuntimeError("No object stores available in current database context")
         return random.choice(stores)
 
+    '''
+    txn需要用到的os，优先选数量少点
+    '''
     def pickRandomObjectStores(self) -> List[str]:
         stores = self.getObjectStores()
         n = len(stores)

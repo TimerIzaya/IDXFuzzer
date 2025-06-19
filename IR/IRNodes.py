@@ -95,7 +95,7 @@ class AssignmentExpression(IRNode):
 
 class CallExpression(IRNode):
     def __init__(self, callee_object: Union[Identifier, Variable], callee_method: str,
-                 args: List[ParamInfo], result_name: Optional[str] = None):
+                 args: List[Identifier], result_name: Optional[str] = None):
         assert isinstance(callee_object, Identifier) or isinstance(callee_object, Variable)
         # callee_object统一作为identifier处理
         if isinstance(callee_object, Variable):

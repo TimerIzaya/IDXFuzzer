@@ -1,3 +1,5 @@
+import random
+
 from IR.context.IRContext import Variable
 from IR.IRNodes import CallExpression, Identifier, Literal
 from IR.layers.Globals import Global
@@ -21,18 +23,30 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
             print("[TransactionLayer] skipped: no object store available")
             return None
 
-        txnVarName = Global.smctx.newTxnName()
-
+        args = []
+        # txn需要用到的os str
         txnOSS = Global.smctx.pickRandomObjectStores()
+        # 包装一层Identifier
+        txnOSS = [Identifier(i) for i in txnOSS]
+        args.append(txnOSS)
+        args.append(Identifier(
+            random.choice(["readwrite", "readonly"])
+        ))
+        args.append(Identifier(
+            "durability:{" + random.choice(["strict", "default", "relaxed"]) + "}"
+        ))
 
-
+        dbIdent = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase).raw
         # 这个方法存在需要缓存的上下文信息 不走schema取 手动构造
         callTX = CallExpression(
-            callee_object=Identifier("db"),
+            callee_object=dbIdent,
             callee_method="transaction",
-            args=[Literal(store_name), Literal("readwrite")],
-            result_name=txnVarName
+            args=args,
+            result_name=Global.smctx.newTxnName()
         )
+
+
+        # 开始挑选os进行curd
 
         osVarName = "store"
         callOS = CallExpression(
