@@ -17,14 +17,16 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer | None:
-        # 如果当前上下文中没有任何 object store，则不生成该层
         if not Global.smctx.getObjectStores():
             print("[TransactionLayer] skipped: no object store available")
             return None
 
-        store_name = Global.smctx.pickRandomObjectStore()
+        txnVarName = Global.smctx.newTxnName()
 
-        txnVarName = "txns"
+        txnOSS = Global.smctx.pickRandomObjectStores()
+
+
+        # 这个方法存在需要缓存的上下文信息 不走schema取 手动构造
         callTX = CallExpression(
             callee_object=Identifier("db"),
             callee_method="transaction",
