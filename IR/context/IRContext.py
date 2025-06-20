@@ -50,7 +50,10 @@ class IRContext:
             for v in layPool.vars:
                 if v.vartype == type_:
                     candidates.append(v)
-        return random.choice(candidates) if candidates else None
+        if len(candidates) == 0:
+            return None
+        else:
+            return random.choice(candidates).name
 
     def generate_unique_name(self, base: str) -> str:
         name = f"{base}_{self.unique_counter}"

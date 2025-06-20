@@ -16,7 +16,7 @@ def replace_index():
 def replace_object_store():
     return [
         *delete_object_store(),
-        *create_object_store()
+        *createObjectStore()
     ]
 
 
@@ -60,7 +60,7 @@ def add_multiple_indexes():
 # drop 系列
 
 def drop_all_indexes():
-    all_indexes = Global.smctx.get_all_indexes()
+    all_indexes = Global.smctx.getAllIndexes()
     if not all_indexes:
         raise RuntimeError("No indexes to drop")
     stmts = []
@@ -75,7 +75,7 @@ def reset_schema():
     return [
         *delete_object_store(),
         *delete_object_store(),
-        *create_object_store(),
+        *createObjectStore(),
         *create_index()
     ]
 

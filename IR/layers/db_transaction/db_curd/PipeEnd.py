@@ -1,12 +1,13 @@
 from typing import List
 
-from IR.context.IRContext import Variable
+from IR.IRNodes import CallExpression
 from IR.IRNodes import Identifier, IRNode, VariableDeclaration, AssignmentExpression
 from IR.IRParamValueGenerator import IRParamValueGenerator
+from IR.context.IRContext import Variable
 from IR.layers.Globals import Global
 from IR.type.IDBTypeTool import IDBTypeTool
 from schema.SchemaClass import MethodInfo
-from IR.IRNodes import CallExpression, Literal
+
 
 class PipeEnd:
     def __init__(self, method_info: MethodInfo):

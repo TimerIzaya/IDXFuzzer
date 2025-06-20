@@ -1,5 +1,5 @@
 import random
-from typing import Optional, Union, List
+from typing import List
 
 from IR.IRNodes import Literal
 from IR.layers.Globals import Global
@@ -10,7 +10,7 @@ from schema.SchemaClass import ParamInfo, TypeInfo, IDBType, MethodInfo
 
 class IRParamValueGenerator:
     @staticmethod
-    def generateValueFromType(typeinfo: TypeInfo):
+    def generateValueFromType(typeinfo: TypeInfo) -> str:
         typeinfo = IDBTypeTool.normalTypeinfo(typeinfo)
         idbType = typeinfo.typename
         items = typeinfo.items
@@ -19,7 +19,7 @@ class IRParamValueGenerator:
             return random.choice([True, False])
 
         if idbType == IDBType.Number:
-            return random.randint(0, 100)
+            return str(random.randint(0, 100))
 
         if idbType == IDBType.String:
             return "str_" + str(random.randint(0, 9999))
@@ -33,7 +33,7 @@ class IRParamValueGenerator:
             else:
                 raise "items not array"
 
-            return [IRParamValueGenerator.generateValueFromType(element_type) for _ in range(count)]
+            return str([IRParamValueGenerator.generateValueFromType(element_type) for _ in range(count)])
 
         if idbType == IDBType.Null:
             return None
@@ -55,14 +55,14 @@ class IRParamValueGenerator:
         if idbType == IDBType.IDBKeyRange.value:
             # return Global.smctx.get_current_store() or "store_default"
             # todo 待定
-            return  "store_default"
+            return "store_default"
         if idbType == IDBType.IDBRequest.value:
             return Global.irctx.get_random_identifier(IDBType.IDBRequest.value) or Literal("<request>")
 
         return f"{idbType.name if isinstance(idbType, IDBType) else idbType}_instance"
 
     @staticmethod
-    def generateValueByParamInfo(param: ParamInfo):
+    def generateValueByParamInfo(param: ParamInfo) -> str:
         if not isinstance(param, ParamInfo):
             raise TypeError("generate_parameter 的入参必须是 ParamInfo 类型")
 
@@ -75,19 +75,20 @@ class IRParamValueGenerator:
         """
         # 如果参数是 optional 类型，则有 50% 的概率跳过
         if param.optional and random.random() < 0.5:
-            return Literal(OPTIONAL_JUMP)
+            return OPTIONAL_JUMP
 
         # 如果参数是一个枚举值，则从枚举列表中随机选择一个作为参数
         if param.enum:
-            return Literal(random.choice(param.enum))
+            return random.choice(param.enum)
 
         # 如果参数是一个具有固定属性的 object 类型（如 IDBIndexParameters）
+        # todo 废弃了
         if isinstance(param.type, object) and param.properties is not None:
             objParam = {}
             for prop in param.properties:
                 # 对每个属性递归生成其值
                 objParam[prop.name] = IRParamValueGenerator.generateValueFromType(prop.type)
-            return Literal(objParam)
+            return str(objParam)
 
         # 参数类型可能是 TypeInfo 或 List[TypeInfo]，统一解析为一个 TypeInfo 实例
         typeInfoUnion = param.type
@@ -101,10 +102,10 @@ class IRParamValueGenerator:
 
         # 如果没有可复用变量，生成新的字面量值
         value = IRParamValueGenerator.generateValueFromType(typeInfo)
-        return Literal(value)
+        return value
 
     @staticmethod
-    def generateMethodArgs(method: MethodInfo) -> List[ParamInfo]:
+    def generateMethodArgs(method: MethodInfo) -> List[str]:
         """
         这里单独写一个方法是为了适配后面更多的option的特殊规则
         :rtype: object
@@ -124,3 +125,20 @@ class IRParamValueGenerator:
                             options.value["multiEntry"] = False
 
         return args
+
+    @staticmethod
+    def generateKeyPath():
+        """
+        暂时不考虑太多，这里比较复杂
+        """
+        if random.random() <= 0.5:
+            return "test"
+        else:
+            return None
+
+    @staticmethod
+    def generateAutoIncrement():
+        if random.random() <= 0.5:
+            return random.choice([True, False])
+        else:
+            return None

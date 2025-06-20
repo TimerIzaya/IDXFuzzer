@@ -17,14 +17,15 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
     @staticmethod
     def build() -> Layer:
         Global.irctx.enter_layer(IDBOpenDBRequest_onupgradeneeded_Layer)
-        Global.smctx.markCurrentDB()
+
+        dbName = Global.smctx.pickRandomDBName()
         body = [
             ConsoleLog(Literal("db onupgraded trigered"))
         ]
 
         # db = event.target.result
         assign_db = AssignmentExpression(
-            left=Identifier("db"),
+            left=Identifier(dbName),
             right=MemberExpression(
                 objectExpr=MemberExpression(Identifier("event"), "target"),
                 property_name="result"
@@ -33,10 +34,7 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
         body.append(assign_db)
 
         # 注册 db 到上下文
-        Global.irctx.register_variable(Variable("db", IDBType.IDBDatabase))
-
-        # ✅ 添加 schema 层
-        schema_layer = IDBDatabase_SchemaOps_Layer.build()
+        Global.irctx.register_variable(Variable(dbName, IDBType.IDBDatabase))
 
         # 构造事件处理器
         open_request_id = Global.irctx.get_identifier_by_type(IDBType.IDBOpenDBRequest)
@@ -46,10 +44,14 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
         )
 
         Global.irctx.exit_layer()
-        Global.smctx.unMarkCurrentDB()
+
+        children = list(filter(None, [
+            IDBDatabase_SchemaOps_Layer.build(),
+        ]))
+
         return Layer(
             IDBOpenDBRequest_onupgradeneeded_Layer.name,
             ir_nodes=[handler],
-            children=[schema_layer],  # ✅ 只将 schema 操作封装为子层
+            children=[children],  # ✅ 只将 schema 操作封装为子层
             layer_type=IDBOpenDBRequest_onupgradeneeded_Layer.layer_type
         )

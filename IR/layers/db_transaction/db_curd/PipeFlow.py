@@ -5,9 +5,8 @@ from IR.layers.db_transaction.db_curd.PipeEnd import PipeEnd
 
 
 class PipeFlow:
-    def __init__(self, store_id: Identifier, key, pipe_ends: List[PipeEnd]):
+    def __init__(self, store_id: Identifier, pipe_ends: List[PipeEnd]):
         self.store_id = store_id
-        self.key = key
         self.pipe_ends = pipe_ends
         self.il_sequence = []
 
@@ -21,5 +20,3 @@ class PipeFlow:
     def __len__(self):
         return len(self.pipe_ends)
 
-    def __repr__(self):
-        return f"<PipeFlow len={len(self)} key={self.key}>"

@@ -93,9 +93,12 @@ class AssignmentExpression(IRNode):
         }
 
 
+"""
+arg如果是literal直接翻译成字符串，如果是ident直接翻译成变量
+"""
 class CallExpression(IRNode):
     def __init__(self, callee_object: Union[Identifier, Variable], callee_method: str,
-                 args: List[Identifier], result_name: Optional[str] = None):
+                 args: List[Union[Identifier, Literal]], result_name: Optional[str] = None):
         assert isinstance(callee_object, Identifier) or isinstance(callee_object, Variable)
         # callee_object统一作为identifier处理
         if isinstance(callee_object, Variable):
@@ -105,7 +108,7 @@ class CallExpression(IRNode):
         for arg in args:
             if isinstance(arg, Literal) and arg.value == OPTIONAL_JUMP:
                 continue
-            assert isinstance(arg, IRNode), f"Invalid arg: {arg}"
+            assert isinstance(arg, IRNode) or isinstance(arg, list), f"Invalid arg: {arg}"
             filtered_args.append(arg)
 
         self.callee_object = callee_object

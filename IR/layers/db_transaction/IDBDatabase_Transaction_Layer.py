@@ -25,39 +25,35 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
 
         args = []
         # txn需要用到的os str
-        txnOSS = Global.smctx.pickRandomObjectStores()
+        txnOSS = Global.smctx.pickRandomTxnObjectStores()
         # 包装一层Identifier
         txnOSS = [Identifier(i) for i in txnOSS]
-        args.append(txnOSS)
-        args.append(Identifier(
-            random.choice(["readwrite", "readonly"])
-        ))
-        args.append(Identifier(
-            "durability:{" + random.choice(["strict", "default", "relaxed"]) + "}"
-        ))
+        Global.smctx.registerTxn(txnOSS)
 
-        dbIdent = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase).raw
-        # 这个方法存在需要缓存的上下文信息 不走schema取 手动构造
+        args.append(txnOSS)
+
+        mode = random.choice(["readwrite", "readonly"])
+        durability = "durability:{" + random.choice(["strict", "default", "relaxed"]) + "}"
+        args.append(Identifier(mode))
+        args.append(Identifier(durability))
+
+        # mode和durability 同步更新到schema上下文
+        Global.smctx.currentDB.txn.mode = mode
+        Global.smctx.currentDB.txn.durability = durability
+
+
+        dbIdent = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase)
+        txnName = Global.smctx.newTxnName()
+        # 事务启动
+        # 存在需要缓存的上下文信息 不走schema取 手动构造
         callTX = CallExpression(
             callee_object=dbIdent,
             callee_method="transaction",
             args=args,
-            result_name=Global.smctx.newTxnName()
+            result_name=txnName
         )
 
-
-        # 开始挑选os进行curd
-
-        osVarName = "store"
-        callOS = CallExpression(
-            callee_object=Identifier(txnVarName),
-            callee_method="objectStore",
-            args=[Literal(store_name)],
-            result_name=osVarName
-        )
-
-        Global.irctx.register_variable(Variable("txns", IDBType.IDBTransaction))
-        Global.irctx.register_variable(Variable("store", IDBType.IDBObjectStore))
+        Global.irctx.register_variable(Variable(txnName, IDBType.IDBTransaction))
 
         children = list(filter(None, [
             IDBObjectStore_DataOps_Layer.build(),
@@ -66,9 +62,10 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
             IDBTransaction_onerror_Layer.build(),
         ]))
 
+        Global.smctx.unRegisterTxn()
         return Layer(
             IDBDatabase_Transaction_Layer.name,
-            ir_nodes=[callTX, callOS],
+            ir_nodes=[callTX],
             children=children,
             layer_type=IDBDatabase_Transaction_Layer.layer_type
         )

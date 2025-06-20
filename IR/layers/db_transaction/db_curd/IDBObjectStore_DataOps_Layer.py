@@ -1,4 +1,5 @@
-from IR.IRNodes import Identifier
+from IR.IRNodes import Identifier, CallExpression
+from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.layers.Globals import Global
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
@@ -7,37 +8,45 @@ from IR.layers.db_transaction.db_curd.PipeGraph import PipeGraph
 from IR.type.IDBType import IDBType
 
 
+'''
+针对某一个事务
+'''
 class IDBObjectStore_DataOps_Layer(LayerBuilder):
     name = "IDBObjectStore_DataOps_Layer"
+
     layer_type = LayerType.EXECUTION
+
+    pipeGraph = PipeGraph()
 
     # 可配置项：pipeflow 个数 和 每个长度
     pipeflow_count = 8
+
     pipeflow_length = 8
 
     @staticmethod
     def build() -> Layer | None:
         body = []
 
-        store_id: Identifier = Global.irctx.get_identifier_by_type(IDBType.IDBObjectStore)
-        current_store = Global.smctx.get_current_store()
-
-        # 如果缺少 store 或 name，跳过该层
-        if store_id is None or current_store is None:
-            return None
-
-        # PipeGraph 用于生成 pipeflow
-        graph = PipeGraph()
-
-        for flow_id in range(IDBObjectStore_DataOps_Layer.pipeflow_count):
-            key = flow_id + 1  # 每个 flow 对应一个不同的 key
-            pipe_ends = graph.generate_weighted_path(
-                max_length=IDBObjectStore_DataOps_Layer.pipeflow_length,
-                transaction_mode="readwrite"
+        # 事务预设的os中选择k个os进行curd
+        oss = Global.smctx.pickRandomObjectStoresFromTxn()
+        txnIdent = Global.irctx.get_identifier_by_type(IDBType. IDBTransaction)
+        tmpOSName = Global.smctx.newTxnTmpOSName(txnName=txnIdent.raw)
+        for osName in oss:
+            txnGetTmpOsCall = CallExpression(
+                callee_object=txnIdent,
+                callee_method="objectStore",
+                args=[Identifier(osName)],
+                result_name=tmpOSName
             )
+            body.append(txnGetTmpOsCall)
 
-            pipeflow = PipeFlow(store_id=store_id, key=key, pipe_ends=pipe_ends)
-            flow_il = pipeflow.generate_il_sequence()
-            body.extend(flow_il)
+            for _ in range(IDBObjectStore_DataOps_Layer.pipeflow_count):
+                pipeEnds = IDBObjectStore_DataOps_Layer.pipeGraph.generate_weighted_path(
+                    max_length=IDBObjectStore_DataOps_Layer.pipeflow_length,
+                    transaction_mode=Global.smctx.currentDB.txn.mode
+                )
+                pipeflow = PipeFlow(store_id=Identifier(tmpOSName),  pipe_ends=pipeEnds)
+                flow_il = pipeflow.generate_il_sequence()
+                body.extend(flow_il)
 
         return Layer(IDBObjectStore_DataOps_Layer.name, body, layer_type=IDBObjectStore_DataOps_Layer.layer_type)

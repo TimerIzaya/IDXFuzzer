@@ -3,7 +3,7 @@ from IR.IRNodes import *
 from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.layers.Layer import LayerType, Layer
 from IR.layers.LayerBuilder import LayerBuilder
-from IR.layers.db_open.db_schema.db_schema_opt.AtomicSchemaOps import create_object_store, create_index
+from IR.layers.db_open.db_schema.db_schema_opt.AtomicSchemaOps import createObjectStore, create_index
 from IR.layers.db_open.db_schema.db_schema_opt.SchemaOptDispatcher import SchemaOptDispatcher
 import random
 
@@ -20,7 +20,7 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
         body = []
 
         # 初始创建一个 object store 和一个 indexes
-        body.extend(create_object_store())
+        body.extend(createObjectStore())
         body.extend(create_index())
 
         dispatcher = SchemaOptDispatcher()

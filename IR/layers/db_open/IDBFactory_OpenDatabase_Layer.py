@@ -28,9 +28,11 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
         name_param = IRParamValueGenerator.generateValueByParamInfo(open_params[0])  # string
         version_param = IRParamValueGenerator.generateValueByParamInfo(open_params[1])  # number?
 
-        # 注册数据库名
-        if isinstance(name_param, Literal):
-            Global.smctx.registerDatabase(name_param.value, version_param)
+        dbName = name_param.value
+        versionNumber = version_param.value
+        Global.smctx.registerDatabase(dbName, versionNumber)
+        Global.smctx.markCurrentDB(dbName)
+
 
         args = [name_param, version_param]
 
