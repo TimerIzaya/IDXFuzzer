@@ -28,7 +28,7 @@
 
   一个事务对应多个os，在case实现中，也没必要交错写，current_txn == current_oss，db.transaction为开头，db.commit为结尾
 
-
+# 一个literal 在我们这里 只对应一个var
 
 
 

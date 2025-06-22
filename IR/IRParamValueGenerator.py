@@ -128,17 +128,16 @@ class IRParamValueGenerator:
 
     @staticmethod
     def generateKeyPath():
-        """
-        暂时不考虑太多，这里比较复杂
-        """
-        if random.random() <= 0.5:
-            return "test"
-        else:
-            return None
+        return "test"
 
     @staticmethod
-    def generateAutoIncrement():
-        if random.random() <= 0.5:
-            return random.choice([True, False])
-        else:
-            return None
+    def generateCreateObjectStoreAutoIncrement():
+        return random.choice([True, False])
+
+    @staticmethod
+    def generateCreateIndexUnique():
+        return random.choice([True, False])
+
+    @staticmethod
+    def generateCreateIndexMultiEntry():
+        return random.choice([True, False])

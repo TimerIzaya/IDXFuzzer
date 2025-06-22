@@ -102,34 +102,28 @@ class IDBSchemaContext:
             self.ctx[dbName] = IDBDataBaseInfo(dbName, db_version)
 
     def registerObjectStore(self, storeName: str):
-        if self.currentDB is None:
-            raise RuntimeError("No active database context")
-        if len(self.ctx[self.currentDB.name].oss) is None:
-            raise RuntimeError("No active object store context")
+        if storeName in self.currentDB.oss:
+            raise RuntimeError(f"ObjectStore {storeName} is already registered")
+
         self.ctx[self.currentDB.name].oss[storeName] = IDBObjectStoreInfo(storeName)
 
     def unregisterObjectStore(self, storeName: str):
-        if self.currentDB is None:
-            raise RuntimeError("No active database context")
-        if len(self.ctx[self.currentDB.name].oss) is None:
+        if storeName not in self.ctx[self.currentDB.name].oss:
             raise RuntimeError("No active object store context")
         del self.ctx[self.currentDB.name].oss[storeName]
 
     def registerIndex(self, storeName: str, indexName: str):
-        if self.currentDB is None:
-            raise RuntimeError("No active database context")
-        try:
-            self.ctx[self.currentDB.name].oss[storeName].indexes[indexName] = IDBIndexInfo(indexName)
-        except Exception as e:
-            print(f"发生异常: {e}")
+        if storeName not in self.ctx[self.currentDB.name].oss:
+            raise RuntimeError("No active object store context")
+        self.ctx[self.currentDB.name].oss[storeName].indexes[indexName] = IDBIndexInfo(indexName)
 
-    def unregister_index(self, storeName: str, indexName: str):
-        """从指定 object store 中注销 indexes"""
-        if self.currentDB is None:
-            return
-        store = self.ctx.get(self.currentDB.name, {}).get(storeName, [])
-        if indexName in store:
-            store.remove(indexName)
+
+    def unregisterIndex(self, storeName: str, indexName: str):
+        if storeName not in self.ctx[self.currentDB.name].oss:
+            raise RuntimeError("No active object store context")
+        if indexName not in self.ctx[self.currentDB.name].oss[storeName].indexes:
+            raise RuntimeError("No active indexName context")
+        del self.ctx[self.currentDB.name].oss[storeName].indexes[indexName]
 
     def registerTxn(self, os: list[str]):
         if self.currentDB is None:
@@ -160,6 +154,7 @@ class IDBSchemaContext:
             for os in self.ctx[db].oss.keys():
                 osnames.append(os)
 
+        print(osnames)
         i = 0
         while True:
             name = f"store_{i}"
@@ -226,6 +221,12 @@ class IDBSchemaContext:
         if not stores:
             raise RuntimeError("No object stores available in current database context")
         return random.choice(stores)
+
+    def pickRandomObjectStoreIndex(self, osName) -> str:
+        oss = self.ctx[self.currentDB.name].oss
+        if osName not in oss or len(oss[osName].indexes) == 0:
+            raise RuntimeError("No active object store context")
+        return random.choice(list(oss[osName].indexes.keys()))
 
     def pickRandomDBName(self) -> str:
         dbs = list(self.ctx.keys())

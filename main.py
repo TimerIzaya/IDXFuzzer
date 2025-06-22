@@ -49,5 +49,5 @@ def genCase(number):
 
 if __name__ == "__main__":
     resetCorpus()
-    for i in range(0, 10):
+    for i in range(0, 1):
         genCase(i)

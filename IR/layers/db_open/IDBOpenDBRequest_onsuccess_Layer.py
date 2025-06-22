@@ -40,8 +40,8 @@ class IDBOpenDBRequest_onsuccess_Layer(LayerBuilder):
         Global.irctx.register_variable(Variable("db", IDBType.IDBDatabase))
 
         # 构建 transaction 层
-        txn_layer = IDBDatabase_Transaction_Layer.build()
-        children.append(txn_layer)
+        # txn_layer = IDBDatabase_Transaction_Layer.build()
+        # children.append(txn_layer)
 
         # 构建 db.onversionchange 层
         version_layer = IDBDatabase_onversionchange_Layer.build()

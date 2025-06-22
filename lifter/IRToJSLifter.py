@@ -65,7 +65,7 @@ class IRToJSLifter:
                 return "true" if val else "false"
             if isinstance(val, dict):
                 js_items = [
-                    f"'{k}': {IRToJSLifter._convert_node(Literal(v), 0)}"
+                    f"{k}: {IRToJSLifter._convert_node(Literal(v), 0)}"
                     for k, v in val.items()
                 ]
                 return "{" + ", ".join(js_items) + "}"

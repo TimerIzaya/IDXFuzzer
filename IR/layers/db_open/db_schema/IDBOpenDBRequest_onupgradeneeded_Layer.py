@@ -24,8 +24,10 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
         ]
 
         # db = event.target.result
+        # 找一个db类型的变量用来赋值
+        dbIdent = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase)
         assign_db = AssignmentExpression(
-            left=Identifier(dbName),
+            left=dbIdent,
             right=MemberExpression(
                 objectExpr=MemberExpression(Identifier("event"), "target"),
                 property_name="result"
@@ -52,6 +54,6 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
         return Layer(
             IDBOpenDBRequest_onupgradeneeded_Layer.name,
             ir_nodes=[handler],
-            children=[children],  # ✅ 只将 schema 操作封装为子层
+            children=children,  # ✅ 只将 schema 操作封装为子层
             layer_type=IDBOpenDBRequest_onupgradeneeded_Layer.layer_type
         )

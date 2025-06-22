@@ -8,14 +8,14 @@ import random
 
 def replace_index():
     return [
-        *delete_index(),
-        *create_index()
+        *deleteIndex(),
+        *createIndex()
     ]
 
 
 def replace_object_store():
     return [
-        *delete_object_store(),
+        *deleteObjectStore(),
         *createObjectStore()
     ]
 
@@ -53,7 +53,7 @@ def replace_index_multiEntry():
 def add_multiple_indexes():
     stmts = []
     for _ in range(random.randint(2, 5)):
-        stmts.extend(create_index())
+        stmts.extend(createIndex())
     return stmts
 
 
@@ -65,7 +65,7 @@ def drop_all_indexes():
         raise RuntimeError("No indexes to drop")
     stmts = []
     for _ in all_indexes:
-        stmts.extend(delete_index())
+        stmts.extend(deleteIndex())
     return stmts
 
 
@@ -73,10 +73,10 @@ def drop_all_indexes():
 
 def reset_schema():
     return [
-        *delete_object_store(),
-        *delete_object_store(),
+        *deleteObjectStore(),
+        *deleteObjectStore(),
         *createObjectStore(),
-        *create_index()
+        *createIndex()
     ]
 
 

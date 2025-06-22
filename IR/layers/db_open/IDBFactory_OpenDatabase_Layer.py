@@ -25,16 +25,14 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
 
         # 单独生成 name/version 参数，便于注册数据库
         open_params = method.getParams().raw()
-        name_param = IRParamValueGenerator.generateValueByParamInfo(open_params[0])  # string
-        version_param = IRParamValueGenerator.generateValueByParamInfo(open_params[1])  # number?
+        dbName = IRParamValueGenerator.generateValueByParamInfo(open_params[0])  # string
+        versionNumber = IRParamValueGenerator.generateValueByParamInfo(open_params[1])  # number?
 
-        dbName = name_param.value
-        versionNumber = version_param.value
         Global.smctx.registerDatabase(dbName, versionNumber)
         Global.smctx.markCurrentDB(dbName)
 
 
-        args = [name_param, version_param]
+        args = [Literal(dbName), Literal(versionNumber)]
 
         call = CallExpression(
             callee_object=Identifier(FATHER),

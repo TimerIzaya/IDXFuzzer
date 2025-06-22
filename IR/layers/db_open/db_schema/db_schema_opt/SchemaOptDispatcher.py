@@ -12,10 +12,11 @@ class SchemaOptDispatcher:
         self.atomic_ops = [
             f for f in AtomicSchemaWeights if AtomicSchemaWeights[f] > 0
         ]
-        self.compound_ops = [
-            f for f in CompoundOpWeights if CompoundOpWeights[f] > 0
-        ]
-        self.all_ops = self.atomic_ops + self.compound_ops
+        # self.compound_ops = [
+        #     f for f in CompoundOpWeights if CompoundOpWeights[f] > 0
+        # ]
+        # self.all_ops = self.atomic_ops + self.compound_ops
+        self.all_ops = self.atomic_ops
 
     def get_all_ops(self):
         return self.all_ops
