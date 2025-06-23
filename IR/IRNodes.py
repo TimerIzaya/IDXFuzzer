@@ -47,7 +47,7 @@ class Variable(IRNode):
 
 
 class Literal(IRNode):
-    def __init__(self, value: Union[str, int, float, bool, dict, None]):
+    def __init__(self, value: str):
         self.value = value
 
     def to_dict(self):

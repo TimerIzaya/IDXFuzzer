@@ -2,6 +2,7 @@ import random
 import re
 
 from IR.layers.Globals import Global
+from IR.layers.db_transaction.db_curd.IDBDataGenerator import IDBDataGenerator
 from IR.type.IDBType import IDBType
 from IR.type.IDBTypeTool import IDBTypeTool
 from schema.IDBSchemaParser import IDBSchemaParser
@@ -75,7 +76,7 @@ def createObjectStore():
     # 参数存在上下文信息，手动构造入参
     args = []
     osName = Global.smctx.newObjectStoreName()
-    keyPath = IRParamValueGenerator.generateKeyPath()
+    keyPath = IDBDataGenerator.generateKeyPath()
     autoIncrement = IRParamValueGenerator.generateCreateObjectStoreAutoIncrement()
     option = {}
     if random.random() > 0.5:
@@ -175,6 +176,40 @@ def deleteIndex():
     return [CallExpression(osVar, METHOD_NAME, args=[Literal(idxName)])]
 
 
+def add():
+    # 随机找一个os，往里add数据
+    METHOD_NAME = "add"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+
+    if osName is None:
+        raise RuntimeError("No Index name available for add")
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+    osKeyPath = Global.smctx.currentDB.oss[osName].keypath
+    args = []
+    if osKeyPath is None:
+        # keyless模式，不用管value是否符合keypath规范
+        value = IDBDataGenerator.generateObject()
+        args.append(Literal(value))
+        # arg1 create的时候没有指定keypath，那需要加key
+        key = IDBDataGenerator.generateString()
+        args.append(Literal(key))
+        Global.smctx.registerKey(osName, key)
+    else:
+        # 正常模式，需要生成符合keypath的数据
+        [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
+        args.append(Literal(value))
+        Global.smctx.registerKey(osName, key)
+    return [CallExpression(osVar, METHOD_NAME, args=args)]
+
+
+
+
 # 每个操作函数的独立权重配置
 AtomicSchemaWeights = {
     # get_store_name: 1,
@@ -189,6 +224,7 @@ AtomicSchemaWeights = {
     deleteObjectStore: 5,
     createIndex: 10,
     deleteIndex: 2,
+    add: 5,
 }
 
 # 自动构造列表

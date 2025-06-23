@@ -67,6 +67,9 @@ class IDBObjectStoreInfo:
 
     indexes: dict[str, IDBIndexInfo] = field(default_factory=dict)
 
+    #todo 我们只存key，value暂时也先放在IR中，后续要把数据生成和IR分离，不然IR要塞多少垃圾
+    keys: list[str] = field(default_factory=list)
+
 
 @dataclass
 class IDBDataBaseInfo:
@@ -129,13 +132,21 @@ class IDBSchemaContext:
             raise RuntimeError("No active database")
         self.ctx[self.currentDB.name].txn = IDBTransactionInfo(os)
 
-
     # 退出该db的onversionchange作用域
     def unRegisterTxn(self):
         if self.currentDB is None:
             raise RuntimeError("No active database")
         self.ctx[self.currentDB.name].txn = None
 
+    def registerKey(self, storeName: str, key: str):
+        if storeName not in self.ctx[self.currentDB.name].oss:
+            raise RuntimeError("No active object store context")
+        self.ctx[self.currentDB.name].oss[storeName].keys.append(key)
+
+    def unregisterKey(self, storeName: str, key: str):
+        if storeName not in self.ctx[self.currentDB.name].oss:
+            raise RuntimeError("No active object store context")
+        self.ctx[self.currentDB.name].oss[storeName].keys.remove(key)
 
     # 进入该db的onversionchange作用域
     def markCurrentDB(self, dbName: str):

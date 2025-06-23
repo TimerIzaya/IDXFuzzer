@@ -59,6 +59,8 @@ class IRToJSLifter:
 
         elif isinstance(node, Literal):
             val = node.value
+            if val is None:
+                return "null"
             if isinstance(val, str):
                 return f"'{val}'"
             if isinstance(val, bool):
