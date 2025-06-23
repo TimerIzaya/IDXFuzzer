@@ -170,7 +170,7 @@ def deleteIndex():
     # 同步更新schemaCtx
     Global.smctx.unregisterIndex(osName, idxName)
 
-    # todo  找到os变量，用于callMethod  正常来说一个literal对应一个var ，但是我的所有var的取名都是根据literal来的，所以可以trick一下，后面记得要改
+    #todo  找到os变量，用于callMethod  正常来说一个literal对应一个var ，但是我的所有var的取名都是根据literal来的，所以可以trick一下，后面记得要改
     return [CallExpression(Variable(osName, IDBType.IDBObjectStore), METHOD_NAME, args=[Literal(idxName)])]
 
 

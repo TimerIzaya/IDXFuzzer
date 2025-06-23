@@ -104,7 +104,6 @@ class IDBSchemaContext:
     def registerObjectStore(self, storeName: str):
         if storeName in self.currentDB.oss:
             raise RuntimeError(f"ObjectStore {storeName} is already registered")
-
         self.ctx[self.currentDB.name].oss[storeName] = IDBObjectStoreInfo(storeName)
 
     def unregisterObjectStore(self, storeName: str):
@@ -154,7 +153,6 @@ class IDBSchemaContext:
             for os in self.ctx[db].oss.keys():
                 osnames.append(os)
 
-        print(osnames)
         i = 0
         while True:
             name = f"store_{i}"

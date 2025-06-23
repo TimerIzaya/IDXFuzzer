@@ -32,6 +32,7 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
         txnIdent = Global.irctx.get_identifier_by_type(IDBType. IDBTransaction)
         tmpOSName = Global.smctx.newTxnTmpOSName(txnName=txnIdent.raw)
         for osName in oss:
+            # call一个tmp os
             txnGetTmpOsCall = CallExpression(
                 callee_object=txnIdent,
                 callee_method="objectStore",
@@ -40,6 +41,7 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
             )
             body.append(txnGetTmpOsCall)
 
+            # 针对这个tmpos 生成pipeflow
             for _ in range(IDBObjectStore_DataOps_Layer.pipeflow_count):
                 pipeEnds = IDBObjectStore_DataOps_Layer.pipeGraph.generate_weighted_path(
                     max_length=IDBObjectStore_DataOps_Layer.pipeflow_length,
