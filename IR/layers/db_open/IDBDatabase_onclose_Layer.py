@@ -11,7 +11,7 @@ class IDBDatabase_onclose_Layer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer:
-        db_id = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase)
+        db_id = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
 
         body = [
             ConsoleLog(Literal("The database connection is unexpectedly closed"))

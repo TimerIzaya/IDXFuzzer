@@ -11,7 +11,7 @@ class IDBTransaction_onabort_Layer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer:
-        txn = Global.irctx.get_identifier_by_type(IDBType.IDBTransaction)
+        txn = Global.irctx.getIdentifierByType(IDBType.IDBTransaction)
         handler = AssignmentExpression(
             left=MemberExpression(txn, "onabort"),
             right=FunctionExpression(

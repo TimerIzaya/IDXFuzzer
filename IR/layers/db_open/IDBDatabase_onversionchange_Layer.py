@@ -11,7 +11,7 @@ class IDBDatabase_onversionchange_Layer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer:
-        db_id = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase)
+        db_id = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
 
         # 构造事件处理函数的 body
         body = [

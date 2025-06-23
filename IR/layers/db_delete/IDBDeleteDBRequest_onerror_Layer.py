@@ -20,7 +20,7 @@ class IDBDeleteDBRequest_onerror_Layer(LayerBuilder):
 
         if randomFuzzing:
             handler = AssignmentExpression(
-                left=MemberExpression(Global.irctx.get_identifier_by_type(IDBType.IDBOpenDBRequest), "onerror"),
+                left=MemberExpression(Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest), "onerror"),
                 right=FunctionExpression([Identifier("event")], body)
             )
         else:

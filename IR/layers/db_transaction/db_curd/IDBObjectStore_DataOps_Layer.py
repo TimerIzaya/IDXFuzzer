@@ -29,7 +29,7 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
 
         # 事务预设的os中选择k个os进行curd
         oss = Global.smctx.pickRandomObjectStoresFromTxn()
-        txnIdent = Global.irctx.get_identifier_by_type(IDBType. IDBTransaction)
+        txnIdent = Global.irctx.getIdentifierByType(IDBType.IDBTransaction)
         tmpOSName = Global.smctx.newTxnTmpOSName(txnName=txnIdent.raw)
         for osName in oss:
             # call一个tmp os

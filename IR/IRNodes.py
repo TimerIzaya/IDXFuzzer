@@ -26,22 +26,24 @@ class Identifier(IRNode):
 显示声明变量，例如var x = "123"，那么一个variable一定和一个identifier
 隐式声明变量，例如funcx(KeyRanger.bound(1))，variable就不需要identifier
 但是隐式声明是对资源的一种浪费，我们希望声明的变量可以在上下文随意调用，所以这里我选择把identifier和variable绑定
-我们IR中变量的name，其实就是它的identifier
+我们IR中变量的name，其实就是它的identifier，不想改了
+
+varLiteral是针对createObjectStore这类api，参数里的osName和recVar的ident需要绑定
+比如我删除一个index，那么需要知道它osName，和osIdent，osName用于更新schemaCtx，osIdent用于call
 '''
 class Variable(IRNode):
     def to_dict(self):
         return {
             "type": "Variable",
             "name": self.name.to_dict(),
-            "varType": self.vartype.value  # ✅ 自动提取枚举值
+            "varType": self.varType.value,
+            "varLiteral": self.varLiteral
         }
 
-    def __init__(self, name: str, vartype: IDBType):
+    def __init__(self, name: str, varType: IDBType, varLiteral: str = None):
         self.name = Identifier(name)
-        self.vartype = vartype
-
-    # def __repr__(self):
-    #     return f"<Variable {self.name}: {self.vartype}>"
+        self.varType = varType
+        self.varLiteral = varLiteral
 
 
 class Literal(IRNode):
@@ -210,7 +212,8 @@ class IRNodeFactory:
         elif t == "Variable":
             return Variable(
                 name=d["name"]["raw"],
-                vartype=IDBType(d["varType"])
+                varType=IDBType(d["varType"]),
+                varLiteral=d["varLiteral"]
             )
         else:
             raise ValueError(f"Unknown IR node type: {t}")

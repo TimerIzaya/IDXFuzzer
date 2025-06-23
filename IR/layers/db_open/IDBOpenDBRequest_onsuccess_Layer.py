@@ -26,34 +26,31 @@ class IDBOpenDBRequest_onsuccess_Layer(LayerBuilder):
 
         children = []
 
-        # 获取当前 openRequest
-        open_request_id = Global.irctx.get_identifier_by_type(IDBType.IDBOpenDBRequest)
+        openRequestIdent = Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest)
+        dbIdent = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
 
         # db = request.result
-        assign_db = AssignmentExpression(
-            left=Identifier("db"),
-            right=MemberExpression(open_request_id, "result")
+        assignDb = AssignmentExpression(
+            left=dbIdent,
+            right=MemberExpression(openRequestIdent, "result")
         )
-        body.append(assign_db)
-
-        # 注册 db 变量
-        Global.irctx.register_variable(Variable("db", IDBType.IDBDatabase))
+        body.append(assignDb)
 
         # 构建 transaction 层
-        txn_layer = IDBDatabase_Transaction_Layer.build()
-        children.append(txn_layer)
+        # txn_layer = IDBDatabase_Transaction_Layer.build()
+        # children.append(txn_layer)
 
         # 构建 db.onversionchange 层
-        version_layer = IDBDatabase_onversionchange_Layer.build()
-        children.append(version_layer)
+        # version_layer = IDBDatabase_onversionchange_Layer.build()
+        # children.append(version_layer)
 
         # 构建 db.onclose 层
-        close_layer = IDBDatabase_onclose_Layer.build()
-        children.append(close_layer)
+        # close_layer = IDBDatabase_onclose_Layer.build()
+        # children.append(close_layer)
 
         # 构造 request.onsuccess = function(event) { ... }
         handler = AssignmentExpression(
-            left=MemberExpression(open_request_id, "onsuccess"),
+            left=MemberExpression(openRequestIdent, "onsuccess"),
             right=FunctionExpression([Identifier("event")], body)
         )
 

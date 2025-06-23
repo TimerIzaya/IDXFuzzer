@@ -28,6 +28,7 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
         dbName = IRParamValueGenerator.generateValueByParamInfo(open_params[0])  # string
         versionNumber = IRParamValueGenerator.generateValueByParamInfo(open_params[1])  # number?
 
+        #注意 这里只是尝试open一个叫dbName的db, 具体赋值的变量要放在onsuccess层里去注册
         Global.smctx.registerDatabase(dbName, versionNumber)
         Global.smctx.markCurrentDB(dbName)
 
@@ -42,9 +43,9 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
         )
 
         # 注册 indexedDB 对象
-        Global.irctx.register_variable(Variable("FATHER", IDBType.IDBFactory))
+        Global.irctx.registerVariable(Variable("FATHER", IDBType.IDBFactory))
 
-        Global.irctx.register_variable(Variable("openRequest", IDBType.IDBOpenDBRequest))
+        Global.irctx.registerVariable(Variable("openRequest", IDBType.IDBOpenDBRequest))
 
         # 注册子事件层
         upgrade_layer = IDBOpenDBRequest_onupgradeneeded_Layer.build()

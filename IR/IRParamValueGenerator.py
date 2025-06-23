@@ -57,7 +57,7 @@ class IRParamValueGenerator:
             # todo 待定
             return "store_default"
         if idbType == IDBType.IDBRequest.value:
-            return Global.irctx.get_random_identifier(IDBType.IDBRequest.value) or Literal("<request>")
+            return Global.irctx.getRandomIdentifier(IDBType.IDBRequest.value) or Literal("<request>")
 
         return f"{idbType.name if isinstance(idbType, IDBType) else idbType}_instance"
 
@@ -96,7 +96,7 @@ class IRParamValueGenerator:
 
         # 优先使用当前上下文中已存在的变量（重用）
         typename = typeInfo.typename
-        candidates = Global.irctx.get_visible_variables(typename)
+        candidates = Global.irctx.getVisibleVariables(typename)
         if candidates:
             return random.choice(candidates).identifier  # 返回 Identifier
 

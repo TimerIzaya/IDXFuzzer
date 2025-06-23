@@ -17,7 +17,7 @@ class IDBOpenDBRequest_onblocked_Layer(LayerBuilder):
         ]
 
         # request.onblocked = function(event) { ... }
-        open_request_id = Global.irctx.get_identifier_by_type(IDBType.IDBOpenDBRequest)
+        open_request_id = Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest)
         handler = AssignmentExpression(
             left=MemberExpression(open_request_id, "onblocked"),
             right=FunctionExpression([Identifier("event")], body)

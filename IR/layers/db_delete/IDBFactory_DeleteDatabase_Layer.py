@@ -25,7 +25,7 @@ class IDBFactory_DeleteDatabase_Layer(LayerBuilder):
             args=args,
             result_name="deleteRequest"
         )
-        Global.irctx.register_variable(Variable("deleteRequest", IDBType.IDBOpenDBRequest))
+        Global.irctx.registerVariable(Variable("deleteRequest", IDBType.IDBOpenDBRequest))
 
         # 构造子事件层
         blocked_layer = IDBDeleteDBRequest_onblocked_Layer.build()

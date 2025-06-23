@@ -68,7 +68,7 @@ from IR.IRParamValueGenerator import IRParamValueGenerator
 
 def createObjectStore():
     # 找到db的标识符
-    dbIdt = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase)
+    dbIdt = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
     if dbIdt is None:
         raise RuntimeError("No IDBDatabase identifier available for create_object_store")
 
@@ -92,7 +92,8 @@ def createObjectStore():
     recVarName = Global.smctx.newObjectStoreName()
     recVar = Variable(recVarName, IDBType.IDBObjectStore)
     Global.smctx.registerObjectStore(recVarName)
-    Global.irctx.register_variable(recVar)
+    Global.irctx.registerVariable(recVar)
+    Global.irctx.registerVariableLiteral(recVar, osName)
     nodes.append(VariableDeclaration(recVar.name))
     nodes.append(AssignmentExpression(recVar, CallExpression(dbIdt, "createObjectStore", args=args)))
     return nodes
@@ -107,14 +108,14 @@ def deleteObjectStore():
 
     Global.smctx.unregisterObjectStore(osName)
 
-    dbIdt = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase)
+    dbIdt = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
     return [CallExpression(dbIdt, METHOD_NAME, args=[Literal(osName)])]
 
 
 def createIndex():
     METHOD_NAME = "createIndex"
     # 找到store的标识符
-    osIdent = Global.irctx.get_identifier_by_type(IDBType.IDBObjectStore)
+    osIdent = Global.irctx.getIdentifierByType(IDBType.IDBObjectStore)
     if osIdent is None:
         raise RuntimeError("No IDBObjectStore identifier available for create_object_store")
 
@@ -149,7 +150,8 @@ def createIndex():
 
     nodes = []
     recVar = Variable(indexName, IDBType.IDBIndex)
-    Global.irctx.register_variable(recVar)
+    Global.irctx.registerVariable(recVar)
+    Global.irctx.registerVariableLiteral(recVar, indexName)
     nodes.append(VariableDeclaration(recVar.name))
     nodes.append(AssignmentExpression(recVar, CallExpression(osIdent, METHOD_NAME, args=args)))
 
@@ -158,20 +160,19 @@ def createIndex():
 
 def deleteIndex():
     METHOD_NAME = "deleteIndex"
-    # 找一个os name
-    osName = Global.smctx.pickRandomObjectStore()
-    if osName is None:
-        raise RuntimeError("No OS name available for deleteIndex")
 
-    # 获得该os的literal name
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+
     idxName = Global.smctx.pickRandomObjectStoreIndex(osName)
     if idxName is None:
         raise RuntimeError("No Index name available for deleteIndex")
+
     # 同步更新schemaCtx
     Global.smctx.unregisterIndex(osName, idxName)
-
-    #todo  找到os变量，用于callMethod  正常来说一个literal对应一个var ，但是我的所有var的取名都是根据literal来的，所以可以trick一下，后面记得要改
-    return [CallExpression(Variable(osName, IDBType.IDBObjectStore), METHOD_NAME, args=[Literal(idxName)])]
+    return [CallExpression(osVar, METHOD_NAME, args=[Literal(idxName)])]
 
 
 # 每个操作函数的独立权重配置

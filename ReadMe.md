@@ -1,8 +1,154 @@
 # TODO
 
-1. 
+1. schema的原子操作读，schema的所有复合操作
+2. dataops层的所有操作
 
-# IRSchema设计
+
+
+# Onupgrade层
+
+超事务层，里面可以使用所有的os，业务层面上来看只是初始化数据库，但是api层面上来看是最大范围的api调用
+
+# Dataopts层
+
+本质上是txn和onupgrade的公用层
+
+## 通用的工具子类
+
+### KeyRange
+
+四种用法看文档，这里涉及到一个跨类型排序，不用太在意
+
+keyrange需要这个os里所有key的上下文，然后随机选上下界
+
+### Query
+
+A key or [`IDBKeyRange`](https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange) to be queried. If nothing is passed, this will default to a key range that selects all the records in this object store.
+
+## OS api集合
+
+### add
+
+```
+add(value)
+add(value, key)
+```
+
+HRule：是否要加key取决于createObjectStore的option是否有keypath
+
+### clear
+
+直接冲
+
+### count
+
+```
+count()
+count(query)
+```
+
+三种用法如下所示：
+
+```js
+const request = indexedDB.open("CountDemoDB", 1);
+
+request.onupgradeneeded = function(event) {
+  const db = event.target.result;
+  const store = db.createObjectStore("users", { keyPath: "id" });
+
+  store.add({ id: 1, name: "Alice" });
+  store.add({ id: 2, name: "Bob" });
+  store.add({ id: 3, name: "Charlie" });
+  store.add({ id: 4, name: "David" });
+};
+
+request.onsuccess = function(event) {
+  const db = event.target.result;
+  const tx = db.transaction("users", "readonly");
+  const store = tx.objectStore("users");
+
+  // 1. 不传 query，统计所有记录数量
+  store.count().onsuccess = function(event) {
+    console.log("1️⃣ 所有记录数量：", event.target.result); // → 4
+  };
+
+  // 2. 传入主键值，统计该主键是否存在
+  store.count(2).onsuccess = function(event) {
+    console.log("2️⃣ 主键为2的记录数量：", event.target.result); // → 1
+  };
+
+  // 3. 使用 IDBKeyRange 统计范围内的记录数量
+  const range = IDBKeyRange.bound(2, 4); // 包含 2, 3, 4
+  store.count(range).onsuccess = function(event) {
+    console.log("3️⃣ 主键在 [2,4] 范围内的记录数量：", event.target.result); // → 3
+  };
+
+  tx.oncomplete = () => db.close();
+};
+
+request.onerror = function(event) {
+  console.error("数据库打开失败：", event.target.error);
+};
+```
+
+### createIndex
+
+done
+
+### delete
+
+db.deleteObjectStore只能作用在schema层，这个其实也是要实现一下的
+
+### deleteIndex
+
+done
+
+### get
+
+需要一个key的上下文
+
+### getAll
+
+```
+getAll()
+getAll(query)
+getAll(query, count)
+```
+
+和count类似
+
+### getAllKeys
+
+上文同理
+
+### getKey
+
+用来判断这个key还是否存在，或者keyrange内第一个存在的key
+
+### index
+
+直接冲
+
+### opencurosr
+
+todo
+
+### openkeycursor
+
+todo
+
+### put
+
+```
+put(item)
+put(item, key)
+```
+
+todo
+
+
+
+## IRSchema设计
 
 # IRLayer设计
 
@@ -32,7 +178,13 @@
 
   一个事务对应多个os，在case实现中，也没必要交错写，current_txn == current_oss，db.transaction为开头，db.commit为结尾
 
-# 一个literal 在我们这里 只对应一个var
+
+
+## IDBIRContext
+
+一个literal 在我们这里 只对应一个var， 每个作用域都有自己的var，所以整体是一个栈结构
+
+
 
 
 

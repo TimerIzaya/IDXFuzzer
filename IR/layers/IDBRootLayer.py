@@ -14,20 +14,21 @@ class IDBRootLayer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer:
-        Global.irctx.enter_layer(IDBRootLayer)
+        Global.irctx.enterLayer(IDBRootLayer)
         # 全局声明 db 变量
-        Global.irctx.register_variable(Variable("db", IDBType.IDBDatabase))
-        db_decl = VariableDeclaration(name=Identifier("db"), kind="let")
+        dbLiteral = "db"
+        # 这里还没赋值 不注册 只注册一个
+        Global.irctx.registerVariable(Variable(dbLiteral, IDBType.IDBDatabase))
+        dbDec = VariableDeclaration(name=Identifier(dbLiteral), kind="let")
 
         # 构建子层：open / delete
         open_layer = IDBFactory_OpenDatabase_Layer.build()
         delete_layer = IDBFactory_DeleteDatabase_Layer.build()
 
-
-        Global.irctx.exit_layer()
+        Global.irctx.exitLayer()
         return Layer(
             name=IDBRootLayer.name,
-            ir_nodes=[db_decl],
+            ir_nodes=[dbDec],
             children=[open_layer, delete_layer],
             layer_type=IDBRootLayer.layer_type
         )

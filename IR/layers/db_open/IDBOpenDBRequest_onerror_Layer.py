@@ -16,7 +16,7 @@ class IDBOpenDBRequest_onerror_Layer(LayerBuilder):
             CallExpression(Identifier("console"), "log", [Literal("open db onerror triggered")]),
         ]
         # request.onerror = function(event) { ... }
-        open_request_id = Global.irctx.get_identifier_by_type(IDBType.IDBOpenDBRequest)
+        open_request_id = Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest)
         handler = AssignmentExpression(
             left=MemberExpression(open_request_id, "onerror"),
             right=FunctionExpression([Identifier("event")], body)

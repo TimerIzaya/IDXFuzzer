@@ -16,18 +16,19 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer:
-        Global.irctx.enter_layer(IDBOpenDBRequest_onupgradeneeded_Layer)
+        Global.irctx.enterLayer(IDBOpenDBRequest_onupgradeneeded_Layer)
 
+        # 找一个db literal，目前全局只有一个
         dbName = Global.smctx.pickRandomDBName()
         body = [
             ConsoleLog(Literal("db onupgraded trigered"))
         ]
 
-        # db = event.target.result
-        # 找一个db类型的变量用来赋值
-        dbIdent = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase)
+        # 找一个db类型的变量用来赋值，目前全局只有一个
+        # 这个var里的literal需要更新一下
+        dbVar = Global.irctx.getVariableByType(IDBType.IDBDatabase)
         assign_db = AssignmentExpression(
-            left=dbIdent,
+            left=dbVar.name,
             right=MemberExpression(
                 objectExpr=MemberExpression(Identifier("event"), "target"),
                 property_name="result"
@@ -35,17 +36,17 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
         )
         body.append(assign_db)
 
-        # 注册 db 到上下文
-        Global.irctx.register_variable(Variable(dbName, IDBType.IDBDatabase))
+        # 去更新之前的IDBDatabase变量 它还没有设置literal 此时db变量才正式诞生
+        Global.irctx.registerVariableLiteral(dbVar, dbName)
 
         # 构造事件处理器
-        open_request_id = Global.irctx.get_identifier_by_type(IDBType.IDBOpenDBRequest)
+        open_request_id = Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest)
         handler = AssignmentExpression(
             left=MemberExpression(open_request_id, "onupgradeneeded"),
             right=FunctionExpression([Identifier("event")], body)
         )
 
-        Global.irctx.exit_layer()
+        Global.irctx.exitLayer()
 
         children = list(filter(None, [
             IDBDatabase_SchemaOps_Layer.build(),

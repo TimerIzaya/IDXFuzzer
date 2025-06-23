@@ -42,7 +42,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
         Global.smctx.currentDB.txn.durability = durability
 
 
-        dbIdent = Global.irctx.get_identifier_by_type(IDBType.IDBDatabase)
+        dbIdent = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
         txnName = Global.smctx.newTxnName()
         # 事务启动
         # 存在需要缓存的上下文信息 不走schema取 手动构造
@@ -53,7 +53,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
             result_name=txnName
         )
 
-        Global.irctx.register_variable(Variable(txnName, IDBType.IDBTransaction))
+        Global.irctx.registerVariable(Variable(txnName, IDBType.IDBTransaction))
 
         children = list(filter(None, [
             IDBObjectStore_DataOps_Layer.build(),

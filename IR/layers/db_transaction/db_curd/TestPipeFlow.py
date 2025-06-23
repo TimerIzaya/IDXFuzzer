@@ -8,7 +8,7 @@ from IR.layers.db_transaction.db_curd.PipeGraph import PipeGraph
 
 if __name__ == '__main__':
     Global.reset()
-    Global.irctx.enter_layer(Layer("test"))
+    Global.irctx.enterLayer(Layer("test"))
     graph = PipeGraph()
     pipes = graph.generate_weighted_path(32, transaction_mode="readwrite")
     flow = PipeFlow(store_id=Identifier("storexxx"), key=1, pipe_ends=pipes)
@@ -17,5 +17,5 @@ if __name__ == '__main__':
         print(json.dumps(i.to_dict(), indent=2))
         print("------------")
 
-    Global.irctx.exit_layer()
+    Global.irctx.exitLayer()
 

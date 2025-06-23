@@ -19,7 +19,7 @@ class IDBDeleteDBRequest_onblocked_Layer(LayerBuilder):
 
         if randomFuzzing:
             handler = AssignmentExpression(
-                left=MemberExpression(Global.irctx.get_identifier_by_type(IDBType.IDBOpenDBRequest), "onblocked"),
+                left=MemberExpression(Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest), "onblocked"),
                 right=FunctionExpression([Identifier("event")], body)
             )
         else:

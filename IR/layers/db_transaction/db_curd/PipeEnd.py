@@ -22,6 +22,7 @@ class PipeEnd:
     def _infer_is_write(self):
         return self.name in {"put", "add", "delete", "clear"}
 
+
     def generate_il(self, store: Identifier) -> List[IRNode]:
         """
         基于 MethodInfo + IDBType + IRContext + IDBSchemaContext 生成 CallExpression。
@@ -29,7 +30,7 @@ class PipeEnd:
         """
         METHOD_NAME = self.method.name
         args = IRParamValueGenerator.generateMethodArgs(method=self.method)
-        recVarName = Global.irctx.generate_unique_name(f"ret_{self.name}")
+        recVarName = Global.irctx.generateUniqueName(f"ret_{self.name}")
 
         nodes = []
 
@@ -41,7 +42,7 @@ class PipeEnd:
             #如果有返回值 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
             recVar = Variable(recVarName, IDBTypeTool.extractIDBTypeFromMethodReturns(self.method))
             Global.smctx.registerIndex(store.raw, recVarName)
-            Global.irctx.register_variable(recVar)
+            Global.irctx.registerVariable(recVar)
             nodes.append(VariableDeclaration(recVar.name))
             nodes.append(
                 AssignmentExpression(recVar, CallExpression(store, METHOD_NAME, args=args))
