@@ -203,7 +203,16 @@ def add():
         [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
         args.append(Literal(value))
         Global.smctx.registerKey(osName, key)
-    return [CallExpression(osVar, METHOD_NAME, args=args)]
+
+
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    addMeName = Global.irctx.newAddMeName()
+    recVar = Variable(addMeName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    return []
 
 def clear():
     METHOD_NAME = "clear"
@@ -236,25 +245,198 @@ def count():
 
     return [CallExpression(osVar, METHOD_NAME, args=args)]
 
+def delete():
+    METHOD_NAME = "delete"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    args = []
+    # 要么选一个key，要么选keyRange，可以删
+    if random.random() > 0.5:
+        keyRange = IDBDataGenerator.generateKeyRange(osName)
+        args.append(Literal(keyRange))
+    else:
+        key = Global.smctx.pickRandomKey(osName)
+        args.append(Literal(key))
+
+    return [CallExpression(osVar, METHOD_NAME, args=args)]
+
+def get():
+    METHOD_NAME = "get"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    args = []
+    # 要么选一个key，要么选keyRange，可以删
+    if random.random() > 0.5:
+        keyRange = IDBDataGenerator.generateKeyRange(osName)
+        args.append(Literal(keyRange))
+    else:
+        key = Global.smctx.pickRandomKey(osName)
+        args.append(Literal(key))
+
+    return [CallExpression(osVar, METHOD_NAME, args=args)]
+
+def getAll():
+    METHOD_NAME = "getAll"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    args = []
+    r = random.random()
+    if r < 0.5:
+        # 50%选query
+        if random.random() < 0.5:
+            keyRange = IDBDataGenerator.generateKeyRange(osName)
+            args.append(Literal(keyRange))
+        else:
+            key = Global.smctx.pickRandomKey(osName)
+            args.append(Literal(key))
+
+        # 25%概率加入cnt
+        if random.random() < 0.5:
+            args.append(Literal(random.randint(0, 4294967295)))
+
+    return [CallExpression(osVar, METHOD_NAME, args=args)]
+
+def getAllKeys():
+    METHOD_NAME = "getAllKeys"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    args = []
+    r = random.random()
+    if r < 0.5:
+        # 50%选query
+        if random.random() < 0.5:
+            keyRange = IDBDataGenerator.generateKeyRange(osName)
+            args.append(Literal(keyRange))
+        else:
+            key = Global.smctx.pickRandomKey(osName)
+            args.append(Literal(key))
+
+        # 25%概率加入cnt
+        if random.random() < 0.5:
+            args.append(Literal(random.randint(0, 4294967295)))
+
+    return [CallExpression(osVar, METHOD_NAME, args=args)]
+
+
+def getKey():
+    METHOD_NAME = "getKey"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    args = []
+    # 50%选query
+    if random.random() < 0.5:
+        keyRange = IDBDataGenerator.generateKeyRange(osName)
+        args.append(Literal(keyRange))
+    else:
+        key = Global.smctx.pickRandomKey(osName)
+        args.append(Literal(key))
+
+    return [CallExpression(osVar, METHOD_NAME, args=args)]
+
+def index():
+    METHOD_NAME = "index"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    # 随便找index
+    indexName = Global.smctx.pickRandomObjectStoreIndex(osName)
+
+    # 和createIndex一样，属于三体变量，需要注册, 后面可能要获取全文中的index类型变量
+    nodes = []
+    varName = Global.irctx.newIndexName()
+    recVar = Variable(varName, IDBType.IDBIndex)
+    Global.irctx.registerVariable(recVar)
+    Global.irctx.registerVariableLiteral(recVar, indexName)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=[Literal(indexName)])))
+    return nodes
+
+def put():
+    # 随机找一个os，往里add数据
+    METHOD_NAME = "put"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    osKeyPath = Global.smctx.currentDB.oss[osName].keypath
+    args = []
+    if osKeyPath is None:
+        # keyless模式，不用管value是否符合keypath规范
+        value = IDBDataGenerator.generateObject()
+        args.append(Literal(value))
+        # arg1 create的时候没有指定keypath，那需要加key
+        key = IDBDataGenerator.generateString()
+        args.append(Literal(key))
+        Global.smctx.registerKey(osName, key)
+    else:
+        # 正常模式，需要生成符合keypath的数据
+        [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
+        args.append(Literal(value))
+        Global.smctx.registerKey(osName, key)
+    return [CallExpression(osVar, METHOD_NAME, args=args)]
 
 
 # 每个操作函数的独立权重配置
 AtomicSchemaWeights = {
-    # get_store_name: 1,
-    # get_store_keypath: 1,
-    # get_store_autoincrement: 1,
-    # get_store_index_names: 1,
-    # get_index_name: 1,
-    # get_index_keypath: 1,
-    # get_index_unique: 1,
-    # get_index_multiEntry: 1,
     createObjectStore: 5,
     deleteObjectStore: 5,
     createIndex: 10,
     deleteIndex: 2,
     add: 5,
     clear: 5,
-    count: 5
+    count: 5,
+    delete: 5,
+    get: 5,
+    getAll: 5,
+    getAllKeys: 5,
+    index: 5,
+    put: 5,
 }
 
 # 自动构造列表

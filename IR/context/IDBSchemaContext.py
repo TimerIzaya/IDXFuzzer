@@ -296,6 +296,16 @@ class IDBSchemaContext:
             raise RuntimeError("No index available in current database context")
         return random.choice(indexes)
 
+    def pickRandomKey(self, osName: str) -> str:
+        if self.currentDB is None:
+            raise RuntimeError("No active database context")
+        if len(self.ctx[self.currentDB.name].oss) is None:
+            raise RuntimeError("No active object store context")
+        keys = self.ctx[self.currentDB.name].oss[osName].keys
+        if len(keys) == 0:
+            raise RuntimeError("No active keys context")
+        return random.choice(keys)
+
     def getAllIndexes(self) -> List[str]:
         ret = []
         for os in  self.ctx[self.currentDB.name].oss.values():

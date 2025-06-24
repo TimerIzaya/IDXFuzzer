@@ -15,9 +15,30 @@ class LayerPool:
 
 class IRContext:
     def __init__(self):
-        #作用域栈
         self.layerStack: List[LayerPool] = []
-        self.unique_counter = 0
+        self.uniqueCounters: Dict[str, int] = {
+            "index": 0,
+            "objectStore": 0,
+            "database": 0,
+            "addMe":0,
+        }
+
+    def generateUniqueName(self, base: str) -> str:
+        count = self.uniqueCounters.get(base, 0)
+        self.uniqueCounters[base] = count + 1
+        return f"{base}_{count}"
+
+    def newIndexName(self) -> str:
+        return self.generateUniqueName("index")
+
+    def newObjectStoreName(self) -> str:
+        return self.generateUniqueName("objectStore")
+
+    def newDatabaseName(self) -> str:
+        return self.generateUniqueName("database")
+
+    def newAddMeName(self) -> str:
+        return self.generateUniqueName("addMe")
 
     def enterLayer(self, layer):
         self.layerStack.append(LayerPool(layer))
@@ -68,8 +89,3 @@ class IRContext:
             return None
         else:
             return random.choice(candidates)
-
-    def generateUniqueName(self, base: str) -> str:
-        name = f"{base}_{self.unique_counter}"
-        self.unique_counter += 1
-        return name
