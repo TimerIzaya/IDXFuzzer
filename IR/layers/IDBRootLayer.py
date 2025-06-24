@@ -1,6 +1,6 @@
 from IR.context.IRContext import IRContext, Variable
 from IR.IRNodes import VariableDeclaration, Identifier
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_open.IDBFactory_OpenDatabase_Layer import IDBFactory_OpenDatabase_Layer

@@ -1,7 +1,7 @@
 import random
 import re
 
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.layers.db_transaction.db_curd.IDBDataGenerator import IDBDataGenerator
 from IR.type.IDBType import IDBType
 from IR.type.IDBTypeTool import IDBTypeTool
@@ -185,11 +185,9 @@ def add():
     if osVar is None or osVar.varLiteral is None:
         raise RuntimeError("No OS var available for deleteIndex")
     osName = osVar.varLiteral
-
-    if osName is None:
-        raise RuntimeError("No Index name available for add")
     if osName not in Global.smctx.currentDB.oss:
         raise RuntimeError("No active object store context")
+
     osKeyPath = Global.smctx.currentDB.oss[osName].keypath
     args = []
     if osKeyPath is None:
@@ -207,6 +205,36 @@ def add():
         Global.smctx.registerKey(osName, key)
     return [CallExpression(osVar, METHOD_NAME, args=args)]
 
+def clear():
+    METHOD_NAME = "clear"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    return [CallExpression(osVar, METHOD_NAME, args=[])]
+
+def count():
+    METHOD_NAME = "count"
+
+    # 先找os变量以及它的literal
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
+        raise RuntimeError("No OS var available for deleteIndex")
+    osName = osVar.varLiteral
+    if osName not in Global.smctx.currentDB.oss:
+        raise RuntimeError("No active object store context")
+
+    args = []
+    if random.random() > 0.5:
+        keyRange = IDBDataGenerator.generateKeyRange(osName)
+        args.append(Literal(keyRange))
+
+    return [CallExpression(osVar, METHOD_NAME, args=args)]
 
 
 
@@ -225,6 +253,8 @@ AtomicSchemaWeights = {
     createIndex: 10,
     deleteIndex: 2,
     add: 5,
+    clear: 5,
+    count: 5
 }
 
 # 自动构造列表

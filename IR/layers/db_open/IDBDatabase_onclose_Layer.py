@@ -1,4 +1,4 @@
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.IRNodes import Identifier, MemberExpression, AssignmentExpression, FunctionExpression, ConsoleLog, Literal
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder

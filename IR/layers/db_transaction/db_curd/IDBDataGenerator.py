@@ -1,27 +1,102 @@
+from IR.layers.Global import Global
 import random
 import string
 import json
+import random
+import string
 
 
-class IDBDataGenerator:
-    # === Configurable Parameters ===
+class BaseGenerator:
     defaultMaxDepth = 3
     defaultMaxFields = 10
     defaultStringMinLen = 3
     defaultStringMaxLen = 12
-    anyTypeDistribution = (
-        ["object"] * 5 +
-        ["string", "number", "boolean", "null", "array"]
-    )
-    # ===============================
-
-    # === Public API ===
 
     @staticmethod
     def generate(typeName: str, key=None):
-        """Generic dispatcher for type-based generation"""
-        method = getattr(IDBDataGenerator, f"generate{typeName.capitalize()}", None)
+        """
+        Generic dispatcher based on typeName.
+        This method assumes the subclass implements generate<TypeName>().
+        """
+        method = getattr(BaseGenerator, f"generate{typeName.capitalize()}", None)
         return method(key) if method else f"<{typeName}>"
+
+    @staticmethod
+    def _randomString(minLength=None, maxLength=None):
+        minLength = minLength or BaseGenerator.defaultStringMinLen
+        maxLength = maxLength or BaseGenerator.defaultStringMaxLen
+        length = random.randint(minLength, maxLength)
+        return ''.join(random.choice(string.ascii_letters) for _ in range(length))
+
+    @staticmethod
+    def _randomFieldName(index):
+        return f"f{index}_{random.choice(string.ascii_lowercase)}"
+
+    @staticmethod
+    def _generatePrimitive():
+        return random.choice([
+            BaseGenerator._randomString(),
+            random.randint(0, 100),
+            True, False, None
+        ])
+
+    @staticmethod
+    def _to_js_literal(obj):
+        if obj is None:
+            return 'null'
+        elif obj is True:
+            return 'true'
+        elif obj is False:
+            return 'false'
+        elif isinstance(obj, str):
+            escaped = obj.replace('\\', '\\\\').replace('"', '\\"')
+            return f'"{escaped}"'
+        elif isinstance(obj, (int, float)):
+            return str(obj)
+        elif isinstance(obj, list):
+            return '[' + ','.join(BaseGenerator._to_js_literal(i) for i in obj) + ']'
+        elif isinstance(obj, dict):
+            return '{' + ','.join(
+                f'{BaseGenerator._to_js_literal(str(k))}:{BaseGenerator._to_js_literal(v)}'
+                for k, v in obj.items()) + '}'
+        else:
+            raise TypeError(f"Unsupported type: {type(obj)}")
+
+    @staticmethod
+    def _generateObject(currentDepth=0):
+        if currentDepth >= BaseGenerator.defaultMaxDepth:
+            return BaseGenerator._generatePrimitive()
+        obj = {}
+        for i in range(random.randint(1, BaseGenerator.defaultMaxFields)):
+            key = BaseGenerator._randomFieldName(i)
+            obj[key] = BaseGenerator._generateValue(currentDepth + 1)
+        return obj
+
+    @staticmethod
+    def _generateObjectWithKeyPathAndValue(parts: list[str], keyValue, currentDepth=0):
+        if currentDepth >= BaseGenerator.defaultMaxDepth:
+            return {}
+        base = BaseGenerator._generateObject(currentDepth)
+        current = base
+        for i, part in enumerate(parts):
+            if i == len(parts) - 1:
+                current[part] = keyValue
+            else:
+                if part not in current or not isinstance(current[part], dict):
+                    current[part] = {}
+                current = current[part]
+        return base
+
+    @staticmethod
+    def _generateValue(currentDepth):
+        typeName = random.choice(["string", "number", "boolean", "null", "array", "object"])
+        return BaseGenerator.generate(typeName)  # 默认从自己调，如果要扩展可重写
+
+
+class IDBDataGenerator(BaseGenerator):
+    anyTypeDistribution = (
+            ["object"] * 5 + ["string", "number", "boolean", "null", "array"]
+    )
 
     @staticmethod
     def generateString(key=None):
@@ -52,40 +127,14 @@ class IDBDataGenerator:
 
     @staticmethod
     def generateObjectAsJS(key=None):
-        """
-        Generate a JS-compatible object as a string, optionally using a given key.
-        Return (js_string, key_value)
-        """
         if key is None:
             key = IDBDataGenerator._generatePrimitive()
-        obj = IDBDataGenerator.generateObject(key=key)
+        obj = IDBDataGenerator.generateObject(key)
         js_code = IDBDataGenerator._to_js_literal(obj)
         return js_code, key
 
     @staticmethod
-    def generateAny(key=None):
-        chosen = random.choice(IDBDataGenerator.anyTypeDistribution)
-        return IDBDataGenerator.generate(chosen, key=key)
-
-    @staticmethod
-    def generateFunction(key=None):
-        return "(e) => { console.log(e); }"
-
-    @staticmethod
-    def generateKeyPath():
-        """Return either flat or nested keyPath string"""
-        if random.random() < 0.2:
-            return '.'.join(
-                str(IDBDataGenerator.generateString()) for _ in range(random.randint(1, 10))
-            )
-        return IDBDataGenerator.generateString()
-
-    @staticmethod
     def generateObjectWithKeyPath(keyPath: str):
-        """
-        Generate an object that contains the given keyPath,
-        and return (object, keyValue) directly when assigning the value.
-        """
         parts = keyPath.split(".")
         keyValue = IDBDataGenerator._generatePrimitive()
         obj = IDBDataGenerator._generateObjectWithKeyPathAndValue(parts, keyValue)
@@ -93,107 +142,48 @@ class IDBDataGenerator:
 
     @staticmethod
     def generateObjectWithKeyPathAsJS(keyPath: str):
-        """
-        Same as generateObjectWithKeyPath, but return JS code string and keyValue
-        """
         obj, keyValue = IDBDataGenerator.generateObjectWithKeyPath(keyPath)
         js_code = IDBDataGenerator._to_js_literal(obj)
         return js_code, keyValue
 
-    # === Internal Implementation ===
+    @staticmethod
+    def generateKeyPath():
+        if random.random() < 0.2:
+            return '.'.join(
+                IDBDataGenerator.generateString() for _ in range(random.randint(1, 10))
+            )
+        return IDBDataGenerator.generateString()
 
     @staticmethod
-    def _generateObject(currentDepth=0):
-        if currentDepth >= IDBDataGenerator.defaultMaxDepth:
-            return IDBDataGenerator._generatePrimitive()
-        obj = {}
-        for i in range(random.randint(1, IDBDataGenerator.defaultMaxFields)):
-            key = IDBDataGenerator._randomFieldName(i)
-            obj[key] = IDBDataGenerator._generateValue(currentDepth + 1)
-        return obj
-
-    @staticmethod
-    def _generateObjectWithKeyPathAndValue(parts: list[str], keyValue, currentDepth=0):
-        if currentDepth >= IDBDataGenerator.defaultMaxDepth:
-            return {}
-
-        base = IDBDataGenerator._generateObject(currentDepth)
-        current = base
-        for i, part in enumerate(parts):
-            if i == len(parts) - 1:
-                current[part] = keyValue
-            else:
-                if part not in current or not isinstance(current[part], dict):
-                    current[part] = {}
-                current = current[part]
-        return base
-
-    @staticmethod
-    def _generateValue(currentDepth):
-        typeName = random.choice(["string", "number", "boolean", "null", "array", "object"])
-        return IDBDataGenerator.generate(typeName)
-
-    @staticmethod
-    def _generatePrimitive():
-        return random.choice([
-            IDBDataGenerator._randomString(),
-            random.randint(0, 100),
-            True, False, None
-        ])
-
-    @staticmethod
-    def _randomString(minLength=None, maxLength=None):
-        minLength = minLength or IDBDataGenerator.defaultStringMinLen
-        maxLength = maxLength or IDBDataGenerator.defaultStringMaxLen
-        length = random.randint(minLength, maxLength)
-        return ''.join(random.choice(string.ascii_letters) for _ in range(length))
-
-    @staticmethod
-    def _randomFieldName(index):
-        return f"f{index}_{random.choice(string.ascii_lowercase)}"
-
-    @staticmethod
-    def _to_js_literal(obj):
-        if obj is None:
-            return 'null'
-        elif obj is True:
-            return 'true'
-        elif obj is False:
-            return 'false'
-        elif isinstance(obj, str):
-            # 转义双引号和反斜杠
-            escaped = obj.replace('\\', '\\\\').replace('"', '\\"')
-            return f'"{escaped}"'
-        elif isinstance(obj, (int, float)):
-            return str(obj)
-        elif isinstance(obj, list):
-            return '[' + ','.join(IDBDataGenerator._to_js_literal(i) for i in obj) + ']'
-        elif isinstance(obj, dict):
-            parts = []
-            for k, v in obj.items():
-                # JS 中 key 必须是字符串，带引号
-                key_str = IDBDataGenerator._to_js_literal(str(k))
-                val_str = IDBDataGenerator._to_js_literal(v)
-                parts.append(f'{key_str}:{val_str}')
-            return '{' + ','.join(parts) + '}'
+    def generateKeyRange(osName: str) -> str:
+        if osName not in Global.smctx.currentDB.oss:
+            raise RuntimeError("No active object store context")
+        oss = Global.smctx.currentDB.oss
+        if len(oss[osName].keys) == 0:
+            raise RuntimeError("No active keys context")
+        os = oss[osName]
+        [lower, upper] = random.choices(os.keys, k=2)
+        b = IDBDataGenerator.generateBoolean
+        r = random.random()
+        if r < 0.25:
+            return f"IDBKeyRange.bound({lower},{upper},{b()},{b()})"
+        elif r < 0.5:
+            return f"IDBKeyRange.lowerBound({lower},{b()})"
+        elif r < 0.75:
+            return f"IDBKeyRange.only({random.choice([lower, upper])})"
         else:
-            raise TypeError(f"Unsupported type: {type(obj)}")
+            return f"IDBKeyRange.bound({lower},{upper},{b()},{b()})"
 
-# === Test ===
 
-def main():
+if __name__ == "__main__":
     # print("JS object with keyPath 'space.user.id':")
     # js_code, key_val = IDBDataGenerator.generateObjectWithKeyPathAsJS("space.user.id")
     # print("JS Object Code:\n", js_code)
     # print("Key Value:", key_val)
 
-    print("\nFlat JS object with implicit key:")
-    js_code, key_val = IDBDataGenerator.generateObjectAsJS()
-    print("JS Object Code:\n", js_code)
-    print("Key Value:", key_val)
+    # print("\nFlat JS object with implicit key:")
+    # js_code, key_val = IDBDataGenerator.generateObjectAsJS()
+    # print("JS Object Code:\n", js_code)
+    # print("Key Value:", key_val)
 
-
-
-
-if __name__ == "__main__":
-    main()
+    IDBDataGenerator.generateKeyRange("Asd")

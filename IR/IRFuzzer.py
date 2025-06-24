@@ -1,4 +1,4 @@
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.layers.IDBRootLayer import IDBRootLayer
 
 def generate_ir_program():

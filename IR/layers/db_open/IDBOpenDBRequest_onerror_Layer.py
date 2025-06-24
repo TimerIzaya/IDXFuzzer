@@ -1,5 +1,5 @@
 from IR.IRNodes import AssignmentExpression, FunctionExpression, Identifier, MemberExpression, CallExpression, Literal
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.type.IDBType import IDBType

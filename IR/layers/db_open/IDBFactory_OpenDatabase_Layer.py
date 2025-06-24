@@ -1,4 +1,4 @@
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.type.IDBType import IDBType
 from schema.IDBSchemaParser import IDBSchemaParser
 from IR.IRNodes import CallExpression, Identifier, Literal

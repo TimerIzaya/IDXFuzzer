@@ -1,6 +1,6 @@
 from IR.context.IRContext import IRContext, Variable
 from IR.IRNodes import Identifier, Literal, CallExpression
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_delete.IDBDeleteDBRequest_onblocked_Layer import IDBDeleteDBRequest_onblocked_Layer

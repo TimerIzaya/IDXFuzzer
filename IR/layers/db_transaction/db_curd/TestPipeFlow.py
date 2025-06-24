@@ -1,7 +1,7 @@
 import json
 
 from IR.IRNodes import Identifier
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.layers.Layer import Layer
 from IR.layers.db_transaction.db_curd.PipeFlow import PipeFlow
 from IR.layers.db_transaction.db_curd.PipeGraph import PipeGraph

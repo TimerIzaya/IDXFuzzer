@@ -2,7 +2,7 @@ import random
 from typing import List
 
 from IR.IRNodes import Literal
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.type.IDBTypeTool import IDBTypeTool
 from config import OPTIONAL_JUMP
 from schema.SchemaClass import ParamInfo, TypeInfo, IDBType, MethodInfo

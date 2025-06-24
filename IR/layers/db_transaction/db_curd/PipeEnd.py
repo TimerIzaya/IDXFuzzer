@@ -4,7 +4,7 @@ from IR.IRNodes import CallExpression
 from IR.IRNodes import Identifier, IRNode, VariableDeclaration, AssignmentExpression
 from IR.IRParamValueGenerator import IRParamValueGenerator
 from IR.context.IRContext import Variable
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.type.IDBTypeTool import IDBTypeTool
 from schema.SchemaClass import MethodInfo
 

@@ -3,7 +3,7 @@ from IR.IRNodes import (
     AssignmentExpression, FunctionExpression, Identifier,
     MemberExpression, Literal, CallExpression
 )
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder

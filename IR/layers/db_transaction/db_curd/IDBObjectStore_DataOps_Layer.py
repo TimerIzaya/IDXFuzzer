@@ -1,6 +1,6 @@
 from IR.IRNodes import Identifier, CallExpression
 from IR.context.IDBSchemaContext import IDBSchemaContext
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_transaction.db_curd.PipeFlow import PipeFlow

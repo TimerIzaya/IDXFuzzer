@@ -1,5 +1,5 @@
 from IR.IRNodes import FunctionExpression, AssignmentExpression, MemberExpression, Identifier, Literal, CallExpression
-from IR.layers.Globals import Global
+from IR.layers.Global import Global
 from IR.type.IDBType import IDBType
 from config import randomFuzzing
 from IR.layers.Layer import Layer, LayerType
