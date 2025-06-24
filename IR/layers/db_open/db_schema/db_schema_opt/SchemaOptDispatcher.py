@@ -18,19 +18,19 @@ class SchemaOptDispatcher:
         # self.all_ops = self.atomic_ops + self.compound_ops
         self.all_ops = self.atomic_ops
 
-    def get_all_ops(self):
+    def getAllOps(self):
         return self.all_ops
 
-    def get_atomic_ops(self):
+    def getAtomicOps(self):
         return self.atomic_ops
 
-    def get_compound_ops(self):
+    def getCompoundOps(self):
         return self.compound_ops
 
-    def get_weight(self, op):
+    def getWeight(self, op):
         return AtomicSchemaWeights.get(op, CompoundOpWeights.get(op, 0))
 
-    def choose_op(self):
+    def chooseOp(self):
         ops = self.all_ops
-        weights = [self.get_weight(op) for op in ops]
+        weights = [self.getWeight(op) for op in ops]
         return random.choices(ops, weights=weights, k=1)[0]

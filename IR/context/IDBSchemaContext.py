@@ -89,7 +89,7 @@ registerXXX 是往全局ctx里填充
 markXXX 是写入临时变量
 newXXX 是生成新变量name
 '''
-@dataclass
+
 class IDBSchemaContext:
 
     """
@@ -98,7 +98,19 @@ class IDBSchemaContext:
     currentDB: Union[None, IDBDataBaseInfo] = None
 
     # db -> IDBDataBaseInfo instance
-    ctx: Dict[str, IDBDataBaseInfo] = field(default_factory=dict)
+    ctx: Dict[str, IDBDataBaseInfo] = {}
+
+    uniqueCounters: Dict[str, int] = {
+        "index": 0,
+        "objectStore": 0,
+        "txn": 0,
+        "txnTmpOs": 0,
+    }
+
+    def generateUniqueName(self, base: str) -> str:
+        count = self.uniqueCounters.get(base, 0)
+        self.uniqueCounters[base] = count + 1
+        return f"{base}_{count}"
 
     def registerDatabase(self, dbName: str, db_version: int):
         if dbName not in self.ctx:
@@ -158,49 +170,17 @@ class IDBSchemaContext:
         self.currentDB = None
 
     def newObjectStoreName(self) -> str:
-        """生成一个全局唯一的 object store 名称，并不注册，仅返回"""
-        osnames = []
-        for db in self.ctx.keys():
-            for os in self.ctx[db].oss.keys():
-                osnames.append(os)
-
-        i = 0
-        while True:
-            name = f"store_{i}"
-            if name not in osnames:
-                return name
-            i += 1
+        return self.generateUniqueName("objectStore")
 
     def newIndexName(self) -> str:
-        """生成一个全局唯一的 indexes 名称，并不注册，仅返回"""
-        indexNames = []
-        for dbName, db in self.ctx.items():
-            for osName, os in db.oss.items():
-                for indexName, index in os.indexes.items():
-                    indexNames.append(indexName)
-
-        i = 0
-        while True:
-            name = f"index_{i}"
-            if name not in indexNames:
-                return name
-            i += 1
+        return self.generateUniqueName("index")
 
     def newTxnName(self) -> str:
-        i = 0
-        while True:
-            name = f"txn_{i}"
-            if name not in self.ctx[self.currentDB.name].historyTxnNames:
-                return name
-            i += 1
+        return self.generateUniqueName("txn")
 
     def newTxnTmpOSName(self, txnName) -> str:
-        i = 0
-        while True:
-            name = f"{txnName}_tmp_{i}"
-            if name not in self.currentDB.txn.oss:
-                return name
-            i += 1
+        return self.generateUniqueName("txnTmpOs")
+
 
     def getObjectStores(self) -> List[str]:
         if self.currentDB is None:
@@ -311,6 +291,16 @@ class IDBSchemaContext:
         for os in  self.ctx[self.currentDB.name].oss.values():
             ret.extend(os.indexes)
         return ret
+
+    def unregisterSomething(self, names):
+        for name in names:
+            for osName in self.currentDB.oss:
+                if osName == name:
+                    del self.ctx[self.currentDB.name].oss[osName]
+            for osName in self.currentDB.oss:
+                for idxName in self.currentDB.oss[osName].indexes:
+                    if idxName == name:
+                        del self.ctx[self.currentDB.name].oss[osName]
 
 
 if __name__ == '__main__':

@@ -43,12 +43,39 @@ class IRContext:
     def enterLayer(self, layer):
         self.layerStack.append(LayerPool(layer))
 
-    def exitLayer(self):
-        self.layerStack.pop()
+    def exitLayer(self) -> list[Variable]:
+        return self.layerStack.pop().vars
 
     def registerVariable(self, var: Variable):
         assert isinstance(var, Variable), "register_variable() must be called with a Variable instance"
         self.layerStack[-1].append(var)
+
+    @DeprecationWarning
+    def unregisterVariable(self, var: Variable):
+        assert isinstance(var, Variable), "unregister_variable() must be called with a Variable instance"
+        delTar = None
+        for layPool in self.layerStack:
+            for v in layPool.vars:
+                if v.varType == var.varType and v.varLiteral == var.varLiteral and v.name.raw == var.name.raw:
+                    delTar = v
+                    break
+            if delTar:
+                layPool.vars.remove(delTar)
+                break
+
+    # def unregisterVariables(self, varLiteralName: str) -> list[Variable]:
+    #     ret = []
+    #     for layPool in self.layerStack:
+    #         delTars = []
+    #         for v in layPool.vars:
+    #             if v.varLiteral == varLiteralName and varLiteralName is not None:
+    #                 delTars.append(v)
+    #
+    #         for delTar in delTars:
+    #             layPool.vars.remove(delTar)
+    #             ret.append(delTar)
+    #     return ret
+
 
     def registerVariableLiteral(self, var: Variable, literal: str):
         var.varLiteral = literal

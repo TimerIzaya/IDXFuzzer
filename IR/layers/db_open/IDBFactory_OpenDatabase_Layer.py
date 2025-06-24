@@ -32,7 +32,6 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
         Global.smctx.registerDatabase(dbName, versionNumber)
         Global.smctx.markCurrentDB(dbName)
 
-
         args = [Literal(dbName), Literal(versionNumber)]
 
         call = CallExpression(

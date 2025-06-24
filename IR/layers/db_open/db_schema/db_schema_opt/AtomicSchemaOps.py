@@ -92,7 +92,7 @@ def createObjectStore():
     # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
     recVarName = Global.smctx.newObjectStoreName()
     recVar = Variable(recVarName, IDBType.IDBObjectStore)
-    Global.smctx.registerObjectStore(recVarName)
+    Global.smctx.registerObjectStore(osName)
     Global.irctx.registerVariable(recVar)
     Global.irctx.registerVariableLiteral(recVar, osName)
     nodes.append(VariableDeclaration(recVar.name))
@@ -108,7 +108,6 @@ def deleteObjectStore():
         raise RuntimeError("No OS name available for deleteIndex")
 
     Global.smctx.unregisterObjectStore(osName)
-
     dbIdt = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
     return [CallExpression(dbIdt, METHOD_NAME, args=[Literal(osName)])]
 
@@ -173,6 +172,7 @@ def deleteIndex():
 
     # 同步更新schemaCtx
     Global.smctx.unregisterIndex(osName, idxName)
+    Global.irctx.unregisterVariables(varLiteralName=idxName)
     return [CallExpression(osVar, METHOD_NAME, args=[Literal(idxName)])]
 
 
@@ -204,7 +204,6 @@ def add():
         args.append(Literal(value))
         Global.smctx.registerKey(osName, key)
 
-
     # 返回一个IDBRequest，然后设置success或者error事件
     nodes = []
     addMeName = Global.irctx.newAddMeName()
@@ -212,7 +211,7 @@ def add():
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
     nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
-    return []
+    return nodes
 
 def clear():
     METHOD_NAME = "clear"
