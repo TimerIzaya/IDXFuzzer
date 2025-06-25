@@ -13,20 +13,17 @@ class LayerPool:
     def append(self, v: Variable):
         self.vars.append(v)
 
+
 class IRContext:
     def __init__(self):
         self.layerStack: List[LayerPool] = []
-        self.uniqueCounters: Dict[str, int] = {
-            "index": 0,
-            "objectStore": 0,
-            "database": 0,
-            "addMe":0,
-        }
+        self.uniqueCounters: Dict[str, int] = {}
 
     def generateUniqueName(self, base: str) -> str:
-        count = self.uniqueCounters.get(base, 0)
-        self.uniqueCounters[base] = count + 1
-        return f"{base}_{count}"
+        if base not in self.uniqueCounters:
+            self.uniqueCounters[base] = -1
+        self.uniqueCounters[base] += 1
+        return f"{base}_{self.uniqueCounters[base]}"
 
     def newIndexName(self) -> str:
         return self.generateUniqueName("index")
@@ -37,8 +34,8 @@ class IRContext:
     def newDatabaseName(self) -> str:
         return self.generateUniqueName("database")
 
-    def newAddMeName(self) -> str:
-        return self.generateUniqueName("addMe")
+    def newMeName(self, meName: str) -> str:
+        return self.generateUniqueName(meName)
 
     def enterLayer(self, layer):
         self.layerStack.append(LayerPool(layer))
@@ -50,35 +47,15 @@ class IRContext:
         assert isinstance(var, Variable), "register_variable() must be called with a Variable instance"
         self.layerStack[-1].append(var)
 
-    @DeprecationWarning
-    def unregisterVariable(self, var: Variable):
-        assert isinstance(var, Variable), "unregister_variable() must be called with a Variable instance"
-        delTar = None
+    def unregisterVariable(self, varLiteral: str):
         for layPool in self.layerStack:
+            delTars = []
             for v in layPool.vars:
-                if v.varType == var.varType and v.varLiteral == var.varLiteral and v.name.raw == var.name.raw:
-                    delTar = v
-                    break
-            if delTar:
-                layPool.vars.remove(delTar)
-                break
+                if v.varLiteral == varLiteral:
+                    delTars.append(v)
+            for d in delTars:
+                layPool.vars.remove(d)
 
-    # def unregisterVariables(self, varLiteralName: str) -> list[Variable]:
-    #     ret = []
-    #     for layPool in self.layerStack:
-    #         delTars = []
-    #         for v in layPool.vars:
-    #             if v.varLiteral == varLiteralName and varLiteralName is not None:
-    #                 delTars.append(v)
-    #
-    #         for delTar in delTars:
-    #             layPool.vars.remove(delTar)
-    #             ret.append(delTar)
-    #     return ret
-
-
-    def registerVariableLiteral(self, var: Variable, literal: str):
-        var.varLiteral = literal
 
     def getRandomIdentifier(self, typename: IDBType) -> Identifier:
         for layPool in self.layerStack:

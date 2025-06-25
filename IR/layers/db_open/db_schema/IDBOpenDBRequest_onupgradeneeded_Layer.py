@@ -27,17 +27,16 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
         # 找一个db类型的变量用来赋值，目前全局只有一个
         # 这个var里的literal需要更新一下
         dbVar = Global.irctx.getVariableByType(IDBType.IDBDatabase)
-        assign_db = AssignmentExpression(
+        # 去更新之前的IDBDatabase变量 它还没有设置literal 此时db变量才正式诞生
+        dbVar.varLiteral = dbName
+        assignDB = AssignmentExpression(
             left=dbVar.name,
             right=MemberExpression(
                 objectExpr=MemberExpression(Identifier("event"), "target"),
                 property_name="result"
             )
         )
-        body.append(assign_db)
-
-        # 去更新之前的IDBDatabase变量 它还没有设置literal 此时db变量才正式诞生
-        Global.irctx.registerVariableLiteral(dbVar, dbName)
+        body.append(assignDB)
 
         # 构造事件处理器
         open_request_id = Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest)

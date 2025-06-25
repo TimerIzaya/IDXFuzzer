@@ -90,11 +90,11 @@ def createObjectStore():
     nodes = []
     # 如果有返回值
     # 生成一个用于接收返回结果的变量，注意该对象的类型就是method的返回值
-    recVarName = Global.smctx.newObjectStoreName()
+    recVarName = Global.irctx.newObjectStoreName()
     recVar = Variable(recVarName, IDBType.IDBObjectStore)
+    recVar.varLiteral = osName
     Global.smctx.registerObjectStore(osName)
     Global.irctx.registerVariable(recVar)
-    Global.irctx.registerVariableLiteral(recVar, osName)
     nodes.append(VariableDeclaration(recVar.name))
     nodes.append(AssignmentExpression(recVar, CallExpression(dbIdt, "createObjectStore", args=args)))
     return nodes
@@ -102,30 +102,35 @@ def createObjectStore():
 
 def deleteObjectStore():
     METHOD_NAME = "deleteObjectStore"
-    # 找一个os name
+
+    dbVar = Global.irctx.getVariableByType(IDBType.IDBDatabase)
+    if dbVar is None:
+        raise RuntimeError("No OS var available for delete")
+
     osName = Global.smctx.pickRandomObjectStore()
-    if osName is None:
-        raise RuntimeError("No OS name available for deleteIndex")
 
     Global.smctx.unregisterObjectStore(osName)
-    dbIdt = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
-    return [CallExpression(dbIdt, METHOD_NAME, args=[Literal(osName)])]
+    # 对应的变量也要跟着删除
+    Global.irctx.unregisterVariable(osName)
+
+    return CallExpression(dbVar, METHOD_NAME, args=[Literal(osName)])
 
 
 def createIndex():
     METHOD_NAME = "createIndex"
     # 找到store的标识符
-    osIdent = Global.irctx.getIdentifierByType(IDBType.IDBObjectStore)
-    if osIdent is None:
+    osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
+    if osVar is None or osVar.varLiteral is None:
         raise RuntimeError("No IDBObjectStore identifier available for create_object_store")
+
 
     args = []
     # arg0 name
     indexName = Global.smctx.newIndexName()
     args.append(Literal(indexName))
     # 注册一个初始IDBSchemaIndexInfo，后面补全
-    Global.smctx.registerIndex(osIdent.raw, indexName)
-    curIdx = Global.smctx.currentDB.oss[osIdent.raw].indexes[indexName]
+    Global.smctx.registerIndex(osVar.varLiteral, indexName)
+    curIdx = Global.smctx.currentDB.oss[osVar.varLiteral].indexes[indexName]
 
     # arg1 keypath
     keyPath = IRParamValueGenerator.generateKeyPath()
@@ -150,13 +155,12 @@ def createIndex():
 
     nodes = []
     recVar = Variable(indexName, IDBType.IDBIndex)
+    recVar.varLiteral = indexName
     Global.irctx.registerVariable(recVar)
-    Global.irctx.registerVariableLiteral(recVar, indexName)
     nodes.append(VariableDeclaration(recVar.name))
-    nodes.append(AssignmentExpression(recVar, CallExpression(osIdent, METHOD_NAME, args=args)))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
 
     return nodes
-
 
 def deleteIndex():
     METHOD_NAME = "deleteIndex"
@@ -172,8 +176,10 @@ def deleteIndex():
 
     # 同步更新schemaCtx
     Global.smctx.unregisterIndex(osName, idxName)
-    Global.irctx.unregisterVariables(varLiteralName=idxName)
-    return [CallExpression(osVar, METHOD_NAME, args=[Literal(idxName)])]
+    Global.irctx.unregisterVariable(idxName)
+
+
+    return CallExpression(osVar, METHOD_NAME, args=[Literal(idxName)])
 
 
 def add():
@@ -206,8 +212,8 @@ def add():
 
     # 返回一个IDBRequest，然后设置success或者error事件
     nodes = []
-    addMeName = Global.irctx.newAddMeName()
-    recVar = Variable(addMeName, IDBType.IDBRequest)
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
     nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
@@ -224,7 +230,14 @@ def clear():
     if osName not in Global.smctx.currentDB.oss:
         raise RuntimeError("No active object store context")
 
-    return [CallExpression(osVar, METHOD_NAME, args=[])]
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=[])))
+    return nodes
 
 def count():
     METHOD_NAME = "count"
@@ -242,7 +255,15 @@ def count():
         keyRange = IDBDataGenerator.generateKeyRange(osName)
         args.append(Literal(keyRange))
 
-    return [CallExpression(osVar, METHOD_NAME, args=args)]
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    return nodes
+
 
 def delete():
     METHOD_NAME = "delete"
@@ -264,7 +285,15 @@ def delete():
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
 
-    return [CallExpression(osVar, METHOD_NAME, args=args)]
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    return nodes
+
 
 def get():
     METHOD_NAME = "get"
@@ -286,7 +315,15 @@ def get():
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
 
-    return [CallExpression(osVar, METHOD_NAME, args=args)]
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    return nodes
+
 
 def getAll():
     METHOD_NAME = "getAll"
@@ -314,7 +351,15 @@ def getAll():
         if random.random() < 0.5:
             args.append(Literal(random.randint(0, 4294967295)))
 
-    return [CallExpression(osVar, METHOD_NAME, args=args)]
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    return nodes
+
 
 def getAllKeys():
     METHOD_NAME = "getAllKeys"
@@ -342,7 +387,14 @@ def getAllKeys():
         if random.random() < 0.5:
             args.append(Literal(random.randint(0, 4294967295)))
 
-    return [CallExpression(osVar, METHOD_NAME, args=args)]
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    return nodes
 
 
 def getKey():
@@ -365,7 +417,15 @@ def getKey():
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
 
-    return [CallExpression(osVar, METHOD_NAME, args=args)]
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    return nodes
+
 
 def index():
     METHOD_NAME = "index"
@@ -385,8 +445,8 @@ def index():
     nodes = []
     varName = Global.irctx.newIndexName()
     recVar = Variable(varName, IDBType.IDBIndex)
+    recVar.varLiteral = indexName
     Global.irctx.registerVariable(recVar)
-    Global.irctx.registerVariableLiteral(recVar, indexName)
     nodes.append(VariableDeclaration(recVar.name))
     nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=[Literal(indexName)])))
     return nodes
@@ -418,7 +478,15 @@ def put():
         [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
         args.append(Literal(value))
         Global.smctx.registerKey(osName, key)
-    return [CallExpression(osVar, METHOD_NAME, args=args)]
+
+    # 返回一个IDBRequest，然后设置success或者error事件
+    nodes = []
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    return nodes
 
 
 # 每个操作函数的独立权重配置

@@ -2,6 +2,8 @@ import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Union, Literal
 
+from IR.IRNodes import Variable
+
 '''
 描述完整的db数据结构供给给下文的dataOpts层使用
 db 1->n oss
@@ -67,7 +69,7 @@ class IDBObjectStoreInfo:
 
     indexes: dict[str, IDBIndexInfo] = field(default_factory=dict)
 
-    #todo 我们只存key，value暂时也先放在IR中，后续要把数据生成和IR分离，不然IR要塞多少垃圾
+    # todo 我们只存key，value暂时也先放在IR中，后续要把数据生成和IR分离，不然IR要塞多少垃圾
     keys: list[str] = field(default_factory=list)
 
 
@@ -84,14 +86,15 @@ class IDBDataBaseInfo:
     # 事务和OS多对多，不用特地构造那么复杂，只记录历史上所有事务的name防止重复即可
     historyTxnNames: list[str] = field(default_factory=list)
 
+
 '''
 registerXXX 是往全局ctx里填充
 markXXX 是写入临时变量
 newXXX 是生成新变量name
 '''
 
-class IDBSchemaContext:
 
+class IDBSchemaContext:
     """
     current系列用于确定当前执行的作用域，ctx仅为注册用，可能先注册，后续再使用db、txn等等
     """
@@ -130,7 +133,6 @@ class IDBSchemaContext:
         if storeName not in self.ctx[self.currentDB.name].oss:
             raise RuntimeError("No active object store context")
         self.ctx[self.currentDB.name].oss[storeName].indexes[indexName] = IDBIndexInfo(indexName)
-
 
     def unregisterIndex(self, storeName: str, indexName: str):
         if storeName not in self.ctx[self.currentDB.name].oss:
@@ -181,7 +183,6 @@ class IDBSchemaContext:
     def newTxnTmpOSName(self, txnName) -> str:
         return self.generateUniqueName("txnTmpOs")
 
-
     def getObjectStores(self) -> List[str]:
         if self.currentDB is None:
             raise RuntimeError("No active database context")
@@ -189,7 +190,7 @@ class IDBSchemaContext:
             raise RuntimeError("No active object store context")
 
         ret = []
-        for osName, os in self.ctx[self.currentDB.name].oss.items():
+        for osName, os in self.currentDB.oss.items():
             ret.append(osName)
         return ret
 
@@ -226,6 +227,7 @@ class IDBSchemaContext:
     '''
     txn需要用到的os，优先选数量少点
     '''
+
     def pickRandomTxnObjectStores(self) -> List[str]:
         stores = self.getObjectStores()
         n = len(stores)
@@ -288,19 +290,26 @@ class IDBSchemaContext:
 
     def getAllIndexes(self) -> List[str]:
         ret = []
-        for os in  self.ctx[self.currentDB.name].oss.values():
+        for os in self.ctx[self.currentDB.name].oss.values():
             ret.extend(os.indexes)
         return ret
 
-    def unregisterSomething(self, names):
+    def unregisterSomething(self, vars: list[Variable]):
+        names = [v.varLiteral for v in vars if v.varLiteral is not None]
         for name in names:
+            delTars = []
             for osName in self.currentDB.oss:
                 if osName == name:
-                    del self.ctx[self.currentDB.name].oss[osName]
+                    delTars.append(name)
+            for d in delTars:
+                del self.currentDB.oss[d]
             for osName in self.currentDB.oss:
+                delTars.clear()
                 for idxName in self.currentDB.oss[osName].indexes:
                     if idxName == name:
-                        del self.ctx[self.currentDB.name].oss[osName]
+                        delTars.append(name)
+                for d in delTars:
+                    del self.ctx[self.currentDB.name].oss[osName].indexes[d]
 
 
 if __name__ == '__main__':

@@ -46,15 +46,11 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
 
         Global.irctx.registerVariable(Variable("openRequest", IDBType.IDBOpenDBRequest))
 
-        # 注册子事件层
-        upgrade_layer = IDBOpenDBRequest_onupgradeneeded_Layer.build()
-        success_layer = IDBOpenDBRequest_onsuccess_Layer.build()
-        blocked_layer = IDBOpenDBRequest_onblocked_Layer.build()
-        error_layer = IDBOpenDBRequest_onerror_Layer.build()
-
         return Layer(
             name=IDBFactory_OpenDatabase_Layer.name,
             ir_nodes=[call],
-            children=[upgrade_layer, success_layer, blocked_layer, error_layer],
+            children=[
+                IDBOpenDBRequest_onupgradeneeded_Layer.build()
+            ],
             layer_type=IDBFactory_OpenDatabase_Layer.layer_type
         )

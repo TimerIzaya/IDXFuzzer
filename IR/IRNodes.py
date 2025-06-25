@@ -47,7 +47,7 @@ class Variable(IRNode):
 
 
 class Literal(IRNode):
-    def __init__(self, value: str):
+    def __init__(self, value: any):
         self.value = value
 
     def to_dict(self):
