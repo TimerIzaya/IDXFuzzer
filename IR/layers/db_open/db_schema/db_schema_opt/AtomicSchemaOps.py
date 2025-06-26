@@ -241,6 +241,7 @@ def clear():
 
 def count():
     METHOD_NAME = "count"
+    nodes = []
 
     # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
@@ -252,11 +253,11 @@ def count():
 
     args = []
     if random.random() > 0.5:
-        keyRange = IDBDataGenerator.generateKeyRange(osName)
-        args.append(Literal(keyRange))
+        keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
+        nodes.append(keyRangeAssign)
+        args.append(keyRangeAssign.left)
 
     # 返回一个IDBRequest，然后设置success或者error事件
-    nodes = []
     meName = Global.irctx.newMeName(METHOD_NAME)
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
@@ -267,6 +268,7 @@ def count():
 
 def delete():
     METHOD_NAME = "delete"
+    nodes = []
 
     # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
@@ -279,14 +281,14 @@ def delete():
     args = []
     # 要么选一个key，要么选keyRange，可以删
     if random.random() > 0.5:
-        keyRange = IDBDataGenerator.generateKeyRange(osName)
-        args.append(Literal(keyRange))
+        keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
+        nodes.append(keyRangeAssign)
+        args.append(keyRangeAssign.left)
     else:
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
 
     # 返回一个IDBRequest，然后设置success或者error事件
-    nodes = []
     meName = Global.irctx.newMeName(METHOD_NAME)
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
@@ -297,6 +299,7 @@ def delete():
 
 def get():
     METHOD_NAME = "get"
+    nodes = []
 
     # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
@@ -309,14 +312,14 @@ def get():
     args = []
     # 要么选一个key，要么选keyRange，可以删
     if random.random() > 0.5:
-        keyRange = IDBDataGenerator.generateKeyRange(osName)
-        args.append(Literal(keyRange))
+        keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
+        nodes.append(keyRangeAssign)
+        args.append(keyRangeAssign.left)
     else:
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
 
     # 返回一个IDBRequest，然后设置success或者error事件
-    nodes = []
     meName = Global.irctx.newMeName(METHOD_NAME)
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
@@ -327,6 +330,7 @@ def get():
 
 def getAll():
     METHOD_NAME = "getAll"
+    nodes = []
 
     # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
@@ -341,8 +345,9 @@ def getAll():
     if r < 0.5:
         # 50%选query
         if random.random() < 0.5:
-            keyRange = IDBDataGenerator.generateKeyRange(osName)
-            args.append(Literal(keyRange))
+            keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
+            nodes.append(keyRangeAssign)
+            args.append(keyRangeAssign.left)
         else:
             key = Global.smctx.pickRandomKey(osName)
             args.append(Literal(key))
@@ -352,7 +357,6 @@ def getAll():
             args.append(Literal(random.randint(0, 4294967295)))
 
     # 返回一个IDBRequest，然后设置success或者error事件
-    nodes = []
     meName = Global.irctx.newMeName(METHOD_NAME)
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
@@ -363,6 +367,7 @@ def getAll():
 
 def getAllKeys():
     METHOD_NAME = "getAllKeys"
+    nodes = []
 
     # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
@@ -377,8 +382,9 @@ def getAllKeys():
     if r < 0.5:
         # 50%选query
         if random.random() < 0.5:
-            keyRange = IDBDataGenerator.generateKeyRange(osName)
-            args.append(Literal(keyRange))
+            keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
+            nodes.append(keyRangeAssign)
+            args.append(keyRangeAssign.left)
         else:
             key = Global.smctx.pickRandomKey(osName)
             args.append(Literal(key))
@@ -388,7 +394,6 @@ def getAllKeys():
             args.append(Literal(random.randint(0, 4294967295)))
 
     # 返回一个IDBRequest，然后设置success或者error事件
-    nodes = []
     meName = Global.irctx.newMeName(METHOD_NAME)
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
@@ -399,6 +404,7 @@ def getAllKeys():
 
 def getKey():
     METHOD_NAME = "getKey"
+    nodes = []
 
     # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
@@ -411,14 +417,14 @@ def getKey():
     args = []
     # 50%选query
     if random.random() < 0.5:
-        keyRange = IDBDataGenerator.generateKeyRange(osName)
-        args.append(Literal(keyRange))
+        keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
+        nodes.append(keyRangeAssign)
+        args.append(keyRangeAssign.left)
     else:
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
 
     # 返回一个IDBRequest，然后设置success或者error事件
-    nodes = []
     meName = Global.irctx.newMeName(METHOD_NAME)
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)

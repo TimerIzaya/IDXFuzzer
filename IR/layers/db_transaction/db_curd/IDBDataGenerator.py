@@ -1,9 +1,12 @@
+from IR.IRNodes import AssignmentExpression, Variable, CallExpression, Identifier, Literal
 from IR.layers.Global import Global
 import random
 import string
 import json
 import random
 import string
+
+from IR.type.IDBType import IDBType
 
 
 class BaseGenerator:
@@ -155,7 +158,8 @@ class IDBDataGenerator(BaseGenerator):
         return IDBDataGenerator.generateString()
 
     @staticmethod
-    def generateKeyRange(osName: str) -> str:
+    def generateKeyRange(osName: str) -> AssignmentExpression:
+        KEY_RANGE = "KeyRange"
         if osName not in Global.smctx.currentDB.oss:
             raise RuntimeError("No active object store context")
         oss = Global.smctx.currentDB.oss
@@ -165,14 +169,39 @@ class IDBDataGenerator(BaseGenerator):
         [lower, upper] = random.choices(os.keys, k=2)
         b = IDBDataGenerator.generateBoolean
         r = random.random()
+        # 以下临时变量不用注册
         if r < 0.25:
-            return f"IDBKeyRange.bound({lower},{upper},{b()},{b()})"
+            return AssignmentExpression(
+                Variable(Global.irctx.newMeName(KEY_RANGE), IDBType.IDBRequest),
+                CallExpression(
+                    Identifier("IDBKeyRange"),
+                    "bound",
+                    [Literal(lower), Literal(upper), Literal(b()), Literal(b())]
+                ))
         elif r < 0.5:
-            return f"IDBKeyRange.lowerBound({lower},{b()})"
+            return AssignmentExpression(
+                Variable(Global.irctx.newMeName(KEY_RANGE), IDBType.IDBRequest),
+                CallExpression(
+                    Identifier("IDBKeyRange"),
+                    "lowerBound",
+                    [Literal(lower), Literal(b())]
+                ))
         elif r < 0.75:
-            return f"IDBKeyRange.only({random.choice([lower, upper])})"
+            return AssignmentExpression(
+                Variable(Global.irctx.newMeName(KEY_RANGE), IDBType.IDBRequest),
+                CallExpression(
+                    Identifier("IDBKeyRange"),
+                    "only",
+                    [Literal(random.choice([lower, upper]))]
+                ))
         else:
-            return f"IDBKeyRange.bound({lower},{upper},{b()},{b()})"
+            return AssignmentExpression(
+                Variable(Global.irctx.newMeName(KEY_RANGE), IDBType.IDBRequest),
+                CallExpression(
+                    Identifier("IDBKeyRange"),
+                    "bound",
+                    [Literal(lower), Literal(upper), Literal(b()), Literal(b())]
+                ))
 
 
 if __name__ == "__main__":

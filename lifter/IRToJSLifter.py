@@ -20,17 +20,11 @@ class IRToJSLifter:
         while i < len(nodes):
             node = nodes[i]
             # 合并声明 + 赋值
-            if (
-                i + 1 < len(nodes)
-                and isinstance(node, VariableDeclaration)
-                and isinstance(nodes[i + 1], AssignmentExpression)
-                # and isinstance(nodes[i + 1].left, Identifier)
-                # and nodes[i + 1].left.raw == nodes.name
-            ):
+            if i + 1 < len(nodes) and isinstance(node, VariableDeclaration) and isinstance(nodes[i + 1], AssignmentExpression):
                 rhs = IRToJSLifter._convert_node(nodes[i + 1].right, 0)
                 if rhs.endswith(";"):
                     rhs = rhs[:-1]
-                line = f"{'  ' * indent_level}{node.kind} {node.name['raw']} = {rhs};"
+                line = f"{'    ' * indent_level}{node.kind} {node.name['raw']} = {rhs};"
                 lines.append(line)
                 i += 2
                 continue
@@ -46,7 +40,7 @@ class IRToJSLifter:
 
     @staticmethod
     def _convert_node(node: IRNode, indent_level: int = 0):
-        indent = "  " * indent_level
+        indent = "    " * indent_level
 
         if isinstance(node, VariableDeclaration):
             return f"{indent}{node.kind} {node.name['raw']};"
@@ -78,7 +72,7 @@ class IRToJSLifter:
 
         elif isinstance(node, AssignmentExpression):
             left = IRToJSLifter._convert_node(node.left, indent_level)
-            right = IRToJSLifter._convert_node(node.right, 0)
+            right = IRToJSLifter._convert_node(node.right, indent_level).lstrip()
             if right.endswith(";"):
                 right = right.rstrip(";")
             return f"{indent}{left} = {right};"
@@ -88,7 +82,6 @@ class IRToJSLifter:
             return f"{obj}.{node.property_name}"
 
         elif isinstance(node, FunctionExpression):
-            params = ", ".join(p.raw for p in node.params)
             body_lines = [
                 IRToJSLifter._convert_node(stmt, indent_level + 1)
                 for stmt in node.body
@@ -104,7 +97,8 @@ class IRToJSLifter:
                         IRToJSLifter.convertLayer(child, indent_level + 1)
                     )
 
-            indented_body = "\n".join("  " * (indent_level + 1) + line.lstrip() for line in body_lines)
+            indented_body = "\n".join("    " * (indent_level + 1) + line.lstrip() for line in body_lines)
+            r = f"{indent}(event) => {{\n{indented_body}\n{indent}}}"
             return f"{indent}(event) => {{\n{indented_body}\n{indent}}}"
 
         elif isinstance(node, CallExpression):

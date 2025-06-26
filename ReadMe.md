@@ -1,3 +1,11 @@
+# Out of semantically well-formed
+
+这里指纯靠静态分析无法解决的地方，必须要加try来兜底
+
+## keyrange
+
+需要保留所有key并且按IDB的跨类型排序，此处排序算法也是源码主要测试对象之一，我们无法生成100% SWF的seed
+
 # TODO
 
 1. schema的原子操作读，schema的所有复合操作
@@ -5,11 +13,11 @@
 
 
 
-# Onupgrade层
+# Onupgrade Layer
 
 超事务层，里面可以使用所有的os，业务层面上来看只是初始化数据库，但是api层面上来看是最大范围的api调用
 
-# Dataopts层
+# Dataopts Layer
 
 本质上是txn和onupgrade的公用层
 
@@ -25,7 +33,7 @@ keyrange需要这个os里所有key的上下文，然后随机选上下界
 
 A key or [`IDBKeyRange`](https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange) to be queried. If nothing is passed, this will default to a key range that selects all the records in this object store.
 
-## OS api集合
+## OS api
 
 ### add
 
