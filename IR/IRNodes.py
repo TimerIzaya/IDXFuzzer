@@ -11,6 +11,18 @@ class IRNode:
         raise NotImplementedError
 
 
+class TryCatchStatement:
+    def __init__(self, tryBody: list[IRNode], catchBody: list[IRNode]):
+        self.tryBody = tryBody
+        self.catchBody = catchBody
+
+    def to_dict(self):
+        return {
+            "tryBody": [t.to_dict() for t in self.tryBody],
+            "catchBody": [c.to_dict() for c in self.catchBody],
+        }
+
+
 class Identifier(IRNode):
     def __init__(self, raw: str):
         self.raw = raw

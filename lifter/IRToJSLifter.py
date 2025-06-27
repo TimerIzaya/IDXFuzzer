@@ -112,6 +112,30 @@ class IRToJSLifter:
         elif isinstance(node, ConsoleLog):
             msg = IRToJSLifter._convert_node(node.value, indent_level)
             return f"{indent}console.log({msg});"
+        elif isinstance(node, TryCatchStatement):
+            body_lines = [
+                IRToJSLifter._convert_node(stmt, indent_level + 1)
+                for stmt in node.body
+            ]
 
+            # if (
+            #         isinstance(IRToJSLifter._current_layer, Layer)
+            #         and IRToJSLifter._current_layer.layer_type == LayerType.REGISTER
+            # ):
+            #     for child in IRToJSLifter._current_layer.children:
+            #         IRToJSLifter._visited_layers.add(child.name)
+            #         body_lines.extend(
+            #             IRToJSLifter.convertLayer(child, indent_level + 1)
+            #         )
+            #
+            # indented_body = "\n".join("    " * (indent_level + 1) + line.lstrip() for line in body_lines)
+            # r = f"{indent}(event) => {{\n{indented_body}\n{indent}}}"
+            # return f"{indent}(event) => {{\n{indented_body}\n{indent}}}"
         else:
             raise ValueError(f"Unsupported node type: {type(node).__name__}")
+
+
+if __name__ == '__main__':
+    c = CallExpression(Identifier("x"), "f", [])
+    ret = IRToJSLifter._convert_node(c,0)
+    print(ret)
