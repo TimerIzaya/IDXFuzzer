@@ -1,6 +1,7 @@
 from IR.layers.Layer import Layer, LayerType
 from IR.IRNodes import *
 
+
 class IRToJSLifter:
     _current_layer = None
     _visited_layers = set()
@@ -20,7 +21,8 @@ class IRToJSLifter:
         while i < len(nodes):
             node = nodes[i]
             # 合并声明 + 赋值
-            if i + 1 < len(nodes) and isinstance(node, VariableDeclaration) and isinstance(nodes[i + 1], AssignmentExpression):
+            if i + 1 < len(nodes) and isinstance(node, VariableDeclaration) and isinstance(nodes[i + 1],
+                                                                                           AssignmentExpression):
                 rhs = IRToJSLifter._convert_node(nodes[i + 1].right, 0)
                 if rhs.endswith(";"):
                     rhs = rhs[:-1]
@@ -88,8 +90,8 @@ class IRToJSLifter:
             ]
 
             if (
-                isinstance(IRToJSLifter._current_layer, Layer)
-                and IRToJSLifter._current_layer.layer_type == LayerType.REGISTER
+                    isinstance(IRToJSLifter._current_layer, Layer)
+                    and IRToJSLifter._current_layer.layer_type == LayerType.REGISTER
             ):
                 for child in IRToJSLifter._current_layer.children:
                     IRToJSLifter._visited_layers.add(child.name)
@@ -113,29 +115,57 @@ class IRToJSLifter:
             msg = IRToJSLifter._convert_node(node.value, indent_level)
             return f"{indent}console.log({msg});"
         elif isinstance(node, TryCatchStatement):
-            body_lines = [
-                IRToJSLifter._convert_node(stmt, indent_level + 1)
-                for stmt in node.body
-            ]
+            content = f"{indent}try{{\n"
+            for stmt in node.tryBody:
+                content += f"{IRToJSLifter._convert_node(stmt, indent_level + 1)}\n"
+            content += f"{indent}}}\n"
 
-            # if (
-            #         isinstance(IRToJSLifter._current_layer, Layer)
-            #         and IRToJSLifter._current_layer.layer_type == LayerType.REGISTER
-            # ):
-            #     for child in IRToJSLifter._current_layer.children:
-            #         IRToJSLifter._visited_layers.add(child.name)
-            #         body_lines.extend(
-            #             IRToJSLifter.convertLayer(child, indent_level + 1)
-            #         )
-            #
-            # indented_body = "\n".join("    " * (indent_level + 1) + line.lstrip() for line in body_lines)
-            # r = f"{indent}(event) => {{\n{indented_body}\n{indent}}}"
-            # return f"{indent}(event) => {{\n{indented_body}\n{indent}}}"
+            content += f"{indent}catch (e){{\n"
+            for stmt in node.catchBody:
+                content += f"{IRToJSLifter._convert_node(stmt, indent_level + 1)}\n"
+            content += f"{indent}}}\n"
+            return content
         else:
             raise ValueError(f"Unsupported node type: {type(node).__name__}")
 
 
 if __name__ == '__main__':
-    c = CallExpression(Identifier("x"), "f", [])
-    ret = IRToJSLifter._convert_node(c,0)
+    tryBody = [
+        CallExpression(Identifier("x"), "f", []),
+        CallExpression(Identifier("x"), "f", [])
+    ]
+
+    catchBody = [
+        CallExpression(Identifier("y"), "f", []),
+        CallExpression(Identifier("y"), "f", [])
+    ]
+    t = TryCatchStatement(tryBody, catchBody)
+    ret = IRToJSLifter._convert_node(t, 0)
     print(ret)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

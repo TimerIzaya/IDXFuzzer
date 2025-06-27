@@ -1,3 +1,4 @@
+import copy
 import random
 import re
 
@@ -6,7 +7,8 @@ from IR.layers.db_transaction.db_curd.IDBDataGenerator import IDBDataGenerator
 from IR.type.IDBType import IDBType
 from IR.type.IDBTypeTool import IDBTypeTool
 from schema.IDBSchemaParser import IDBSchemaParser
-from IR.IRNodes import MemberExpression, CallExpression, Literal, VariableDeclaration, AssignmentExpression, Identifier
+from IR.IRNodes import MemberExpression, CallExpression, Literal, VariableDeclaration, AssignmentExpression, Identifier, \
+    TryCatchStatement
 from IR.context.IRContext import IRContext, Variable
 from IR.IRParamValueGenerator import IRParamValueGenerator
 
@@ -252,17 +254,34 @@ def count():
         raise RuntimeError("No active object store context")
 
     args = []
+    useKeyRange = False
     if random.random() > 0.5:
         keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
         nodes.append(keyRangeAssign)
         args.append(keyRangeAssign.left)
+        useKeyRange = True
 
     # 返回一个IDBRequest，然后设置success或者error事件
     meName = Global.irctx.newMeName(METHOD_NAME)
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
-    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    if not useKeyRange:
+        nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    else:
+        stableArgs = copy.deepcopy(args)
+        stableKRAss = IDBDataGenerator.generateKeyRange(osName, stable=True)
+        stableArgs[-1] = stableKRAss.left
+        tryCatch = TryCatchStatement(
+            tryBody=[
+                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
+            ],
+            catchBody=[
+                stableKRAss,
+                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
+            ]
+        )
+        nodes.append(tryCatch)
     return nodes
 
 

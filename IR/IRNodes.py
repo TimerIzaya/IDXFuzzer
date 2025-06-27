@@ -11,13 +11,14 @@ class IRNode:
         raise NotImplementedError
 
 
-class TryCatchStatement:
+class TryCatchStatement(IRNode):
     def __init__(self, tryBody: list[IRNode], catchBody: list[IRNode]):
         self.tryBody = tryBody
         self.catchBody = catchBody
 
     def to_dict(self):
         return {
+            "type": "TryCatchStatement",
             "tryBody": [t.to_dict() for t in self.tryBody],
             "catchBody": [c.to_dict() for c in self.catchBody],
         }
@@ -226,6 +227,11 @@ class IRNodeFactory:
                 name=d["name"]["raw"],
                 varType=IDBType(d["varType"]),
                 varLiteral=d["varLiteral"]
+            )
+        elif t == "TryCatchStatement":
+            return TryCatchStatement(
+                tryBody= [IRNodeFactory.from_dict(t) for t in d.get("tryBody", [])],
+                catchBody=[IRNodeFactory.from_dict(t) for t in d.get("catchBody", [])],
             )
         else:
             raise ValueError(f"Unknown IR node type: {t}")

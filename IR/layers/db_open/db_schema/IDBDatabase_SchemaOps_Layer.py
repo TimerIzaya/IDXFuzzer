@@ -1,10 +1,4 @@
-from socks import PRINTABLE_PROXY_TYPES
-
-from IR.IRNodes import AssignmentExpression
-from IR.context.IRContext import IRContext
 from IR.IRNodes import *
-from IR.context.IDBSchemaContext import IDBSchemaContext
-from IR.layers.Global import Global
 from IR.layers.Layer import LayerType, Layer
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_open.db_schema.db_schema_opt.AtomicSchemaOps import *
