@@ -241,6 +241,25 @@ def clear():
     nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=[])))
     return nodes
 
+def appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes):
+    if not useKeyRange:
+        nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    else:
+        stableArgs = copy.deepcopy(args)
+        stableKRAss = IDBDataGenerator.generateKeyRange(osName, stable=True)
+        stableArgs[-1] = stableKRAss.left
+        tryCatch = TryCatchStatement(
+            tryBody=[
+                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
+            ],
+            catchBody=[
+                stableKRAss,
+                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
+            ]
+        )
+        nodes.append(tryCatch)
+
+
 def count():
     METHOD_NAME = "count"
     nodes = []
@@ -266,22 +285,7 @@ def count():
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
-    if not useKeyRange:
-        nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
-    else:
-        stableArgs = copy.deepcopy(args)
-        stableKRAss = IDBDataGenerator.generateKeyRange(osName, stable=True)
-        stableArgs[-1] = stableKRAss.left
-        tryCatch = TryCatchStatement(
-            tryBody=[
-                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
-            ],
-            catchBody=[
-                stableKRAss,
-                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
-            ]
-        )
-        nodes.append(tryCatch)
+    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
     return nodes
 
 
@@ -298,11 +302,13 @@ def delete():
         raise RuntimeError("No active object store context")
 
     args = []
+    useKeyRange = False
     # 要么选一个key，要么选keyRange，可以删
     if random.random() > 0.5:
         keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
         nodes.append(keyRangeAssign)
         args.append(keyRangeAssign.left)
+        useKeyRange = True
     else:
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
@@ -312,7 +318,7 @@ def delete():
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
-    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
     return nodes
 
 
@@ -329,11 +335,13 @@ def get():
         raise RuntimeError("No active object store context")
 
     args = []
+    useKeyRange = False
     # 要么选一个key，要么选keyRange，可以删
     if random.random() > 0.5:
         keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
         nodes.append(keyRangeAssign)
         args.append(keyRangeAssign.left)
+        useKeyRange = True
     else:
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
@@ -343,7 +351,7 @@ def get():
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
-    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
     return nodes
 
 
@@ -361,12 +369,14 @@ def getAll():
 
     args = []
     r = random.random()
+    useKeyRange = False
     if r < 0.5:
         # 50%选query
         if random.random() < 0.5:
             keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
             nodes.append(keyRangeAssign)
             args.append(keyRangeAssign.left)
+            useKeyRange = True
         else:
             key = Global.smctx.pickRandomKey(osName)
             args.append(Literal(key))
@@ -380,7 +390,7 @@ def getAll():
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
-    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
     return nodes
 
 
@@ -398,12 +408,14 @@ def getAllKeys():
 
     args = []
     r = random.random()
+    useKeyRange = False
     if r < 0.5:
         # 50%选query
         if random.random() < 0.5:
             keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
             nodes.append(keyRangeAssign)
             args.append(keyRangeAssign.left)
+            useKeyRange = True
         else:
             key = Global.smctx.pickRandomKey(osName)
             args.append(Literal(key))
@@ -417,7 +429,7 @@ def getAllKeys():
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
-    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
     return nodes
 
 
@@ -434,11 +446,13 @@ def getKey():
         raise RuntimeError("No active object store context")
 
     args = []
+    useKeyRange = False
     # 50%选query
     if random.random() < 0.5:
         keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
         nodes.append(keyRangeAssign)
         args.append(keyRangeAssign.left)
+        useKeyRange = True
     else:
         key = Global.smctx.pickRandomKey(osName)
         args.append(Literal(key))
@@ -448,7 +462,7 @@ def getKey():
     recVar = Variable(meName, IDBType.IDBRequest)
     Global.irctx.registerVariable(recVar)
     nodes.append(VariableDeclaration(recVar.name))
-    nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
     return nodes
 
 
