@@ -241,230 +241,236 @@ def clear():
     nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=[])))
     return nodes
 
-def appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes):
-    if not useKeyRange:
+def declareVarToWelcome(METHOD_NAME, nodes):
+    meName = Global.irctx.newMeName(METHOD_NAME)
+    recVar = Variable(meName, IDBType.IDBRequest)
+    Global.irctx.registerVariable(recVar)
+    nodes.append(VariableDeclaration(recVar.name))
+    return recVar
+
+def useKeyRangeOrNot(nodes, recVar, osVar, os, METHOD_NAME, args):
+    if random.random() > 0.5:
+        # v = os.xxx()
         nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
     else:
+        # k = KeyRange.xxx()
+        # v = os.xxx(k)
+        keyRangeAssign = IDBDataGenerator.generateKeyRange(os)
+        args.append(keyRangeAssign.left)
+        # used to catch
         stableArgs = copy.deepcopy(args)
-        stableKRAss = IDBDataGenerator.generateKeyRange(osName, stable=True)
-        stableArgs[-1] = stableKRAss.left
+        stableKeyRangeAssign = IDBDataGenerator.generateKeyRange(os, stable=True)
+        stableArgs[-1] = stableKeyRangeAssign.left
         tryCatch = TryCatchStatement(
             tryBody=[
+                keyRangeAssign,
                 AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
             ],
             catchBody=[
-                stableKRAss,
+                stableKeyRangeAssign,
                 AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
             ]
         )
         nodes.append(tryCatch)
 
+def useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args):
+    # k = KeyRange.xxx()
+    # v = os.xxx(k)
+    keyRangeAssign = IDBDataGenerator.generateKeyRange(os)
+    args.append(keyRangeAssign.left)
+    # used to catch
+    stableArgs = copy.deepcopy(args)
+    stableKeyRangeAssign = IDBDataGenerator.generateKeyRange(os, stable=True)
+    stableArgs[-1] = stableKeyRangeAssign.left
+    tryCatch = TryCatchStatement(
+        tryBody=[
+            keyRangeAssign,
+            AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
+        ],
+        catchBody=[
+            stableKeyRangeAssign,
+            AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
+        ]
+    )
+    nodes.append(tryCatch)
 
 def count():
     METHOD_NAME = "count"
-    nodes = []
-
-    # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
     if osVar is None or osVar.varLiteral is None:
         raise RuntimeError("No OS var available for deleteIndex")
     osName = osVar.varLiteral
     if osName not in Global.smctx.currentDB.oss:
         raise RuntimeError("No active object store context")
+    oss = Global.smctx.currentDB.oss
+    if len(oss[osName].keys) == 0:
+        raise RuntimeError("No active keys context")
 
+    os = oss[osName]
+    nodes = []
     args = []
-    useKeyRange = False
-    if random.random() > 0.5:
-        keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
-        nodes.append(keyRangeAssign)
-        args.append(keyRangeAssign.left)
-        useKeyRange = True
-
-    # 返回一个IDBRequest，然后设置success或者error事件
-    meName = Global.irctx.newMeName(METHOD_NAME)
-    recVar = Variable(meName, IDBType.IDBRequest)
-    Global.irctx.registerVariable(recVar)
-    nodes.append(VariableDeclaration(recVar.name))
-    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
+    recVar = declareVarToWelcome(METHOD_NAME, nodes)
+    useKeyRangeOrNot(nodes, recVar, osVar, os, METHOD_NAME, args)
     return nodes
 
 
 def delete():
     METHOD_NAME = "delete"
-    nodes = []
-
-    # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
     if osVar is None or osVar.varLiteral is None:
         raise RuntimeError("No OS var available for deleteIndex")
     osName = osVar.varLiteral
     if osName not in Global.smctx.currentDB.oss:
         raise RuntimeError("No active object store context")
+    oss = Global.smctx.currentDB.oss
+    if len(oss[osName].keys) == 0:
+        raise RuntimeError("No active keys context")
 
+    os = oss[osName]
+    nodes = []
     args = []
-    useKeyRange = False
-    # 要么选一个key，要么选keyRange，可以删
-    if random.random() > 0.5:
-        keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
-        nodes.append(keyRangeAssign)
-        args.append(keyRangeAssign.left)
-        useKeyRange = True
-    else:
-        key = Global.smctx.pickRandomKey(osName)
-        args.append(Literal(key))
-
-    # 返回一个IDBRequest，然后设置success或者error事件
-    meName = Global.irctx.newMeName(METHOD_NAME)
-    recVar = Variable(meName, IDBType.IDBRequest)
-    Global.irctx.registerVariable(recVar)
-    nodes.append(VariableDeclaration(recVar.name))
-    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
+    recVar = declareVarToWelcome(METHOD_NAME, nodes)
+    useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
     return nodes
 
 
 def get():
     METHOD_NAME = "get"
-    nodes = []
-
-    # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
     if osVar is None or osVar.varLiteral is None:
         raise RuntimeError("No OS var available for deleteIndex")
     osName = osVar.varLiteral
     if osName not in Global.smctx.currentDB.oss:
         raise RuntimeError("No active object store context")
+    oss = Global.smctx.currentDB.oss
+    if len(oss[osName].keys) == 0:
+        raise RuntimeError("No active keys context")
 
+    os = oss[osName]
+    nodes = []
     args = []
-    useKeyRange = False
-    # 要么选一个key，要么选keyRange，可以删
-    if random.random() > 0.5:
-        keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
-        nodes.append(keyRangeAssign)
-        args.append(keyRangeAssign.left)
-        useKeyRange = True
-    else:
-        key = Global.smctx.pickRandomKey(osName)
-        args.append(Literal(key))
-
-    # 返回一个IDBRequest，然后设置success或者error事件
-    meName = Global.irctx.newMeName(METHOD_NAME)
-    recVar = Variable(meName, IDBType.IDBRequest)
-    Global.irctx.registerVariable(recVar)
-    nodes.append(VariableDeclaration(recVar.name))
-    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
+    recVar = declareVarToWelcome(METHOD_NAME, nodes)
+    useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
     return nodes
 
 
 def getAll():
     METHOD_NAME = "getAll"
-    nodes = []
-
-    # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
     if osVar is None or osVar.varLiteral is None:
         raise RuntimeError("No OS var available for deleteIndex")
     osName = osVar.varLiteral
     if osName not in Global.smctx.currentDB.oss:
         raise RuntimeError("No active object store context")
+    oss = Global.smctx.currentDB.oss
+    if len(oss[osName].keys) == 0:
+        raise RuntimeError("No active keys context")
 
+    os = oss[osName]
+    nodes = []
     args = []
-    r = random.random()
-    useKeyRange = False
-    if r < 0.5:
-        # 50%选query
-        if random.random() < 0.5:
-            keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
-            nodes.append(keyRangeAssign)
-            args.append(keyRangeAssign.left)
-            useKeyRange = True
-        else:
-            key = Global.smctx.pickRandomKey(osName)
-            args.append(Literal(key))
+    recVar = declareVarToWelcome(METHOD_NAME, nodes)
 
-        # 25%概率加入cnt
-        if random.random() < 0.5:
-            args.append(Literal(random.randint(0, 4294967295)))
-
-    # 返回一个IDBRequest，然后设置success或者error事件
-    meName = Global.irctx.newMeName(METHOD_NAME)
-    recVar = Variable(meName, IDBType.IDBRequest)
-    Global.irctx.registerVariable(recVar)
-    nodes.append(VariableDeclaration(recVar.name))
-    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
+    if random.random() > 0.5:
+        # v = os.xxx()
+        if random.random() > 0.5:
+            rand_num = random.randint(0, 2 ** 32)
+            args.append(Literal(rand_num))
+        nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    else:
+        # k = KeyRange.xxx()
+        # v = os.xxx(k)
+        keyRangeAssign = IDBDataGenerator.generateKeyRange(os)
+        args.append(keyRangeAssign.left)
+        # used to catch
+        stableArgs = copy.deepcopy(args)
+        stableKeyRangeAssign = IDBDataGenerator.generateKeyRange(os, stable=True)
+        stableArgs[-1] = stableKeyRangeAssign.left
+        if random.random() > 0.5:
+            rand_num = random.randint(0, 2 ** 32)
+            args.append(Literal(rand_num))
+        tryCatch = TryCatchStatement(
+            tryBody=[
+                keyRangeAssign,
+                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
+            ],
+            catchBody=[
+                stableKeyRangeAssign,
+                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
+            ]
+        )
+        nodes.append(tryCatch)
     return nodes
+
 
 
 def getAllKeys():
     METHOD_NAME = "getAllKeys"
-    nodes = []
-
-    # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
     if osVar is None or osVar.varLiteral is None:
         raise RuntimeError("No OS var available for deleteIndex")
     osName = osVar.varLiteral
     if osName not in Global.smctx.currentDB.oss:
         raise RuntimeError("No active object store context")
+    oss = Global.smctx.currentDB.oss
+    if len(oss[osName].keys) == 0:
+        raise RuntimeError("No active keys context")
 
+    os = oss[osName]
+    nodes = []
     args = []
-    r = random.random()
-    useKeyRange = False
-    if r < 0.5:
-        # 50%选query
-        if random.random() < 0.5:
-            keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
-            nodes.append(keyRangeAssign)
-            args.append(keyRangeAssign.left)
-            useKeyRange = True
-        else:
-            key = Global.smctx.pickRandomKey(osName)
-            args.append(Literal(key))
+    recVar = declareVarToWelcome(METHOD_NAME, nodes)
 
-        # 25%概率加入cnt
-        if random.random() < 0.5:
-            args.append(Literal(random.randint(0, 4294967295)))
-
-    # 返回一个IDBRequest，然后设置success或者error事件
-    meName = Global.irctx.newMeName(METHOD_NAME)
-    recVar = Variable(meName, IDBType.IDBRequest)
-    Global.irctx.registerVariable(recVar)
-    nodes.append(VariableDeclaration(recVar.name))
-    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
+    if random.random() > 0.5:
+        # v = os.xxx()
+        if random.random() > 0.5:
+            rand_num = random.randint(0, 2 ** 32)
+            args.append(Literal(rand_num))
+        nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+    else:
+        # k = KeyRange.xxx()
+        # v = os.xxx(k)
+        keyRangeAssign = IDBDataGenerator.generateKeyRange(os)
+        args.append(keyRangeAssign.left)
+        # used to catch
+        stableArgs = copy.deepcopy(args)
+        stableKeyRangeAssign = IDBDataGenerator.generateKeyRange(os, stable=True)
+        stableArgs[-1] = stableKeyRangeAssign.left
+        if random.random() > 0.5:
+            rand_num = random.randint(0, 2 ** 32)
+            args.append(Literal(rand_num))
+        tryCatch = TryCatchStatement(
+            tryBody=[
+                keyRangeAssign,
+                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
+            ],
+            catchBody=[
+                stableKeyRangeAssign,
+                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
+            ]
+        )
+        nodes.append(tryCatch)
     return nodes
 
 
 def getKey():
     METHOD_NAME = "getKey"
-    nodes = []
-
-    # 先找os变量以及它的literal
     osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
     if osVar is None or osVar.varLiteral is None:
         raise RuntimeError("No OS var available for deleteIndex")
     osName = osVar.varLiteral
     if osName not in Global.smctx.currentDB.oss:
         raise RuntimeError("No active object store context")
+    oss = Global.smctx.currentDB.oss
+    if len(oss[osName].keys) == 0:
+        raise RuntimeError("No active keys context")
 
+    os = oss[osName]
+    nodes = []
     args = []
-    useKeyRange = False
-    # 50%选query
-    if random.random() < 0.5:
-        keyRangeAssign = IDBDataGenerator.generateKeyRange(osName)
-        nodes.append(keyRangeAssign)
-        args.append(keyRangeAssign.left)
-        useKeyRange = True
-    else:
-        key = Global.smctx.pickRandomKey(osName)
-        args.append(Literal(key))
-
-    # 返回一个IDBRequest，然后设置success或者error事件
-    meName = Global.irctx.newMeName(METHOD_NAME)
-    recVar = Variable(meName, IDBType.IDBRequest)
-    Global.irctx.registerVariable(recVar)
-    nodes.append(VariableDeclaration(recVar.name))
-    appendKeyRange(useKeyRange, recVar, osVar, osName, METHOD_NAME, args, nodes)
+    recVar = declareVarToWelcome(METHOD_NAME, nodes)
+    useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
     return nodes
-
 
 def index():
     METHOD_NAME = "index"
@@ -539,8 +545,8 @@ AtomicSchemaWeights = {
     count: 5,
     delete: 5,
     get: 5,
-    getAll: 5,
-    getAllKeys: 5,
+    # getAll: 5,
+    # getAllKeys: 5,
     index: 5,
     put: 5,
 }

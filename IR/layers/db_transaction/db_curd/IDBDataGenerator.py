@@ -159,16 +159,8 @@ class IDBDataGenerator(BaseGenerator):
 
     # stable指的是稳定输出only，绝不会错, 等价于getkey
     @staticmethod
-    def generateKeyRange(osName: str, stable: bool = False) -> AssignmentExpression:
+    def generateKeyRange(os, stable: bool = False) -> AssignmentExpression:
         KEY_RANGE = "KeyRange"
-        if osName not in Global.smctx.currentDB.oss:
-            raise RuntimeError("No active object store context")
-        oss = Global.smctx.currentDB.oss
-        if len(oss[osName].keys) == 0:
-            raise RuntimeError("No active keys context")
-        os = oss[osName]
-        if os.keys.__len__() == 0:
-            raise RuntimeError("No active keys context")
 
         [lower, upper] = random.choices(os.keys, k=2)
 
