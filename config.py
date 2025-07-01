@@ -8,14 +8,9 @@ SCHEMA_FILE = os.path.join(BASE_DIR, "schema", "indexeddb_schema.json")
 
 FATHER = "window.indexedDB"
 
-IDBFactory_OpenDatabase_Layer = "IDBFactory_OpenDatabase_Layer"
-IDBOpenDBRequest_onsuccess_Layer = "IDBOpenDBRequest_onsuccess_Layer"
-IDBTransaction_ObjectStoreAccess_Layer = "IDBTransaction_ObjectStoreAccess_Layer"
-IDBObjectStore_DataOps_Layer = "IDBObjectStore_DataOps_Layer"
-
 OPTIONAL_JUMP = "__JUMP__"
 
 randomFuzzing = False
 
-class Consts:
-    TypeName = "typename"
+EDGE_TOTAL_COUNT = 7618971
+

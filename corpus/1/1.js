@@ -1,0 +1,52 @@
+let db;
+const openRequest = window.indexedDB.open('str_9240', '45')
+openRequest.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db = event.target.result;
+    var objectStore_0 = db.createObjectStore('objectStore_21', {keypath: 'saCZtU', autoIncrement: false});
+    var index_30 = objectStore_0.createIndex('index_30', 'test', {unique: true});
+    var add_0 = objectStore_0.add({f0_d: '<string>', f1_j: '<string>', f2_u: '<string>', f3_f: '<array>', f4_y: '<array>', f5_b: '<null>'}, 'bCEyxOZUmj');
+    var clear_0 = objectStore_0.clear();
+    var count_0 = objectStore_0.count();
+    var delete_0;
+    try{
+        KeyRange_0 = IDBKeyRange.bound('bCEyxOZUmj', 'bCEyxOZUmj', true, false);
+        delete_0 = objectStore_0.delete(KeyRange_0);
+    }
+    catch (e){
+        KeyRange_1 = IDBKeyRange.only('bCEyxOZUmj');
+        delete_0 = objectStore_0.delete(KeyRange_1);
+    }
+
+    var index_0 = objectStore_0.index('index_30');
+    var index_31 = objectStore_0.createIndex('index_31', 'test', {unique: true});
+    var index_32 = objectStore_0.createIndex('index_32', 'test');
+    var objectStore_1 = db.createObjectStore('objectStore_22', {keypath: 'QBdGHJiCyXa'});
+    var add_1 = objectStore_1.add({f0_a: '<number>', f1_e: '<string>'}, 'ATzzWiOesTOq');
+    var index_33 = objectStore_1.createIndex('index_33', 'test', {multiEntry: false});
+    var delete_1;
+    try{
+        KeyRange_2 = IDBKeyRange.only('ATzzWiOesTOq');
+        delete_1 = objectStore_1.delete(KeyRange_2);
+    }
+    catch (e){
+        KeyRange_3 = IDBKeyRange.only('ATzzWiOesTOq');
+        delete_1 = objectStore_1.delete(KeyRange_3);
+    }
+
+    var put_0 = objectStore_0.put({f0_k: '<boolean>', f1_e: '<boolean>', f2_e: '<object>', f3_g: '<null>'}, 'MXvu');
+    var index_1 = objectStore_1.index('index_33');
+    objectStore_0.deleteIndex('index_32')
+    var put_1 = objectStore_0.put({f0_c: '<null>', f1_q: '<string>'}, 'tjGA');
+    var index_34 = objectStore_1.createIndex('index_34', 'test', {unique: false, multiEntry: true});
+};
+const deleteRequest = indexedDB.deleteDatabase('str_9240')
+deleteRequest.onblocked = (event) => {
+    console.log('delete db onblocked triggered')
+};
+deleteRequest.onsuccess = (event) => {
+    console.log('delete db onsuccess triggered')
+};
+deleteRequest.onerror = (event) => {
+    console.log('delete db onerror triggered')
+};
