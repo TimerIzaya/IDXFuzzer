@@ -1,6 +1,9 @@
+import subprocess
+
 import numpy as np
 from pathlib import Path
-from typing import Union
+from typing import Union, List
+
 
 class EdgeBitmap:
     """
@@ -61,10 +64,44 @@ class EdgeBitmap:
         with open(path, "wb") as f:
             f.write(self._global.tobytes())
 
+    def run_and_update_from_html(self, html_path: str, run_cov_script: str = "coverage/run_cov.sh") -> List[int]:
+        """
+        调用 run_cov.sh 执行 HTML 文件，
+        仅当脚本因 timeout 正常退出（exit code 124）时，处理 /tmp 中生成的 bin 文件。
+        其他退出码视为异常，返回 [0, 0]。
+        """
+        tmp_dir = Path("/tmp")
+        before = set(tmp_dir.iterdir())
+
+        result = subprocess.run([run_cov_script, html_path], capture_output=True)
+
+        if result.returncode != 0:
+            print(f"[!] 脚本未按预期 timeout 退出（code={result.returncode}）")
+            print(result.stderr.decode().strip())
+            return [0, 0]
+
+        after = set(tmp_dir.iterdir())
+        new_bins = [f for f in (after - before) if f.suffix == ".bin"]
+        new_bins.sort(key=lambda f: f.stat().st_mtime)
+
+        if len(new_bins) < 2:
+            print(f"[!] 脚本生成的 bin 文件不足两个：{new_bins}")
+            return [0, 0]
+
+        new_edges = [self.update_from_file(str(f)) for f in new_bins[:2]]
+        return new_edges
+
 # ------------------ 用法示例 ------------------ #
 if __name__ == "__main__":
     bm = EdgeBitmap()  # 默认 16 MiB，可 EdgeBitmap(size=1<<20) 自定义
+    #
+    # for i in range(1, 6):
+    #     new1 = bm.update_from_file(f"bin/{i}.bin")
+    #     print(f"Run-1 新增边: {new1}")
 
-    for i in range(1, 6):
-        new1 = bm.update_from_file(f"bin/{i}.bin")
-        print(f"Run-1 新增边: {new1}")
+    newEdgeCnt = bm.run_and_update_from_html("/timer/IDXFuzzer/corpus/0/0.html", run_cov_script="/timer/IDXFuzzer/coverage/run_cov.sh")
+    print(newEdgeCnt)
+
+
+    newEdgeCnt = bm.run_and_update_from_html("/timer/IDXFuzzer/corpus/1/1.html", run_cov_script="/timer/IDXFuzzer/coverage/run_cov.sh")
+    print(newEdgeCnt)
