@@ -1,0 +1,332 @@
+let db;
+const openRequest = window.indexedDB.open('str_3574')
+openRequest.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db = event.target.result;
+    var objectStore_0 = db.createObjectStore('objectStore_519', {keypath: 'GKVeNzLsqjxE', autoIncrement: false});
+    var objectStore_1 = db.createObjectStore('objectStore_520', {autoIncrement: true});
+    db.deleteObjectStore('objectStore_519')
+    var index_480 = objectStore_1.createIndex('index_480', 'test', {unique: false});
+    objectStore_1.deleteIndex('index_480')
+    var objectStore_2 = db.createObjectStore('objectStore_521', {keypath: 'GVnjvWJx', autoIncrement: false});
+    var objectStore_3 = db.createObjectStore('objectStore_522', {autoIncrement: false});
+    db.deleteObjectStore('objectStore_520')
+    var objectStore_4 = db.createObjectStore('objectStore_523');
+    var clear_0 = objectStore_4.clear();
+    var add_0 = objectStore_4.add({f0_w: '<null>', f1_o: '<null>', f2_f: '<object>', f3_z: '<boolean>', f4_t: '<null>', f5_f: '<object>', f6_m: '<object>', f7_p: '<array>', f8_g: '<object>'}, 'KoMD');
+    var index_481 = objectStore_3.createIndex('index_481', 'test', {unique: false, multiEntry: true});
+    var index_482 = objectStore_2.createIndex('index_482', 'test', {unique: true, multiEntry: true});
+    var add_1 = objectStore_2.add({f0_e: '<null>', f1_b: '<null>'}, 'wtOh');
+    var put_0 = objectStore_2.put({f0_z: '<boolean>', f1_a: '<null>'}, 'MSg');
+    var add_2 = objectStore_3.add({f0_y: '<null>', f1_w: '<boolean>', f2_o: '<number>', f3_h: '<number>'}, 'mqXb');
+    var index_483 = objectStore_2.createIndex('index_483', 'test');
+    var put_1 = objectStore_4.put({f0_q: '<object>', f1_t: '<boolean>', f2_y: '<number>', f3_s: '<object>', f4_l: '<boolean>'}, 'CADGtYbfby');
+    var put_2 = objectStore_4.put({f0_l: '<boolean>', f1_j: '<boolean>', f2_b: '<array>', f3_h: '<number>', f4_f: '<null>'}, 'nbOeVYCKzeP');
+    var index_0 = objectStore_3.index('index_481');
+    var index_1 = objectStore_3.index('index_481');
+    var count_0 = objectStore_2.count();
+    db.deleteObjectStore('objectStore_522')
+    var count_1 = objectStore_2.count();
+    var index_484 = objectStore_2.createIndex('index_484', 'test');
+    var objectStore_5 = db.createObjectStore('objectStore_524', {keypath: 'YYOoLVt'});
+    var objectStore_6 = db.createObjectStore('objectStore_525', {autoIncrement: true});
+    var index_485 = objectStore_2.createIndex('index_485', 'test');
+    var index_486 = objectStore_4.createIndex('index_486', 'test', {unique: true});
+    db.deleteObjectStore('objectStore_524')
+    var index_487 = objectStore_6.createIndex('index_487', 'test', {unique: true});
+    var count_2;
+    try{
+        KeyRange_0 = IDBKeyRange.lowerBound('CADGtYbfby', true);
+        count_2 = objectStore_4.count(KeyRange_0);
+    }
+    catch (e){
+        KeyRange_1 = IDBKeyRange.only('CADGtYbfby');
+        count_2 = objectStore_4.count(KeyRange_1);
+    }
+
+    var add_3 = objectStore_6.add({f0_l: '<string>', f1_y: '<boolean>', f2_u: '<array>', f3_j: '<boolean>', f4_m: '<number>'}, 'KqCltarmzIyK');
+    var index_2 = objectStore_2.index('index_482');
+    var objectStore_7 = db.createObjectStore('objectStore_526', {keypath: 'SgmjUZEkyvwP', autoIncrement: false});
+    var put_3 = objectStore_4.put({f0_n: '<null>', f1_t: '<boolean>', f2_n: '<null>', f3_m: '<object>', f4_j: '<boolean>', f5_j: '<number>'}, 'NXYQXypBUNgv');
+    var index_488 = objectStore_2.createIndex('index_488', 'test', {unique: false, multiEntry: false});
+    var clear_1 = objectStore_4.clear();
+    var objectStore_8 = db.createObjectStore('objectStore_527');
+    var put_4 = objectStore_6.put({f0_d: '<boolean>'}, 'agGyOSAeMr');
+    var index_489 = objectStore_4.createIndex('index_489', 'test', {unique: false});
+    var get_0;
+    try{
+        KeyRange_2 = IDBKeyRange.only('agGyOSAeMr');
+        get_0 = objectStore_6.get(KeyRange_2);
+    }
+    catch (e){
+        KeyRange_3 = IDBKeyRange.only('KqCltarmzIyK');
+        get_0 = objectStore_6.get(KeyRange_3);
+    }
+
+    var index_490 = objectStore_4.createIndex('index_490', 'test');
+    db.deleteObjectStore('objectStore_523')
+    var add_4 = objectStore_8.add({f0_e: '<null>', f1_r: '<number>', f2_m: '<array>', f3_q: '<number>', f4_w: '<object>', f5_p: '<boolean>', f6_f: '<array>', f7_k: '<null>', f8_b: '<number>', f9_s: '<number>'}, 'nfhZkCM');
+    add_1.onsuccess = (event) => {
+        var count_3;
+        try{
+            KeyRange_4 = IDBKeyRange.bound('nfhZkCM', 'nfhZkCM', false, true);
+            count_3 = objectStore_8.count(KeyRange_4);
+        }
+        catch (e){
+            KeyRange_5 = IDBKeyRange.only('nfhZkCM');
+            count_3 = objectStore_8.count(KeyRange_5);
+        }
+
+        var get_1;
+        try{
+            KeyRange_6 = IDBKeyRange.bound('wtOh', 'wtOh', true, true);
+            get_1 = objectStore_2.get(KeyRange_6);
+        }
+        catch (e){
+            KeyRange_7 = IDBKeyRange.only('wtOh');
+            get_1 = objectStore_2.get(KeyRange_7);
+        }
+
+        var clear_2;
+        clear_2 = objectStore_2.clear();
+        count_2.onsuccess = (event) => {
+            db.deleteObjectStore('objectStore_521')
+            put_2.onsuccess = (event) => {
+                var objectStore_9;
+                objectStore_9 = db.createObjectStore('objectStore_528', {autoIncrement: false});
+                var index_491;
+                index_491 = objectStore_8.createIndex('index_491', 'test');
+                var put_5;
+                put_5 = objectStore_6.put({f0_u: '<number>', f1_f: '<null>', f2_a: '<number>', f3_a: '<object>', f4_h: '<null>', f5_p: '<boolean>'}, 'EnysdIEN');
+                get_0.onsuccess = (event) => {
+                    var put_6;
+                    put_6 = objectStore_8.put({f0_s: '<object>', f1_o: '<number>'}, 'AEIxmCH');
+                    add_0.onsuccess = (event) => {
+                        var clear_3;
+                        clear_3 = objectStore_8.clear();
+                        var add_5;
+                        add_5 = objectStore_7.add({f0_e: '<boolean>', f1_h: '<array>', f2_t: '<object>', f3_o: '<string>', f4_y: '<number>', f5_t: '<string>', f6_t: '<string>', f7_i: '<number>', f8_b: '<object>'}, 'kyRZoBPj');
+                        var get_2;
+                        try{
+                            KeyRange_8 = IDBKeyRange.only('nfhZkCM');
+                            get_2 = objectStore_8.get(KeyRange_8);
+                        }
+                        catch (e){
+                            KeyRange_9 = IDBKeyRange.only('AEIxmCH');
+                            get_2 = objectStore_8.get(KeyRange_9);
+                        }
+
+                        clear_2.onsuccess = (event) => {
+                            var get_3;
+                            try{
+                                KeyRange_10 = IDBKeyRange.only('nfhZkCM');
+                                get_3 = objectStore_8.get(KeyRange_10);
+                            }
+                            catch (e){
+                                KeyRange_11 = IDBKeyRange.only('nfhZkCM');
+                                get_3 = objectStore_8.get(KeyRange_11);
+                            }
+
+                            var index_492;
+                            index_492 = objectStore_9.createIndex('index_492', 'test', {multiEntry: false});
+                            var add_6;
+                            add_6 = objectStore_9.add({f0_w: '<boolean>', f1_x: '<object>', f2_e: '<number>'}, 'duJwzlXb');
+                            var index_493;
+                            index_493 = objectStore_8.createIndex('index_493', 'test', {unique: true, multiEntry: false});
+                            put_1.onsuccess = (event) => {
+                                db.deleteObjectStore('objectStore_526')
+                                var index_494;
+                                index_494 = objectStore_9.createIndex('index_494', 'test', {multiEntry: false});
+                                var objectStore_10;
+                                objectStore_10 = db.createObjectStore('objectStore_529', {autoIncrement: false});
+                                count_3.onsuccess = (event) => {
+                                    var delete_0;
+                                    try{
+                                        KeyRange_12 = IDBKeyRange.bound('EnysdIEN', 'KqCltarmzIyK', true, false);
+                                        delete_0 = objectStore_6.delete(KeyRange_12);
+                                    }
+                                    catch (e){
+                                        KeyRange_13 = IDBKeyRange.only('EnysdIEN');
+                                        delete_0 = objectStore_6.delete(KeyRange_13);
+                                    }
+
+                                    var index_495;
+                                    index_495 = objectStore_9.createIndex('index_495', 'test', {unique: true, multiEntry: false});
+                                    var get_4;
+                                    try{
+                                        KeyRange_14 = IDBKeyRange.bound('KqCltarmzIyK', 'EnysdIEN', true, true);
+                                        get_4 = objectStore_6.get(KeyRange_14);
+                                    }
+                                    catch (e){
+                                        KeyRange_15 = IDBKeyRange.only('KqCltarmzIyK');
+                                        get_4 = objectStore_6.get(KeyRange_15);
+                                    }
+
+                                    var put_7;
+                                    put_7 = objectStore_9.put({f0_d: '<number>', f1_k: '<number>', f2_u: '<object>'}, 'PQtfCZrxVlXA');
+                                    var index_3;
+                                    index_3 = objectStore_6.index('index_487');
+                                    get_3.onsuccess = (event) => {
+                                        var index_496;
+                                        index_496 = objectStore_9.createIndex('index_496', 'test', {multiEntry: false});
+                                        var add_7;
+                                        add_7 = objectStore_9.add({f0_i: '<string>', f1_k: '<string>', f2_c: '<array>', f3_l: '<number>', f4_i: '<string>', f5_i: '<object>', f6_k: '<object>'}, 'rvfwbfERf');
+                                        get_0.onsuccess = (event) => {
+                                            var index_497;
+                                            index_497 = objectStore_6.createIndex('index_497', 'test');
+                                            var objectStore_11;
+                                            objectStore_11 = db.createObjectStore('objectStore_530', {autoIncrement: false});
+                                            var put_8;
+                                            put_8 = objectStore_10.put({f0_t: '<object>', f1_z: '<object>', f2_i: '<boolean>', f3_r: '<boolean>', f4_o: '<boolean>', f5_v: '<null>', f6_m: '<array>', f7_y: '<string>', f8_i: '<null>', f9_h: '<array>'}, 'ortVIDeDX');
+                                            var get_5;
+                                            try{
+                                                KeyRange_16 = IDBKeyRange.bound('ortVIDeDX', 'ortVIDeDX', true, true);
+                                                get_5 = objectStore_10.get(KeyRange_16);
+                                            }
+                                            catch (e){
+                                                KeyRange_17 = IDBKeyRange.only('ortVIDeDX');
+                                                get_5 = objectStore_10.get(KeyRange_17);
+                                            }
+
+                                            var count_4;
+                                            try{
+                                                KeyRange_18 = IDBKeyRange.lowerBound('rvfwbfERf', true);
+                                                count_4 = objectStore_9.count(KeyRange_18);
+                                            }
+                                            catch (e){
+                                                KeyRange_19 = IDBKeyRange.only('rvfwbfERf');
+                                                count_4 = objectStore_9.count(KeyRange_19);
+                                            }
+
+                                            db.deleteObjectStore('objectStore_525')
+                                        };
+                                        var index_4;
+                                        index_4 = objectStore_9.index('index_494');
+                                        var index_498;
+                                        index_498 = objectStore_10.createIndex('index_498', 'test', {unique: false});
+                                        db.deleteObjectStore('objectStore_527')
+                                        var clear_4;
+                                        clear_4 = objectStore_9.clear();
+                                        var put_9;
+                                        put_9 = objectStore_9.put({f0_g: '<boolean>', f1_w: '<string>', f2_t: '<boolean>', f3_a: '<null>', f4_i: '<string>', f5_x: '<object>', f6_f: '<boolean>', f7_j: '<array>', f8_a: '<object>'}, 'Vkpw');
+                                    };
+                                    db.deleteObjectStore('objectStore_529')
+                                    var index_5;
+                                    index_5 = objectStore_9.index('index_492');
+                                    var index_499;
+                                    index_499 = objectStore_9.createIndex('index_499', 'test', {multiEntry: false});
+                                    var index_6;
+                                    index_6 = objectStore_9.index('index_492');
+                                    var index_500;
+                                    index_500 = objectStore_9.createIndex('index_500', 'test', {unique: false, multiEntry: false});
+                                };
+                                var index_501;
+                                index_501 = objectStore_9.createIndex('index_501', 'test', {multiEntry: false});
+                                var delete_1;
+                                try{
+                                    KeyRange_20 = IDBKeyRange.bound('PQtfCZrxVlXA', 'duJwzlXb', true, false);
+                                    delete_1 = objectStore_9.delete(KeyRange_20);
+                                }
+                                catch (e){
+                                    KeyRange_21 = IDBKeyRange.only('PQtfCZrxVlXA');
+                                    delete_1 = objectStore_9.delete(KeyRange_21);
+                                }
+
+                                var index_7;
+                                index_7 = objectStore_9.index('index_501');
+                                var index_502;
+                                index_502 = objectStore_9.createIndex('index_502', 'test', {unique: false, multiEntry: true});
+                                var get_6;
+                                try{
+                                    KeyRange_22 = IDBKeyRange.bound('rvfwbfERf', 'Vkpw', false, true);
+                                    get_6 = objectStore_9.get(KeyRange_22);
+                                }
+                                catch (e){
+                                    KeyRange_23 = IDBKeyRange.only('rvfwbfERf');
+                                    get_6 = objectStore_9.get(KeyRange_23);
+                                }
+
+                            };
+                            var put_10;
+                            put_10 = objectStore_9.put({f0_l: '<string>', f1_m: '<null>', f2_p: '<number>', f3_s: '<object>', f4_q: '<object>', f5_f: '<object>', f6_i: '<array>'}, 'deDaGLoZibn');
+                            var delete_2;
+                            try{
+                                KeyRange_24 = IDBKeyRange.lowerBound('rvfwbfERf', true);
+                                delete_2 = objectStore_9.delete(KeyRange_24);
+                            }
+                            catch (e){
+                                KeyRange_25 = IDBKeyRange.only('PQtfCZrxVlXA');
+                                delete_2 = objectStore_9.delete(KeyRange_25);
+                            }
+
+                            var delete_3;
+                            try{
+                                KeyRange_26 = IDBKeyRange.bound('deDaGLoZibn', 'PQtfCZrxVlXA', false, true);
+                                delete_3 = objectStore_9.delete(KeyRange_26);
+                            }
+                            catch (e){
+                                KeyRange_27 = IDBKeyRange.only('PQtfCZrxVlXA');
+                                delete_3 = objectStore_9.delete(KeyRange_27);
+                            }
+
+                            var count_5;
+                            count_5 = objectStore_9.count();
+                        };
+                        var get_7;
+                        try{
+                            KeyRange_28 = IDBKeyRange.lowerBound('rvfwbfERf', false);
+                            get_7 = objectStore_9.get(KeyRange_28);
+                        }
+                        catch (e){
+                            KeyRange_29 = IDBKeyRange.only('rvfwbfERf');
+                            get_7 = objectStore_9.get(KeyRange_29);
+                        }
+
+                        var index_503;
+                        index_503 = objectStore_9.createIndex('index_503', 'test', {unique: true, multiEntry: false});
+                        db.deleteObjectStore('objectStore_528')
+                    };
+                };
+            };
+            var objectStore_12;
+            objectStore_12 = db.createObjectStore('objectStore_531');
+        };
+        var objectStore_13;
+        objectStore_13 = db.createObjectStore('objectStore_532', {autoIncrement: true});
+        db.deleteObjectStore('objectStore_532')
+    };
+    var objectStore_14 = db.createObjectStore('objectStore_533', {keypath: 'ZLe.nbQ.eUqvdzV.DfTKnZJOXp.FwifMADrWkTM.PRL.bqmV.NOdlagk', autoIncrement: true});
+    var put_11 = objectStore_14.put({f0_j: '<null>', f1_z: '<array>', f2_p: '<object>'}, 'wUqKMN');
+    var objectStore_15 = db.createObjectStore('objectStore_534', {keypath: 'wdpeY', autoIncrement: false});
+    var get_8;
+    try{
+        KeyRange_30 = IDBKeyRange.bound('wUqKMN', 'wUqKMN', false, true);
+        get_8 = objectStore_14.get(KeyRange_30);
+    }
+    catch (e){
+        KeyRange_31 = IDBKeyRange.only('wUqKMN');
+        get_8 = objectStore_14.get(KeyRange_31);
+    }
+
+    var index_504 = objectStore_14.createIndex('index_504', 'test', {multiEntry: true});
+    var index_505 = objectStore_14.createIndex('index_505', 'test', {multiEntry: false});
+    var index_506 = objectStore_15.createIndex('index_506', 'test');
+    var count_6 = objectStore_14.count();
+    var add_8 = objectStore_14.add({f0_s: '<null>', f1_m: '<string>', f2_n: '<boolean>', f3_r: '<null>'}, 'nfqxxuLvPVdv');
+    var index_507 = objectStore_15.createIndex('index_507', 'test');
+    var count_7 = objectStore_14.count();
+    var objectStore_16 = db.createObjectStore('objectStore_535');
+    var objectStore_17 = db.createObjectStore('objectStore_536', {autoIncrement: false});
+    var put_12 = objectStore_16.put({f0_b: '<object>', f1_w: '<boolean>', f2_r: '<number>', f3_t: '<object>', f4_k: '<array>', f5_k: '<string>', f6_j: '<object>'}, 'uZhSPOSOXms');
+    var index_508 = objectStore_16.createIndex('index_508', 'test', {unique: true});
+};
+const deleteRequest = indexedDB.deleteDatabase('str_8545')
+deleteRequest.onblocked = (event) => {
+    console.log('delete db onblocked triggered')
+};
+deleteRequest.onsuccess = (event) => {
+    console.log('delete db onsuccess triggered')
+};
+deleteRequest.onerror = (event) => {
+    console.log('delete db onerror triggered')
+};

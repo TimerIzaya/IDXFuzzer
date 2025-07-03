@@ -46,7 +46,7 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
                 if IDBRequestHandler is not None:
                     body.append(IDBRequestHandler)
 
-        print(f"[IDBDatabase_SchemaOps_Layer]: actualOpt / expectOpt = {IDBDatabase_SchemaOps_Layer.actualOpt} / {IDBDatabase_SchemaOps_Layer.expectOpCnt}")
+        # print(f"[IDBDatabase_SchemaOps_Layer]: actualOpt / expectOpt = {IDBDatabase_SchemaOps_Layer.actualOpt} / {IDBDatabase_SchemaOps_Layer.expectOpCnt}")
         return Layer(
             IDBDatabase_SchemaOps_Layer.name,
             body,

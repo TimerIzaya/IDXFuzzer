@@ -3,6 +3,7 @@ import os
 import shutil
 from IR.IRFuzzer import generate_ir_program
 from IR.layers.Layer import Layer
+from coverage.run_cov import GlobalEdgeBitmap, run_and_update_coverage
 from lifter.IRToJSLifter import IRToJSLifter
 
 def wrap_js_in_html(js_path: str, html_output_path: str):
@@ -24,7 +25,7 @@ def wrap_js_in_html(js_path: str, html_output_path: str):
             // todo
         {js_code_safe}
         
-            setTimeout(() => {{window.close();}}, 1000);
+            setTimeout(() => {{window.close();}}, 200);
           </script>
         </body>
         </html>
@@ -79,6 +80,21 @@ def genCase(number) -> str:
 
 if __name__ == "__main__":
     initCorpus()
-    for no in range(0, 10):
+    bm = GlobalEdgeBitmap()
+    ROOT = "/timer/IDXFuzzer/"
+
+    no = 0
+    while True:
         JSPath = genCase(no)
-        wrap_js_in_html(f'corpus/{no}/{no}.js', f'corpus/{no}/{no}.html')
+        JS_PATH = f"corpus/{no}/{no}.js"
+        HTML_PATH = f'corpus/{no}/{no}.html'
+        wrap_js_in_html(JS_PATH, HTML_PATH)
+        new_edges, coverage = run_and_update_coverage(HTML_PATH, bm)
+        if new_edges == 0:
+            shutil.rmtree(f"{ROOT}/corpus/{no}")
+        else:
+            no = no + 1
+        print(f"[Run {no}] edge: {new_edges}/{coverage}")
+
+
+
