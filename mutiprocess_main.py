@@ -87,7 +87,8 @@ def run_one_case(bitmap_name):
                 return np.count_nonzero(self.bitmap) - before
 
     tmp = TmpBitmap(local_bitmap)
-    new_edges, _ = run_and_update_coverage(html_path, tmp)
+    new_edges,coverage, total_time = run_and_update_coverage(html_path, tmp)
+    print(f"new_edge: {new_edges:<8} time: {total_time} ms     coverage: {coverage:.4f}%")
 
     if new_edges:
         shared = SharedGlobalEdgeBitmap(name=bitmap_name, create=False)
