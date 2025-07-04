@@ -1,0 +1,3006 @@
+{
+  "name": "IDBRootLayer",
+  "layer_type": "\u8c03\u7528\u578b",
+  "ir_nodes": [
+    {
+      "type": "VariableDeclaration",
+      "kind": "let",
+      "name": {
+        "type": "Identifier",
+        "raw": "db"
+      }
+    }
+  ],
+  "children": [
+    {
+      "name": "IDBFactory_OpenDatabase_Layer",
+      "layer_type": "\u8c03\u7528\u578b",
+      "ir_nodes": [
+        {
+          "type": "CallExpression",
+          "callee_object": {
+            "type": "Identifier",
+            "raw": "window.indexedDB"
+          },
+          "callee_method": "open",
+          "args": [
+            {
+              "type": "Literal",
+              "value": "str_9405"
+            },
+            {
+              "type": "Literal",
+              "value": "20"
+            }
+          ],
+          "result_name": "openRequest"
+        }
+      ],
+      "children": [
+        {
+          "name": "IDBOpenDBRequest_onupgradeneeded_Layer",
+          "layer_type": "\u6ce8\u518c\u578b",
+          "ir_nodes": [
+            {
+              "type": "AssignmentExpression",
+              "left": {
+                "type": "MemberExpression",
+                "object": {
+                  "type": "Identifier",
+                  "raw": "openRequest"
+                },
+                "property": "onupgradeneeded"
+              },
+              "right": {
+                "type": "FunctionExpression",
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "raw": "event"
+                  }
+                ],
+                "body": [
+                  {
+                    "type": "ConsoleLog",
+                    "value": {
+                      "type": "Literal",
+                      "value": "db onupgraded trigered"
+                    }
+                  },
+                  {
+                    "type": "AssignmentExpression",
+                    "left": {
+                      "type": "Identifier",
+                      "raw": "db"
+                    },
+                    "right": {
+                      "type": "MemberExpression",
+                      "object": {
+                        "type": "MemberExpression",
+                        "object": {
+                          "type": "Identifier",
+                          "raw": "event"
+                        },
+                        "property": "target"
+                      },
+                      "property": "result"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "children": [
+            {
+              "name": "IDBDatabase_SchemaOps_Layer",
+              "layer_type": "\u6267\u884c\u578b",
+              "ir_nodes": [
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "objectStore_0"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "objectStore_0"
+                    },
+                    "varType": "IDBObjectStore",
+                    "varLiteral": "objectStore_184"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "db"
+                    },
+                    "callee_method": "createObjectStore",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "objectStore_184"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "autoIncrement": true
+                        }
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "index_173"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "index_173"
+                    },
+                    "varType": "IDBIndex",
+                    "varLiteral": "index_173"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_0"
+                    },
+                    "callee_method": "createIndex",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "index_173"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "test"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "unique": true
+                        }
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "index_174"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "index_174"
+                    },
+                    "varType": "IDBIndex",
+                    "varLiteral": "index_174"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_0"
+                    },
+                    "callee_method": "createIndex",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "index_174"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "test"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "multiEntry": true
+                        }
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "add_0"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "add_0"
+                    },
+                    "varType": "IDBRequest",
+                    "varLiteral": null
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_0"
+                    },
+                    "callee_method": "add",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "f0_j": "<object>",
+                          "f1_j": "<array>",
+                          "f2_y": "<null>"
+                        }
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "cAzs"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "index_175"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "index_175"
+                    },
+                    "varType": "IDBIndex",
+                    "varLiteral": "index_175"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_0"
+                    },
+                    "callee_method": "createIndex",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "index_175"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "test"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "unique": true,
+                          "multiEntry": true
+                        }
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "objectStore_1"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "objectStore_1"
+                    },
+                    "varType": "IDBObjectStore",
+                    "varLiteral": "objectStore_185"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "db"
+                    },
+                    "callee_method": "createObjectStore",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "objectStore_185"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "put_0"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "put_0"
+                    },
+                    "varType": "IDBRequest",
+                    "varLiteral": null
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_0"
+                    },
+                    "callee_method": "put",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "f0_h": "<object>",
+                          "f1_s": "<array>",
+                          "f2_b": "<object>"
+                        }
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "AqFbpniex"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "index_176"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "index_176"
+                    },
+                    "varType": "IDBIndex",
+                    "varLiteral": "index_176"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_1"
+                    },
+                    "callee_method": "createIndex",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "index_176"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "test"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "objectStore_2"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "objectStore_2"
+                    },
+                    "varType": "IDBObjectStore",
+                    "varLiteral": "objectStore_186"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "db"
+                    },
+                    "callee_method": "createObjectStore",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "objectStore_186"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "index_177"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "index_177"
+                    },
+                    "varType": "IDBIndex",
+                    "varLiteral": "index_177"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_0"
+                    },
+                    "callee_method": "createIndex",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "index_177"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "test"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "index_178"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "index_178"
+                    },
+                    "varType": "IDBIndex",
+                    "varLiteral": "index_178"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_2"
+                    },
+                    "callee_method": "createIndex",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "index_178"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "test"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "multiEntry": true
+                        }
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "add_1"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "add_1"
+                    },
+                    "varType": "IDBRequest",
+                    "varLiteral": null
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_2"
+                    },
+                    "callee_method": "add",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "f0_r": "<number>",
+                          "f1_x": "<boolean>",
+                          "f2_w": "<array>"
+                        }
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "jGfFVIeGf"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "put_1"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "put_1"
+                    },
+                    "varType": "IDBRequest",
+                    "varLiteral": null
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_1"
+                    },
+                    "callee_method": "put",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": {
+                          "f0_l": "<object>"
+                        }
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "LMUbWXOjUR"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "CallExpression",
+                  "callee_object": {
+                    "type": "Identifier",
+                    "raw": "db"
+                  },
+                  "callee_method": "deleteObjectStore",
+                  "args": [
+                    {
+                      "type": "Literal",
+                      "value": "objectStore_184"
+                    }
+                  ],
+                  "result_name": null
+                },
+                {
+                  "type": "CallExpression",
+                  "callee_object": {
+                    "type": "Identifier",
+                    "raw": "db"
+                  },
+                  "callee_method": "deleteObjectStore",
+                  "args": [
+                    {
+                      "type": "Literal",
+                      "value": "objectStore_186"
+                    }
+                  ],
+                  "result_name": null
+                },
+                {
+                  "type": "VariableDeclaration",
+                  "kind": "var",
+                  "name": {
+                    "type": "Identifier",
+                    "raw": "index_179"
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "Variable",
+                    "name": {
+                      "type": "Identifier",
+                      "raw": "index_179"
+                    },
+                    "varType": "IDBIndex",
+                    "varLiteral": "index_179"
+                  },
+                  "right": {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "objectStore_1"
+                    },
+                    "callee_method": "createIndex",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "index_179"
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "test"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                },
+                {
+                  "type": "AssignmentExpression",
+                  "left": {
+                    "type": "MemberExpression",
+                    "object": {
+                      "type": "Identifier",
+                      "raw": "put_0"
+                    },
+                    "property": "onsuccess"
+                  },
+                  "right": {
+                    "type": "FunctionExpression",
+                    "params": [
+                      {
+                        "type": "Identifier",
+                        "raw": "event"
+                      }
+                    ],
+                    "body": [
+                      {
+                        "type": "VariableDeclaration",
+                        "kind": "var",
+                        "name": {
+                          "type": "Identifier",
+                          "raw": "count_0"
+                        }
+                      },
+                      {
+                        "type": "AssignmentExpression",
+                        "left": {
+                          "type": "Variable",
+                          "name": {
+                            "type": "Identifier",
+                            "raw": "count_0"
+                          },
+                          "varType": "IDBRequest",
+                          "varLiteral": null
+                        },
+                        "right": {
+                          "type": "CallExpression",
+                          "callee_object": {
+                            "type": "Identifier",
+                            "raw": "objectStore_1"
+                          },
+                          "callee_method": "count",
+                          "args": [],
+                          "result_name": null
+                        }
+                      },
+                      {
+                        "type": "VariableDeclaration",
+                        "kind": "var",
+                        "name": {
+                          "type": "Identifier",
+                          "raw": "index_0"
+                        }
+                      },
+                      {
+                        "type": "AssignmentExpression",
+                        "left": {
+                          "type": "Variable",
+                          "name": {
+                            "type": "Identifier",
+                            "raw": "index_0"
+                          },
+                          "varType": "IDBIndex",
+                          "varLiteral": "index_176"
+                        },
+                        "right": {
+                          "type": "CallExpression",
+                          "callee_object": {
+                            "type": "Identifier",
+                            "raw": "objectStore_1"
+                          },
+                          "callee_method": "index",
+                          "args": [
+                            {
+                              "type": "Literal",
+                              "value": "index_176"
+                            }
+                          ],
+                          "result_name": null
+                        }
+                      },
+                      {
+                        "type": "VariableDeclaration",
+                        "kind": "var",
+                        "name": {
+                          "type": "Identifier",
+                          "raw": "objectStore_3"
+                        }
+                      },
+                      {
+                        "type": "AssignmentExpression",
+                        "left": {
+                          "type": "Variable",
+                          "name": {
+                            "type": "Identifier",
+                            "raw": "objectStore_3"
+                          },
+                          "varType": "IDBObjectStore",
+                          "varLiteral": "objectStore_187"
+                        },
+                        "right": {
+                          "type": "CallExpression",
+                          "callee_object": {
+                            "type": "Identifier",
+                            "raw": "db"
+                          },
+                          "callee_method": "createObjectStore",
+                          "args": [
+                            {
+                              "type": "Literal",
+                              "value": "objectStore_187"
+                            },
+                            {
+                              "type": "Literal",
+                              "value": {
+                                "keypath": "VtFNQoSfGhIY",
+                                "autoIncrement": false
+                              }
+                            }
+                          ],
+                          "result_name": null
+                        }
+                      },
+                      {
+                        "type": "VariableDeclaration",
+                        "kind": "var",
+                        "name": {
+                          "type": "Identifier",
+                          "raw": "objectStore_4"
+                        }
+                      },
+                      {
+                        "type": "AssignmentExpression",
+                        "left": {
+                          "type": "Variable",
+                          "name": {
+                            "type": "Identifier",
+                            "raw": "objectStore_4"
+                          },
+                          "varType": "IDBObjectStore",
+                          "varLiteral": "objectStore_188"
+                        },
+                        "right": {
+                          "type": "CallExpression",
+                          "callee_object": {
+                            "type": "Identifier",
+                            "raw": "db"
+                          },
+                          "callee_method": "createObjectStore",
+                          "args": [
+                            {
+                              "type": "Literal",
+                              "value": "objectStore_188"
+                            }
+                          ],
+                          "result_name": null
+                        }
+                      },
+                      {
+                        "type": "AssignmentExpression",
+                        "left": {
+                          "type": "MemberExpression",
+                          "object": {
+                            "type": "Identifier",
+                            "raw": "add_0"
+                          },
+                          "property": "onsuccess"
+                        },
+                        "right": {
+                          "type": "FunctionExpression",
+                          "params": [
+                            {
+                              "type": "Identifier",
+                              "raw": "event"
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "VariableDeclaration",
+                              "kind": "var",
+                              "name": {
+                                "type": "Identifier",
+                                "raw": "put_2"
+                              }
+                            },
+                            {
+                              "type": "AssignmentExpression",
+                              "left": {
+                                "type": "Variable",
+                                "name": {
+                                  "type": "Identifier",
+                                  "raw": "put_2"
+                                },
+                                "varType": "IDBRequest",
+                                "varLiteral": null
+                              },
+                              "right": {
+                                "type": "CallExpression",
+                                "callee_object": {
+                                  "type": "Identifier",
+                                  "raw": "objectStore_4"
+                                },
+                                "callee_method": "put",
+                                "args": [
+                                  {
+                                    "type": "Literal",
+                                    "value": {
+                                      "f0_c": "<object>",
+                                      "f1_y": "<object>",
+                                      "f2_u": "<string>",
+                                      "f3_x": "<null>",
+                                      "f4_d": "<boolean>"
+                                    }
+                                  },
+                                  {
+                                    "type": "Literal",
+                                    "value": "IZRlzCnn"
+                                  }
+                                ],
+                                "result_name": null
+                              }
+                            },
+                            {
+                              "type": "VariableDeclaration",
+                              "kind": "var",
+                              "name": {
+                                "type": "Identifier",
+                                "raw": "clear_0"
+                              }
+                            },
+                            {
+                              "type": "AssignmentExpression",
+                              "left": {
+                                "type": "Variable",
+                                "name": {
+                                  "type": "Identifier",
+                                  "raw": "clear_0"
+                                },
+                                "varType": "IDBRequest",
+                                "varLiteral": null
+                              },
+                              "right": {
+                                "type": "CallExpression",
+                                "callee_object": {
+                                  "type": "Identifier",
+                                  "raw": "objectStore_1"
+                                },
+                                "callee_method": "clear",
+                                "args": [],
+                                "result_name": null
+                              }
+                            },
+                            {
+                              "type": "AssignmentExpression",
+                              "left": {
+                                "type": "MemberExpression",
+                                "object": {
+                                  "type": "Identifier",
+                                  "raw": "count_0"
+                                },
+                                "property": "onsuccess"
+                              },
+                              "right": {
+                                "type": "FunctionExpression",
+                                "params": [
+                                  {
+                                    "type": "Identifier",
+                                    "raw": "event"
+                                  }
+                                ],
+                                "body": [
+                                  {
+                                    "type": "VariableDeclaration",
+                                    "kind": "var",
+                                    "name": {
+                                      "type": "Identifier",
+                                      "raw": "index_180"
+                                    }
+                                  },
+                                  {
+                                    "type": "AssignmentExpression",
+                                    "left": {
+                                      "type": "Variable",
+                                      "name": {
+                                        "type": "Identifier",
+                                        "raw": "index_180"
+                                      },
+                                      "varType": "IDBIndex",
+                                      "varLiteral": "index_180"
+                                    },
+                                    "right": {
+                                      "type": "CallExpression",
+                                      "callee_object": {
+                                        "type": "Identifier",
+                                        "raw": "objectStore_1"
+                                      },
+                                      "callee_method": "createIndex",
+                                      "args": [
+                                        {
+                                          "type": "Literal",
+                                          "value": "index_180"
+                                        },
+                                        {
+                                          "type": "Literal",
+                                          "value": "test"
+                                        },
+                                        {
+                                          "type": "Literal",
+                                          "value": {
+                                            "unique": false
+                                          }
+                                        }
+                                      ],
+                                      "result_name": null
+                                    }
+                                  },
+                                  {
+                                    "type": "VariableDeclaration",
+                                    "kind": "var",
+                                    "name": {
+                                      "type": "Identifier",
+                                      "raw": "index_181"
+                                    }
+                                  },
+                                  {
+                                    "type": "AssignmentExpression",
+                                    "left": {
+                                      "type": "Variable",
+                                      "name": {
+                                        "type": "Identifier",
+                                        "raw": "index_181"
+                                      },
+                                      "varType": "IDBIndex",
+                                      "varLiteral": "index_181"
+                                    },
+                                    "right": {
+                                      "type": "CallExpression",
+                                      "callee_object": {
+                                        "type": "Identifier",
+                                        "raw": "objectStore_1"
+                                      },
+                                      "callee_method": "createIndex",
+                                      "args": [
+                                        {
+                                          "type": "Literal",
+                                          "value": "index_181"
+                                        },
+                                        {
+                                          "type": "Literal",
+                                          "value": "test"
+                                        }
+                                      ],
+                                      "result_name": null
+                                    }
+                                  },
+                                  {
+                                    "type": "VariableDeclaration",
+                                    "kind": "var",
+                                    "name": {
+                                      "type": "Identifier",
+                                      "raw": "objectStore_5"
+                                    }
+                                  },
+                                  {
+                                    "type": "AssignmentExpression",
+                                    "left": {
+                                      "type": "Variable",
+                                      "name": {
+                                        "type": "Identifier",
+                                        "raw": "objectStore_5"
+                                      },
+                                      "varType": "IDBObjectStore",
+                                      "varLiteral": "objectStore_189"
+                                    },
+                                    "right": {
+                                      "type": "CallExpression",
+                                      "callee_object": {
+                                        "type": "Identifier",
+                                        "raw": "db"
+                                      },
+                                      "callee_method": "createObjectStore",
+                                      "args": [
+                                        {
+                                          "type": "Literal",
+                                          "value": "objectStore_189"
+                                        },
+                                        {
+                                          "type": "Literal",
+                                          "value": {
+                                            "autoIncrement": true
+                                          }
+                                        }
+                                      ],
+                                      "result_name": null
+                                    }
+                                  },
+                                  {
+                                    "type": "VariableDeclaration",
+                                    "kind": "var",
+                                    "name": {
+                                      "type": "Identifier",
+                                      "raw": "index_182"
+                                    }
+                                  },
+                                  {
+                                    "type": "AssignmentExpression",
+                                    "left": {
+                                      "type": "Variable",
+                                      "name": {
+                                        "type": "Identifier",
+                                        "raw": "index_182"
+                                      },
+                                      "varType": "IDBIndex",
+                                      "varLiteral": "index_182"
+                                    },
+                                    "right": {
+                                      "type": "CallExpression",
+                                      "callee_object": {
+                                        "type": "Identifier",
+                                        "raw": "objectStore_1"
+                                      },
+                                      "callee_method": "createIndex",
+                                      "args": [
+                                        {
+                                          "type": "Literal",
+                                          "value": "index_182"
+                                        },
+                                        {
+                                          "type": "Literal",
+                                          "value": "test"
+                                        },
+                                        {
+                                          "type": "Literal",
+                                          "value": {
+                                            "unique": true,
+                                            "multiEntry": true
+                                          }
+                                        }
+                                      ],
+                                      "result_name": null
+                                    }
+                                  },
+                                  {
+                                    "type": "AssignmentExpression",
+                                    "left": {
+                                      "type": "MemberExpression",
+                                      "object": {
+                                        "type": "Identifier",
+                                        "raw": "count_0"
+                                      },
+                                      "property": "onsuccess"
+                                    },
+                                    "right": {
+                                      "type": "FunctionExpression",
+                                      "params": [
+                                        {
+                                          "type": "Identifier",
+                                          "raw": "event"
+                                        }
+                                      ],
+                                      "body": [
+                                        {
+                                          "type": "VariableDeclaration",
+                                          "kind": "var",
+                                          "name": {
+                                            "type": "Identifier",
+                                            "raw": "delete_0"
+                                          }
+                                        },
+                                        {
+                                          "type": "TryCatchStatement",
+                                          "tryBody": [
+                                            {
+                                              "type": "AssignmentExpression",
+                                              "left": {
+                                                "type": "Variable",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "KeyRange_0"
+                                                },
+                                                "varType": "IDBRequest",
+                                                "varLiteral": null
+                                              },
+                                              "right": {
+                                                "type": "CallExpression",
+                                                "callee_object": {
+                                                  "type": "Identifier",
+                                                  "raw": "IDBKeyRange"
+                                                },
+                                                "callee_method": "bound",
+                                                "args": [
+                                                  {
+                                                    "type": "Literal",
+                                                    "value": "IZRlzCnn"
+                                                  },
+                                                  {
+                                                    "type": "Literal",
+                                                    "value": "IZRlzCnn"
+                                                  },
+                                                  {
+                                                    "type": "Literal",
+                                                    "value": true
+                                                  },
+                                                  {
+                                                    "type": "Literal",
+                                                    "value": true
+                                                  }
+                                                ],
+                                                "result_name": null
+                                              }
+                                            },
+                                            {
+                                              "type": "AssignmentExpression",
+                                              "left": {
+                                                "type": "Variable",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "delete_0"
+                                                },
+                                                "varType": "IDBRequest",
+                                                "varLiteral": null
+                                              },
+                                              "right": {
+                                                "type": "CallExpression",
+                                                "callee_object": {
+                                                  "type": "Identifier",
+                                                  "raw": "objectStore_4"
+                                                },
+                                                "callee_method": "delete",
+                                                "args": [
+                                                  {
+                                                    "type": "Variable",
+                                                    "name": {
+                                                      "type": "Identifier",
+                                                      "raw": "KeyRange_0"
+                                                    },
+                                                    "varType": "IDBRequest",
+                                                    "varLiteral": null
+                                                  }
+                                                ],
+                                                "result_name": null
+                                              }
+                                            }
+                                          ],
+                                          "catchBody": [
+                                            {
+                                              "type": "AssignmentExpression",
+                                              "left": {
+                                                "type": "Variable",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "KeyRange_1"
+                                                },
+                                                "varType": "IDBRequest",
+                                                "varLiteral": null
+                                              },
+                                              "right": {
+                                                "type": "CallExpression",
+                                                "callee_object": {
+                                                  "type": "Identifier",
+                                                  "raw": "IDBKeyRange"
+                                                },
+                                                "callee_method": "only",
+                                                "args": [
+                                                  {
+                                                    "type": "Literal",
+                                                    "value": "IZRlzCnn"
+                                                  }
+                                                ],
+                                                "result_name": null
+                                              }
+                                            },
+                                            {
+                                              "type": "AssignmentExpression",
+                                              "left": {
+                                                "type": "Variable",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "delete_0"
+                                                },
+                                                "varType": "IDBRequest",
+                                                "varLiteral": null
+                                              },
+                                              "right": {
+                                                "type": "CallExpression",
+                                                "callee_object": {
+                                                  "type": "Identifier",
+                                                  "raw": "objectStore_4"
+                                                },
+                                                "callee_method": "delete",
+                                                "args": [
+                                                  {
+                                                    "type": "Variable",
+                                                    "name": {
+                                                      "type": "Identifier",
+                                                      "raw": "KeyRange_1"
+                                                    },
+                                                    "varType": "IDBRequest",
+                                                    "varLiteral": null
+                                                  }
+                                                ],
+                                                "result_name": null
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "AssignmentExpression",
+                                          "left": {
+                                            "type": "MemberExpression",
+                                            "object": {
+                                              "type": "Identifier",
+                                              "raw": "put_1"
+                                            },
+                                            "property": "onsuccess"
+                                          },
+                                          "right": {
+                                            "type": "FunctionExpression",
+                                            "params": [
+                                              {
+                                                "type": "Identifier",
+                                                "raw": "event"
+                                              }
+                                            ],
+                                            "body": [
+                                              {
+                                                "type": "VariableDeclaration",
+                                                "kind": "var",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "add_2"
+                                                }
+                                              },
+                                              {
+                                                "type": "AssignmentExpression",
+                                                "left": {
+                                                  "type": "Variable",
+                                                  "name": {
+                                                    "type": "Identifier",
+                                                    "raw": "add_2"
+                                                  },
+                                                  "varType": "IDBRequest",
+                                                  "varLiteral": null
+                                                },
+                                                "right": {
+                                                  "type": "CallExpression",
+                                                  "callee_object": {
+                                                    "type": "Identifier",
+                                                    "raw": "objectStore_3"
+                                                  },
+                                                  "callee_method": "add",
+                                                  "args": [
+                                                    {
+                                                      "type": "Literal",
+                                                      "value": {
+                                                        "f0_z": "<number>",
+                                                        "f1_d": "<string>",
+                                                        "f2_o": "<number>",
+                                                        "f3_a": "<string>",
+                                                        "f4_u": "<boolean>",
+                                                        "f5_p": "<number>",
+                                                        "f6_d": "<null>"
+                                                      }
+                                                    },
+                                                    {
+                                                      "type": "Literal",
+                                                      "value": "KZqtavOBMin"
+                                                    }
+                                                  ],
+                                                  "result_name": null
+                                                }
+                                              },
+                                              {
+                                                "type": "VariableDeclaration",
+                                                "kind": "var",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "index_1"
+                                                }
+                                              },
+                                              {
+                                                "type": "AssignmentExpression",
+                                                "left": {
+                                                  "type": "Variable",
+                                                  "name": {
+                                                    "type": "Identifier",
+                                                    "raw": "index_1"
+                                                  },
+                                                  "varType": "IDBIndex",
+                                                  "varLiteral": "index_180"
+                                                },
+                                                "right": {
+                                                  "type": "CallExpression",
+                                                  "callee_object": {
+                                                    "type": "Identifier",
+                                                    "raw": "objectStore_1"
+                                                  },
+                                                  "callee_method": "index",
+                                                  "args": [
+                                                    {
+                                                      "type": "Literal",
+                                                      "value": "index_180"
+                                                    }
+                                                  ],
+                                                  "result_name": null
+                                                }
+                                              },
+                                              {
+                                                "type": "VariableDeclaration",
+                                                "kind": "var",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "get_0"
+                                                }
+                                              },
+                                              {
+                                                "type": "TryCatchStatement",
+                                                "tryBody": [
+                                                  {
+                                                    "type": "AssignmentExpression",
+                                                    "left": {
+                                                      "type": "Variable",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "KeyRange_2"
+                                                      },
+                                                      "varType": "IDBRequest",
+                                                      "varLiteral": null
+                                                    },
+                                                    "right": {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "IDBKeyRange"
+                                                      },
+                                                      "callee_method": "lowerBound",
+                                                      "args": [
+                                                        {
+                                                          "type": "Literal",
+                                                          "value": "LMUbWXOjUR"
+                                                        },
+                                                        {
+                                                          "type": "Literal",
+                                                          "value": false
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "AssignmentExpression",
+                                                    "left": {
+                                                      "type": "Variable",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "get_0"
+                                                      },
+                                                      "varType": "IDBRequest",
+                                                      "varLiteral": null
+                                                    },
+                                                    "right": {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "objectStore_1"
+                                                      },
+                                                      "callee_method": "get",
+                                                      "args": [
+                                                        {
+                                                          "type": "Variable",
+                                                          "name": {
+                                                            "type": "Identifier",
+                                                            "raw": "KeyRange_2"
+                                                          },
+                                                          "varType": "IDBRequest",
+                                                          "varLiteral": null
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    }
+                                                  }
+                                                ],
+                                                "catchBody": [
+                                                  {
+                                                    "type": "AssignmentExpression",
+                                                    "left": {
+                                                      "type": "Variable",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "KeyRange_3"
+                                                      },
+                                                      "varType": "IDBRequest",
+                                                      "varLiteral": null
+                                                    },
+                                                    "right": {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "IDBKeyRange"
+                                                      },
+                                                      "callee_method": "only",
+                                                      "args": [
+                                                        {
+                                                          "type": "Literal",
+                                                          "value": "LMUbWXOjUR"
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "AssignmentExpression",
+                                                    "left": {
+                                                      "type": "Variable",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "get_0"
+                                                      },
+                                                      "varType": "IDBRequest",
+                                                      "varLiteral": null
+                                                    },
+                                                    "right": {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "objectStore_1"
+                                                      },
+                                                      "callee_method": "get",
+                                                      "args": [
+                                                        {
+                                                          "type": "Variable",
+                                                          "name": {
+                                                            "type": "Identifier",
+                                                            "raw": "KeyRange_3"
+                                                          },
+                                                          "varType": "IDBRequest",
+                                                          "varLiteral": null
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    }
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "VariableDeclaration",
+                                                "kind": "var",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "index_183"
+                                                }
+                                              },
+                                              {
+                                                "type": "AssignmentExpression",
+                                                "left": {
+                                                  "type": "Variable",
+                                                  "name": {
+                                                    "type": "Identifier",
+                                                    "raw": "index_183"
+                                                  },
+                                                  "varType": "IDBIndex",
+                                                  "varLiteral": "index_183"
+                                                },
+                                                "right": {
+                                                  "type": "CallExpression",
+                                                  "callee_object": {
+                                                    "type": "Identifier",
+                                                    "raw": "objectStore_5"
+                                                  },
+                                                  "callee_method": "createIndex",
+                                                  "args": [
+                                                    {
+                                                      "type": "Literal",
+                                                      "value": "index_183"
+                                                    },
+                                                    {
+                                                      "type": "Literal",
+                                                      "value": "test"
+                                                    },
+                                                    {
+                                                      "type": "Literal",
+                                                      "value": {
+                                                        "unique": true,
+                                                        "multiEntry": false
+                                                      }
+                                                    }
+                                                  ],
+                                                  "result_name": null
+                                                }
+                                              },
+                                              {
+                                                "type": "VariableDeclaration",
+                                                "kind": "var",
+                                                "name": {
+                                                  "type": "Identifier",
+                                                  "raw": "get_1"
+                                                }
+                                              },
+                                              {
+                                                "type": "TryCatchStatement",
+                                                "tryBody": [
+                                                  {
+                                                    "type": "AssignmentExpression",
+                                                    "left": {
+                                                      "type": "Variable",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "KeyRange_4"
+                                                      },
+                                                      "varType": "IDBRequest",
+                                                      "varLiteral": null
+                                                    },
+                                                    "right": {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "IDBKeyRange"
+                                                      },
+                                                      "callee_method": "lowerBound",
+                                                      "args": [
+                                                        {
+                                                          "type": "Literal",
+                                                          "value": "LMUbWXOjUR"
+                                                        },
+                                                        {
+                                                          "type": "Literal",
+                                                          "value": true
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "AssignmentExpression",
+                                                    "left": {
+                                                      "type": "Variable",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "get_1"
+                                                      },
+                                                      "varType": "IDBRequest",
+                                                      "varLiteral": null
+                                                    },
+                                                    "right": {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "objectStore_1"
+                                                      },
+                                                      "callee_method": "get",
+                                                      "args": [
+                                                        {
+                                                          "type": "Variable",
+                                                          "name": {
+                                                            "type": "Identifier",
+                                                            "raw": "KeyRange_4"
+                                                          },
+                                                          "varType": "IDBRequest",
+                                                          "varLiteral": null
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    }
+                                                  }
+                                                ],
+                                                "catchBody": [
+                                                  {
+                                                    "type": "AssignmentExpression",
+                                                    "left": {
+                                                      "type": "Variable",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "KeyRange_5"
+                                                      },
+                                                      "varType": "IDBRequest",
+                                                      "varLiteral": null
+                                                    },
+                                                    "right": {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "IDBKeyRange"
+                                                      },
+                                                      "callee_method": "only",
+                                                      "args": [
+                                                        {
+                                                          "type": "Literal",
+                                                          "value": "LMUbWXOjUR"
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "AssignmentExpression",
+                                                    "left": {
+                                                      "type": "Variable",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "get_1"
+                                                      },
+                                                      "varType": "IDBRequest",
+                                                      "varLiteral": null
+                                                    },
+                                                    "right": {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "objectStore_1"
+                                                      },
+                                                      "callee_method": "get",
+                                                      "args": [
+                                                        {
+                                                          "type": "Variable",
+                                                          "name": {
+                                                            "type": "Identifier",
+                                                            "raw": "KeyRange_5"
+                                                          },
+                                                          "varType": "IDBRequest",
+                                                          "varLiteral": null
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    }
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "AssignmentExpression",
+                                                "left": {
+                                                  "type": "MemberExpression",
+                                                  "object": {
+                                                    "type": "Identifier",
+                                                    "raw": "add_2"
+                                                  },
+                                                  "property": "onsuccess"
+                                                },
+                                                "right": {
+                                                  "type": "FunctionExpression",
+                                                  "params": [
+                                                    {
+                                                      "type": "Identifier",
+                                                      "raw": "event"
+                                                    }
+                                                  ],
+                                                  "body": [
+                                                    {
+                                                      "type": "VariableDeclaration",
+                                                      "kind": "var",
+                                                      "name": {
+                                                        "type": "Identifier",
+                                                        "raw": "count_1"
+                                                      }
+                                                    },
+                                                    {
+                                                      "type": "AssignmentExpression",
+                                                      "left": {
+                                                        "type": "Variable",
+                                                        "name": {
+                                                          "type": "Identifier",
+                                                          "raw": "count_1"
+                                                        },
+                                                        "varType": "IDBRequest",
+                                                        "varLiteral": null
+                                                      },
+                                                      "right": {
+                                                        "type": "CallExpression",
+                                                        "callee_object": {
+                                                          "type": "Identifier",
+                                                          "raw": "objectStore_1"
+                                                        },
+                                                        "callee_method": "count",
+                                                        "args": [],
+                                                        "result_name": null
+                                                      }
+                                                    },
+                                                    {
+                                                      "type": "CallExpression",
+                                                      "callee_object": {
+                                                        "type": "Identifier",
+                                                        "raw": "db"
+                                                      },
+                                                      "callee_method": "deleteObjectStore",
+                                                      "args": [
+                                                        {
+                                                          "type": "Literal",
+                                                          "value": "objectStore_188"
+                                                        }
+                                                      ],
+                                                      "result_name": null
+                                                    },
+                                                    {
+                                                      "type": "AssignmentExpression",
+                                                      "left": {
+                                                        "type": "MemberExpression",
+                                                        "object": {
+                                                          "type": "Identifier",
+                                                          "raw": "get_0"
+                                                        },
+                                                        "property": "onsuccess"
+                                                      },
+                                                      "right": {
+                                                        "type": "FunctionExpression",
+                                                        "params": [
+                                                          {
+                                                            "type": "Identifier",
+                                                            "raw": "event"
+                                                          }
+                                                        ],
+                                                        "body": [
+                                                          {
+                                                            "type": "VariableDeclaration",
+                                                            "kind": "var",
+                                                            "name": {
+                                                              "type": "Identifier",
+                                                              "raw": "objectStore_6"
+                                                            }
+                                                          },
+                                                          {
+                                                            "type": "AssignmentExpression",
+                                                            "left": {
+                                                              "type": "Variable",
+                                                              "name": {
+                                                                "type": "Identifier",
+                                                                "raw": "objectStore_6"
+                                                              },
+                                                              "varType": "IDBObjectStore",
+                                                              "varLiteral": "objectStore_190"
+                                                            },
+                                                            "right": {
+                                                              "type": "CallExpression",
+                                                              "callee_object": {
+                                                                "type": "Identifier",
+                                                                "raw": "db"
+                                                              },
+                                                              "callee_method": "createObjectStore",
+                                                              "args": [
+                                                                {
+                                                                  "type": "Literal",
+                                                                  "value": "objectStore_190"
+                                                                },
+                                                                {
+                                                                  "type": "Literal",
+                                                                  "value": {
+                                                                    "autoIncrement": false
+                                                                  }
+                                                                }
+                                                              ],
+                                                              "result_name": null
+                                                            }
+                                                          },
+                                                          {
+                                                            "type": "AssignmentExpression",
+                                                            "left": {
+                                                              "type": "MemberExpression",
+                                                              "object": {
+                                                                "type": "Identifier",
+                                                                "raw": "put_0"
+                                                              },
+                                                              "property": "onsuccess"
+                                                            },
+                                                            "right": {
+                                                              "type": "FunctionExpression",
+                                                              "params": [
+                                                                {
+                                                                  "type": "Identifier",
+                                                                  "raw": "event"
+                                                                }
+                                                              ],
+                                                              "body": [
+                                                                {
+                                                                  "type": "VariableDeclaration",
+                                                                  "kind": "var",
+                                                                  "name": {
+                                                                    "type": "Identifier",
+                                                                    "raw": "add_3"
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "AssignmentExpression",
+                                                                  "left": {
+                                                                    "type": "Variable",
+                                                                    "name": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "add_3"
+                                                                    },
+                                                                    "varType": "IDBRequest",
+                                                                    "varLiteral": null
+                                                                  },
+                                                                  "right": {
+                                                                    "type": "CallExpression",
+                                                                    "callee_object": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "objectStore_3"
+                                                                    },
+                                                                    "callee_method": "add",
+                                                                    "args": [
+                                                                      {
+                                                                        "type": "Literal",
+                                                                        "value": {
+                                                                          "f0_k": "<string>",
+                                                                          "f1_c": "<array>",
+                                                                          "f2_e": "<array>",
+                                                                          "f3_s": "<object>",
+                                                                          "f4_w": "<boolean>",
+                                                                          "f5_m": "<object>",
+                                                                          "f6_x": "<array>"
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "Literal",
+                                                                        "value": "lAggvoy"
+                                                                      }
+                                                                    ],
+                                                                    "result_name": null
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "CallExpression",
+                                                                  "callee_object": {
+                                                                    "type": "Identifier",
+                                                                    "raw": "db"
+                                                                  },
+                                                                  "callee_method": "deleteObjectStore",
+                                                                  "args": [
+                                                                    {
+                                                                      "type": "Literal",
+                                                                      "value": "objectStore_187"
+                                                                    }
+                                                                  ],
+                                                                  "result_name": null
+                                                                },
+                                                                {
+                                                                  "type": "VariableDeclaration",
+                                                                  "kind": "var",
+                                                                  "name": {
+                                                                    "type": "Identifier",
+                                                                    "raw": "clear_1"
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "AssignmentExpression",
+                                                                  "left": {
+                                                                    "type": "Variable",
+                                                                    "name": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "clear_1"
+                                                                    },
+                                                                    "varType": "IDBRequest",
+                                                                    "varLiteral": null
+                                                                  },
+                                                                  "right": {
+                                                                    "type": "CallExpression",
+                                                                    "callee_object": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "objectStore_6"
+                                                                    },
+                                                                    "callee_method": "clear",
+                                                                    "args": [],
+                                                                    "result_name": null
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "VariableDeclaration",
+                                                                  "kind": "var",
+                                                                  "name": {
+                                                                    "type": "Identifier",
+                                                                    "raw": "objectStore_7"
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "AssignmentExpression",
+                                                                  "left": {
+                                                                    "type": "Variable",
+                                                                    "name": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "objectStore_7"
+                                                                    },
+                                                                    "varType": "IDBObjectStore",
+                                                                    "varLiteral": "objectStore_191"
+                                                                  },
+                                                                  "right": {
+                                                                    "type": "CallExpression",
+                                                                    "callee_object": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "db"
+                                                                    },
+                                                                    "callee_method": "createObjectStore",
+                                                                    "args": [
+                                                                      {
+                                                                        "type": "Literal",
+                                                                        "value": "objectStore_191"
+                                                                      },
+                                                                      {
+                                                                        "type": "Literal",
+                                                                        "value": {
+                                                                          "autoIncrement": true
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "result_name": null
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "AssignmentExpression",
+                                                                  "left": {
+                                                                    "type": "MemberExpression",
+                                                                    "object": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "add_1"
+                                                                    },
+                                                                    "property": "onsuccess"
+                                                                  },
+                                                                  "right": {
+                                                                    "type": "FunctionExpression",
+                                                                    "params": [
+                                                                      {
+                                                                        "type": "Identifier",
+                                                                        "raw": "event"
+                                                                      }
+                                                                    ],
+                                                                    "body": [
+                                                                      {
+                                                                        "type": "VariableDeclaration",
+                                                                        "kind": "var",
+                                                                        "name": {
+                                                                          "type": "Identifier",
+                                                                          "raw": "index_184"
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "AssignmentExpression",
+                                                                        "left": {
+                                                                          "type": "Variable",
+                                                                          "name": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "index_184"
+                                                                          },
+                                                                          "varType": "IDBIndex",
+                                                                          "varLiteral": "index_184"
+                                                                        },
+                                                                        "right": {
+                                                                          "type": "CallExpression",
+                                                                          "callee_object": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "objectStore_1"
+                                                                          },
+                                                                          "callee_method": "createIndex",
+                                                                          "args": [
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": "index_184"
+                                                                            },
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": "test"
+                                                                            },
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": {
+                                                                                "unique": true,
+                                                                                "multiEntry": false
+                                                                              }
+                                                                            }
+                                                                          ],
+                                                                          "result_name": null
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "AssignmentExpression",
+                                                                        "left": {
+                                                                          "type": "MemberExpression",
+                                                                          "object": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "count_1"
+                                                                          },
+                                                                          "property": "onsuccess"
+                                                                        },
+                                                                        "right": {
+                                                                          "type": "FunctionExpression",
+                                                                          "params": [
+                                                                            {
+                                                                              "type": "Identifier",
+                                                                              "raw": "event"
+                                                                            }
+                                                                          ],
+                                                                          "body": [
+                                                                            {
+                                                                              "type": "VariableDeclaration",
+                                                                              "kind": "var",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "objectStore_8"
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "AssignmentExpression",
+                                                                              "left": {
+                                                                                "type": "Variable",
+                                                                                "name": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "objectStore_8"
+                                                                                },
+                                                                                "varType": "IDBObjectStore",
+                                                                                "varLiteral": "objectStore_192"
+                                                                              },
+                                                                              "right": {
+                                                                                "type": "CallExpression",
+                                                                                "callee_object": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "db"
+                                                                                },
+                                                                                "callee_method": "createObjectStore",
+                                                                                "args": [
+                                                                                  {
+                                                                                    "type": "Literal",
+                                                                                    "value": "objectStore_192"
+                                                                                  }
+                                                                                ],
+                                                                                "result_name": null
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "VariableDeclaration",
+                                                                              "kind": "var",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "clear_2"
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "AssignmentExpression",
+                                                                              "left": {
+                                                                                "type": "Variable",
+                                                                                "name": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "clear_2"
+                                                                                },
+                                                                                "varType": "IDBRequest",
+                                                                                "varLiteral": null
+                                                                              },
+                                                                              "right": {
+                                                                                "type": "CallExpression",
+                                                                                "callee_object": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "objectStore_1"
+                                                                                },
+                                                                                "callee_method": "clear",
+                                                                                "args": [],
+                                                                                "result_name": null
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "VariableDeclaration",
+                                                                              "kind": "var",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "index_185"
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "AssignmentExpression",
+                                                                              "left": {
+                                                                                "type": "Variable",
+                                                                                "name": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "index_185"
+                                                                                },
+                                                                                "varType": "IDBIndex",
+                                                                                "varLiteral": "index_185"
+                                                                              },
+                                                                              "right": {
+                                                                                "type": "CallExpression",
+                                                                                "callee_object": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "objectStore_5"
+                                                                                },
+                                                                                "callee_method": "createIndex",
+                                                                                "args": [
+                                                                                  {
+                                                                                    "type": "Literal",
+                                                                                    "value": "index_185"
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "Literal",
+                                                                                    "value": "test"
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "Literal",
+                                                                                    "value": {
+                                                                                      "unique": false
+                                                                                    }
+                                                                                  }
+                                                                                ],
+                                                                                "result_name": null
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "VariableDeclaration",
+                                                                              "kind": "var",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "objectStore_9"
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "AssignmentExpression",
+                                                                              "left": {
+                                                                                "type": "Variable",
+                                                                                "name": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "objectStore_9"
+                                                                                },
+                                                                                "varType": "IDBObjectStore",
+                                                                                "varLiteral": "objectStore_193"
+                                                                              },
+                                                                              "right": {
+                                                                                "type": "CallExpression",
+                                                                                "callee_object": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "db"
+                                                                                },
+                                                                                "callee_method": "createObjectStore",
+                                                                                "args": [
+                                                                                  {
+                                                                                    "type": "Literal",
+                                                                                    "value": "objectStore_193"
+                                                                                  }
+                                                                                ],
+                                                                                "result_name": null
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "VariableDeclaration",
+                                                                              "kind": "var",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "objectStore_10"
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "AssignmentExpression",
+                                                                              "left": {
+                                                                                "type": "Variable",
+                                                                                "name": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "objectStore_10"
+                                                                                },
+                                                                                "varType": "IDBObjectStore",
+                                                                                "varLiteral": "objectStore_194"
+                                                                              },
+                                                                              "right": {
+                                                                                "type": "CallExpression",
+                                                                                "callee_object": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "db"
+                                                                                },
+                                                                                "callee_method": "createObjectStore",
+                                                                                "args": [
+                                                                                  {
+                                                                                    "type": "Literal",
+                                                                                    "value": "objectStore_194"
+                                                                                  }
+                                                                                ],
+                                                                                "result_name": null
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "CallExpression",
+                                                                              "callee_object": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "db"
+                                                                              },
+                                                                              "callee_method": "deleteObjectStore",
+                                                                              "args": [
+                                                                                {
+                                                                                  "type": "Literal",
+                                                                                  "value": "objectStore_190"
+                                                                                }
+                                                                              ],
+                                                                              "result_name": null
+                                                                            },
+                                                                            {
+                                                                              "type": "VariableDeclaration",
+                                                                              "kind": "var",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "put_3"
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "AssignmentExpression",
+                                                                              "left": {
+                                                                                "type": "Variable",
+                                                                                "name": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "put_3"
+                                                                                },
+                                                                                "varType": "IDBRequest",
+                                                                                "varLiteral": null
+                                                                              },
+                                                                              "right": {
+                                                                                "type": "CallExpression",
+                                                                                "callee_object": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "objectStore_10"
+                                                                                },
+                                                                                "callee_method": "put",
+                                                                                "args": [
+                                                                                  {
+                                                                                    "type": "Literal",
+                                                                                    "value": {
+                                                                                      "f0_f": "<string>",
+                                                                                      "f1_d": "<number>",
+                                                                                      "f2_m": "<null>",
+                                                                                      "f3_f": "<null>",
+                                                                                      "f4_i": "<array>",
+                                                                                      "f5_r": "<number>",
+                                                                                      "f6_g": "<object>",
+                                                                                      "f7_l": "<number>",
+                                                                                      "f8_r": "<null>",
+                                                                                      "f9_l": "<object>"
+                                                                                    }
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "Literal",
+                                                                                    "value": "tUFlIUixJqhG"
+                                                                                  }
+                                                                                ],
+                                                                                "result_name": null
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "VariableDeclaration",
+                                                                              "kind": "var",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "count_2"
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "AssignmentExpression",
+                                                                              "left": {
+                                                                                "type": "Variable",
+                                                                                "name": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "count_2"
+                                                                                },
+                                                                                "varType": "IDBRequest",
+                                                                                "varLiteral": null
+                                                                              },
+                                                                              "right": {
+                                                                                "type": "CallExpression",
+                                                                                "callee_object": {
+                                                                                  "type": "Identifier",
+                                                                                  "raw": "objectStore_1"
+                                                                                },
+                                                                                "callee_method": "count",
+                                                                                "args": [],
+                                                                                "result_name": null
+                                                                              }
+                                                                            },
+                                                                            {
+                                                                              "type": "CallExpression",
+                                                                              "callee_object": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "db"
+                                                                              },
+                                                                              "callee_method": "deleteObjectStore",
+                                                                              "args": [
+                                                                                {
+                                                                                  "type": "Literal",
+                                                                                  "value": "objectStore_189"
+                                                                                }
+                                                                              ],
+                                                                              "result_name": null
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "VariableDeclaration",
+                                                                        "kind": "var",
+                                                                        "name": {
+                                                                          "type": "Identifier",
+                                                                          "raw": "objectStore_11"
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "AssignmentExpression",
+                                                                        "left": {
+                                                                          "type": "Variable",
+                                                                          "name": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "objectStore_11"
+                                                                          },
+                                                                          "varType": "IDBObjectStore",
+                                                                          "varLiteral": "objectStore_195"
+                                                                        },
+                                                                        "right": {
+                                                                          "type": "CallExpression",
+                                                                          "callee_object": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "db"
+                                                                          },
+                                                                          "callee_method": "createObjectStore",
+                                                                          "args": [
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": "objectStore_195"
+                                                                            },
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": {
+                                                                                "keypath": "SoYOPIUFoVM",
+                                                                                "autoIncrement": true
+                                                                              }
+                                                                            }
+                                                                          ],
+                                                                          "result_name": null
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "VariableDeclaration",
+                                                                        "kind": "var",
+                                                                        "name": {
+                                                                          "type": "Identifier",
+                                                                          "raw": "index_186"
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "AssignmentExpression",
+                                                                        "left": {
+                                                                          "type": "Variable",
+                                                                          "name": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "index_186"
+                                                                          },
+                                                                          "varType": "IDBIndex",
+                                                                          "varLiteral": "index_186"
+                                                                        },
+                                                                        "right": {
+                                                                          "type": "CallExpression",
+                                                                          "callee_object": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "objectStore_7"
+                                                                          },
+                                                                          "callee_method": "createIndex",
+                                                                          "args": [
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": "index_186"
+                                                                            },
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": "test"
+                                                                            }
+                                                                          ],
+                                                                          "result_name": null
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "VariableDeclaration",
+                                                                        "kind": "var",
+                                                                        "name": {
+                                                                          "type": "Identifier",
+                                                                          "raw": "index_187"
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "AssignmentExpression",
+                                                                        "left": {
+                                                                          "type": "Variable",
+                                                                          "name": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "index_187"
+                                                                          },
+                                                                          "varType": "IDBIndex",
+                                                                          "varLiteral": "index_187"
+                                                                        },
+                                                                        "right": {
+                                                                          "type": "CallExpression",
+                                                                          "callee_object": {
+                                                                            "type": "Identifier",
+                                                                            "raw": "objectStore_1"
+                                                                          },
+                                                                          "callee_method": "createIndex",
+                                                                          "args": [
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": "index_187"
+                                                                            },
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": "test"
+                                                                            },
+                                                                            {
+                                                                              "type": "Literal",
+                                                                              "value": {
+                                                                                "multiEntry": true
+                                                                              }
+                                                                            }
+                                                                          ],
+                                                                          "result_name": null
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "VariableDeclaration",
+                                                                        "kind": "var",
+                                                                        "name": {
+                                                                          "type": "Identifier",
+                                                                          "raw": "count_3"
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "TryCatchStatement",
+                                                                        "tryBody": [
+                                                                          {
+                                                                            "type": "AssignmentExpression",
+                                                                            "left": {
+                                                                              "type": "Variable",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "KeyRange_6"
+                                                                              },
+                                                                              "varType": "IDBRequest",
+                                                                              "varLiteral": null
+                                                                            },
+                                                                            "right": {
+                                                                              "type": "CallExpression",
+                                                                              "callee_object": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "IDBKeyRange"
+                                                                              },
+                                                                              "callee_method": "bound",
+                                                                              "args": [
+                                                                                {
+                                                                                  "type": "Literal",
+                                                                                  "value": "LMUbWXOjUR"
+                                                                                },
+                                                                                {
+                                                                                  "type": "Literal",
+                                                                                  "value": "LMUbWXOjUR"
+                                                                                },
+                                                                                {
+                                                                                  "type": "Literal",
+                                                                                  "value": true
+                                                                                },
+                                                                                {
+                                                                                  "type": "Literal",
+                                                                                  "value": false
+                                                                                }
+                                                                              ],
+                                                                              "result_name": null
+                                                                            }
+                                                                          },
+                                                                          {
+                                                                            "type": "AssignmentExpression",
+                                                                            "left": {
+                                                                              "type": "Variable",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "count_3"
+                                                                              },
+                                                                              "varType": "IDBRequest",
+                                                                              "varLiteral": null
+                                                                            },
+                                                                            "right": {
+                                                                              "type": "CallExpression",
+                                                                              "callee_object": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "objectStore_1"
+                                                                              },
+                                                                              "callee_method": "count",
+                                                                              "args": [
+                                                                                {
+                                                                                  "type": "Variable",
+                                                                                  "name": {
+                                                                                    "type": "Identifier",
+                                                                                    "raw": "KeyRange_6"
+                                                                                  },
+                                                                                  "varType": "IDBRequest",
+                                                                                  "varLiteral": null
+                                                                                }
+                                                                              ],
+                                                                              "result_name": null
+                                                                            }
+                                                                          }
+                                                                        ],
+                                                                        "catchBody": [
+                                                                          {
+                                                                            "type": "AssignmentExpression",
+                                                                            "left": {
+                                                                              "type": "Variable",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "KeyRange_7"
+                                                                              },
+                                                                              "varType": "IDBRequest",
+                                                                              "varLiteral": null
+                                                                            },
+                                                                            "right": {
+                                                                              "type": "CallExpression",
+                                                                              "callee_object": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "IDBKeyRange"
+                                                                              },
+                                                                              "callee_method": "only",
+                                                                              "args": [
+                                                                                {
+                                                                                  "type": "Literal",
+                                                                                  "value": "LMUbWXOjUR"
+                                                                                }
+                                                                              ],
+                                                                              "result_name": null
+                                                                            }
+                                                                          },
+                                                                          {
+                                                                            "type": "AssignmentExpression",
+                                                                            "left": {
+                                                                              "type": "Variable",
+                                                                              "name": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "count_3"
+                                                                              },
+                                                                              "varType": "IDBRequest",
+                                                                              "varLiteral": null
+                                                                            },
+                                                                            "right": {
+                                                                              "type": "CallExpression",
+                                                                              "callee_object": {
+                                                                                "type": "Identifier",
+                                                                                "raw": "objectStore_1"
+                                                                              },
+                                                                              "callee_method": "count",
+                                                                              "args": [
+                                                                                {
+                                                                                  "type": "Variable",
+                                                                                  "name": {
+                                                                                    "type": "Identifier",
+                                                                                    "raw": "KeyRange_7"
+                                                                                  },
+                                                                                  "varType": "IDBRequest",
+                                                                                  "varLiteral": null
+                                                                                }
+                                                                              ],
+                                                                              "result_name": null
+                                                                            }
+                                                                          }
+                                                                        ]
+                                                                      },
+                                                                      {
+                                                                        "type": "CallExpression",
+                                                                        "callee_object": {
+                                                                          "type": "Identifier",
+                                                                          "raw": "db"
+                                                                        },
+                                                                        "callee_method": "deleteObjectStore",
+                                                                        "args": [
+                                                                          {
+                                                                            "type": "Literal",
+                                                                            "value": "objectStore_185"
+                                                                          }
+                                                                        ],
+                                                                        "result_name": null
+                                                                      }
+                                                                    ]
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "VariableDeclaration",
+                                                                  "kind": "var",
+                                                                  "name": {
+                                                                    "type": "Identifier",
+                                                                    "raw": "index_188"
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "AssignmentExpression",
+                                                                  "left": {
+                                                                    "type": "Variable",
+                                                                    "name": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "index_188"
+                                                                    },
+                                                                    "varType": "IDBIndex",
+                                                                    "varLiteral": "index_188"
+                                                                  },
+                                                                  "right": {
+                                                                    "type": "CallExpression",
+                                                                    "callee_object": {
+                                                                      "type": "Identifier",
+                                                                      "raw": "objectStore_7"
+                                                                    },
+                                                                    "callee_method": "createIndex",
+                                                                    "args": [
+                                                                      {
+                                                                        "type": "Literal",
+                                                                        "value": "index_188"
+                                                                      },
+                                                                      {
+                                                                        "type": "Literal",
+                                                                        "value": "test"
+                                                                      },
+                                                                      {
+                                                                        "type": "Literal",
+                                                                        "value": {
+                                                                          "unique": false
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "result_name": null
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "type": "CallExpression",
+                                                                  "callee_object": {
+                                                                    "type": "Identifier",
+                                                                    "raw": "objectStore_7"
+                                                                  },
+                                                                  "callee_method": "deleteIndex",
+                                                                  "args": [
+                                                                    {
+                                                                      "type": "Literal",
+                                                                      "value": "index_188"
+                                                                    }
+                                                                  ],
+                                                                  "result_name": null
+                                                                }
+                                                              ]
+                                                            }
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "VariableDeclaration",
+                        "kind": "var",
+                        "name": {
+                          "type": "Identifier",
+                          "raw": "objectStore_12"
+                        }
+                      },
+                      {
+                        "type": "AssignmentExpression",
+                        "left": {
+                          "type": "Variable",
+                          "name": {
+                            "type": "Identifier",
+                            "raw": "objectStore_12"
+                          },
+                          "varType": "IDBObjectStore",
+                          "varLiteral": "objectStore_196"
+                        },
+                        "right": {
+                          "type": "CallExpression",
+                          "callee_object": {
+                            "type": "Identifier",
+                            "raw": "db"
+                          },
+                          "callee_method": "createObjectStore",
+                          "args": [
+                            {
+                              "type": "Literal",
+                              "value": "objectStore_196"
+                            },
+                            {
+                              "type": "Literal",
+                              "value": {
+                                "keypath": "CjYozlIKefzu",
+                                "autoIncrement": false
+                              }
+                            }
+                          ],
+                          "result_name": null
+                        }
+                      },
+                      {
+                        "type": "VariableDeclaration",
+                        "kind": "var",
+                        "name": {
+                          "type": "Identifier",
+                          "raw": "objectStore_13"
+                        }
+                      },
+                      {
+                        "type": "AssignmentExpression",
+                        "left": {
+                          "type": "Variable",
+                          "name": {
+                            "type": "Identifier",
+                            "raw": "objectStore_13"
+                          },
+                          "varType": "IDBObjectStore",
+                          "varLiteral": "objectStore_197"
+                        },
+                        "right": {
+                          "type": "CallExpression",
+                          "callee_object": {
+                            "type": "Identifier",
+                            "raw": "db"
+                          },
+                          "callee_method": "createObjectStore",
+                          "args": [
+                            {
+                              "type": "Literal",
+                              "value": "objectStore_197"
+                            },
+                            {
+                              "type": "Literal",
+                              "value": {
+                                "keypath": "RKcjt.KjHUzxiTrx.oDlXEW.VbpzrAvLr.eFAPqkgXvQo",
+                                "autoIncrement": true
+                              }
+                            }
+                          ],
+                          "result_name": null
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "IDBFactory_DeleteDatabase_Layer",
+      "layer_type": "\u8c03\u7528\u578b",
+      "ir_nodes": [
+        {
+          "type": "CallExpression",
+          "callee_object": {
+            "type": "Identifier",
+            "raw": "indexedDB"
+          },
+          "callee_method": "deleteDatabase",
+          "args": [
+            {
+              "type": "Literal",
+              "value": "str_9405"
+            }
+          ],
+          "result_name": "deleteRequest"
+        }
+      ],
+      "children": [
+        {
+          "name": "IDBDeleteDBRequest_onblocked_Layer",
+          "layer_type": "\u6ce8\u518c\u578b",
+          "ir_nodes": [
+            {
+              "type": "AssignmentExpression",
+              "left": {
+                "type": "MemberExpression",
+                "object": {
+                  "type": "Identifier",
+                  "raw": "deleteRequest"
+                },
+                "property": "onblocked"
+              },
+              "right": {
+                "type": "FunctionExpression",
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "raw": "event"
+                  }
+                ],
+                "body": [
+                  {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "console"
+                    },
+                    "callee_method": "log",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "delete db onblocked triggered"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IDBDeleteDBRequest_onsuccess_Layer",
+          "layer_type": "\u6ce8\u518c\u578b",
+          "ir_nodes": [
+            {
+              "type": "AssignmentExpression",
+              "left": {
+                "type": "MemberExpression",
+                "object": {
+                  "type": "Identifier",
+                  "raw": "deleteRequest"
+                },
+                "property": "onsuccess"
+              },
+              "right": {
+                "type": "FunctionExpression",
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "raw": "event"
+                  }
+                ],
+                "body": [
+                  {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "console"
+                    },
+                    "callee_method": "log",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "delete db onsuccess triggered"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IDBDeleteDBRequest_onerror_Layer",
+          "layer_type": "\u6ce8\u518c\u578b",
+          "ir_nodes": [
+            {
+              "type": "AssignmentExpression",
+              "left": {
+                "type": "MemberExpression",
+                "object": {
+                  "type": "Identifier",
+                  "raw": "deleteRequest"
+                },
+                "property": "onerror"
+              },
+              "right": {
+                "type": "FunctionExpression",
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "raw": "event"
+                  }
+                ],
+                "body": [
+                  {
+                    "type": "CallExpression",
+                    "callee_object": {
+                      "type": "Identifier",
+                      "raw": "console"
+                    },
+                    "callee_method": "log",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": "delete db onerror triggered"
+                      }
+                    ],
+                    "result_name": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
