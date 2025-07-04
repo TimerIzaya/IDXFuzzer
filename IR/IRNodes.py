@@ -194,8 +194,8 @@ class IRNodeFactory:
             return Literal(d["value"])
         elif t == "VariableDeclaration":
             return VariableDeclaration(
-                name=d["name"],
-                kind=d.get("kind", "let")
+                name=IRNodeFactory.from_dict(d["name"]),
+                kind=d["kind"]
             )
         elif t == "AssignmentExpression":
             return AssignmentExpression(

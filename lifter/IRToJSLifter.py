@@ -26,7 +26,7 @@ class IRToJSLifter:
                 rhs = IRToJSLifter._convert_node(nodes[i + 1].right, 0)
                 if rhs.endswith(";"):
                     rhs = rhs[:-1]
-                line = f"{'    ' * indent_level}{node.kind} {node.name['raw']} = {rhs};"
+                line = f"{'    ' * indent_level}{node.kind} {node.name.raw} = {rhs};"
                 lines.append(line)
                 i += 2
                 continue
@@ -45,7 +45,7 @@ class IRToJSLifter:
         indent = "    " * indent_level
 
         if isinstance(node, VariableDeclaration):
-            return f"{indent}{node.kind} {node.name['raw']};"
+            return f"{indent}{node.kind} {node.name};"
 
         elif isinstance(node, Identifier):
             return node.raw

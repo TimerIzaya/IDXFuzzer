@@ -29,9 +29,6 @@ class Layer:
             result["ir_nodes"] = [n.to_dict() for n in self.ir_nodes]
 
         if self.children:
-            for c in self.children:
-                if isinstance(c, list):
-                    print(1)
             children_serialized = [c.to_dict() for c in self.children if c is not None]
             if children_serialized:
                 result["children"] = children_serialized

@@ -88,8 +88,7 @@ def run_and_update_coverage(html_path: str, edge_bitmap: GlobalEdgeBitmap, tmp_d
 
     # 打印合计耗时
     total_time = exec_time + parse_time
-    # print(f"新增覆盖边数: {new_edges}, 累计覆盖率: {coverage:.4f}%")
-    print(f"time: {total_time} ms")
+    print(f"new_edge: {new_edges}    time: {total_time} ms     coverage: {coverage:.4f}%")
 
     return new_edges, coverage
 
