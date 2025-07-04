@@ -51,12 +51,12 @@ def genCase(number) -> str:
     with open(IRPath, "w", encoding="utf-8") as f:
         f.write(IRJson)
 
-    # 这里绕一圈是为了测试lifter相互转化的能力
-    with open(IRPath, "r") as f:
-        ir_data = json.load(f)
-
-    # lines = IRToJSLifter.convertLayer(IR, 0)
-    root_layer = Layer.from_dict(ir_data)
+    # # 这里绕一圈是为了测试lifter相互转化的能力
+    # with open(IRPath, "r") as f:
+    #     ir_data = json.load(f)
+    #
+    # # lines = IRToJSLifter.convertLayer(IR, 0)
+    # root_layer = Layer.from_dict(ir_data)
     lines = IRToJSLifter.convertLayer(IR, 0)
 
     s = f"{rootDir}/{number}.html"

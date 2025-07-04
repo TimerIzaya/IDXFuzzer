@@ -18,27 +18,22 @@ class GlobalEdgeBitmap:
         new_edges = np.count_nonzero(self.bitmap) - np.count_nonzero(old_bitmap)
         return new_edges
 
-def now_ms():
-    return int(time.time() * 1000)
 
-def log_duration(label, start_ms, end_ms):
-    print(f"[{label}] 耗时: {end_ms - start_ms} ms")
 
 def run_and_update_coverage(html_path: str, edge_bitmap: GlobalEdgeBitmap, tmp_dir: str = "/tmp/chrome-tmp", total_edges: int = 7618971):
+    def now_ms():
+        return int(time.time() * 1000)
+
     html_path = os.path.abspath(html_path)
     bin_glob = "/tmp/sancov_bitmap_*.bin"
 
-    t0 = now_ms()
-
-    # 清理旧数据（不打印）
+    # 清理旧数据
     if os.path.exists(tmp_dir):
         subprocess.run(["rm", "-rf", tmp_dir], check=True)
     for f in glob.glob(bin_glob):
         os.remove(f)
     t1 = now_ms()
-    # 清理耗时不打印
 
-    # 执行 content_shell
     cmd = [
         "/timer/chromium/src/out/IndexedDBSanCov/content_shell",
         "--no-sandbox",
@@ -69,7 +64,6 @@ def run_and_update_coverage(html_path: str, edge_bitmap: GlobalEdgeBitmap, tmp_d
     ]
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     t2 = now_ms()
-    # 执行 content_shell 耗时
     exec_time = t2 - t1
 
     # 获取 bin 文件
