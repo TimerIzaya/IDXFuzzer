@@ -34,34 +34,34 @@
 
 ## IR
 
-下面用一段生成阶段的seed片段简单介绍我们的IR设计
+本系统采用上下文驱动的分层 IR 构建框架，整体流程如图所示。生成过程由 `IDBRootLayer` 启动，逐层展开 IndexedDB 的典型使用路径，确保结构与语义的完整性及上下文一致性。
 
-```js
-let db;
-const openRequest = window.indexedDB.open('str_726', 74)
-openRequest.onupgradeneeded = (event) => {
-    db = event.target.result;
-    var objectStore_0 = db.createObjectStore('objectStore_0', {keypath: 'jDNqUydS', autoIncrement: false});
-    var index_0 = objectStore_0.createIndex('index_0', 'test');
-    var get_0;
-    try {
-        KeyRange_0 = IDBKeyRange.bound('XUJrADmHnDx', 'XUJrADmHnDx', true, true);
-        get_0 = objectStore_0.get(KeyRange_0);
-    } catch (e) {
-        KeyRange_1 = IDBKeyRange.only('XUJrADmHnDx');
-        get_0 = objectStore_0.get(KeyRange_1);
-    }
-    var clear_0 = objectStore_0.clear();
-    clear_0.onsuccess = (event) => {
-        db.deleteObjectStore('objectStore_0')
-        var objectStore_2 = db.createObjectStore('objectStore_2', {keypath: 'yrOcBVU', autoIncrement: true});
-        var index_2 = objectStore_2.createIndex('index_2', 'test');
-        get_0.onsuccess = (event) => {
-            var index_3 = objectStore_1.createIndex('index_3', 'test', {unique: false, multiEntry: false});
-        };
-    };
-};
-```
+在初始化阶段，`IDBContext` 负责维护数据库结构定义（如 object store 与 index 的 schema 信息），而 `IRContext` 则用于追踪变量声明、作用域状态与语义约束，两者共同构成语义感知的上下文环境，贯穿 IR 构建全程。
+
+我们以图1中表结构初始化为例，简要说明各阶段 IR 的设计与生成：
+
+- **数据库连接阶段**：由 `IDBRootLayer` 发起 `indexedDB.open()` 调用，并注册 `onupgradeneeded` 等事件监听器；
+- **结构变更阶段**：进入 `IDBDatabase_SchemaOps_Layer`，生成结构操作，包括 `createObjectStore`、`deleteObjectStore`、`createIndex` 和 `deleteIndex`；
+- **数据初始化阶段**：执行 object store 核心接口（如 `put`、`add`、`get`、`delete` 等），该阶段涵盖大量事务操作，是测试语义行为与事务特性的关键；
+- **事件流生成阶段**：IndexedDB 的操作均以事件驱动方式异步执行，不同事件可嵌套或并行形成复杂 event flow。在构建过程中，需依据 `IDBContext` 的结构快照及 `IRContext` 的变量状态，动态生成符合依赖关系的后续层。
+
+为进一步捕捉事务语义与执行行为，我们将 object store 的每个接口抽象为 **PipeEnd**，接口间的顺序关系建模为 **Pipe**，多个 Pipe 组合为 **PipeFlow**。考虑到不同接口序列的测试价值差异，我们设计了基于结构依赖的权重划分机制：
+
+- **高权重 Pipe**：如 `put/get`、`add/delete` 等具有明确读写依赖的操作序列，有助于验证事务的隔离性与原子性；
+- **中权重 Pipe**：如对同一对象的多次查询，体现典型的自循环模式；
+- **低权重 Pipe**：如 `getAllKeys/getAll` 等冗余、低效的无依赖访问模式。
+
+基于此 **PipeGraph** 架构，如图2所示，系统可按需随机生成具有长度、数据依赖与语义多样性的 PipeFlow，实现具备行为驱动特性的测试输入生成。
+
+此外，系统实现了双向转换模块 Lifter，可在 IR 与 JavaScript 代码之间无损映射，便于前后端集成与结果验证，相关细节此处不再赘述。
+
+
+
+**图1：IR简单构建流程.drawio**
+
+**图2：pipegraph.png**
+
+
 
 
 
