@@ -45,7 +45,7 @@ class IRToJSLifter:
         indent = "    " * indent_level
 
         if isinstance(node, VariableDeclaration):
-            return f"{indent}{node.kind} {node.name};"
+            return f"{indent}{node.kind} {node.name.raw};"
 
         elif isinstance(node, Identifier):
             return node.raw

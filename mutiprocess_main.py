@@ -10,13 +10,11 @@ CORPUS_ROOT = "/timer/IDXFuzzer/corpus"
 def make_uid(): return uuid.uuid4().hex[:8]
 
 def wrap_js_in_html(lines, out):
-    tpl = f"""<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
-<body><script>
-{lines}
-setTimeout(() => {{ window.close(); }}, 200);
-</script></body></html>"""
-    with open(out, "w") as f: f.write(tpl)
+    with open(out, "w", encoding="utf-8") as f:
+        f.write("<!DOCTYPE html>\n<html><head><meta charset=\"UTF-8\"><title>IndexedDB</title></head>\n<body><script>\n")
+        f.writelines(lines)
+        f.write("setTimeout(() => { window.close(); }, 200);\n</script></body></html>")
+
 
 def gen_case(case_id):
     root = f"{CORPUS_ROOT}/{case_id}"
@@ -45,7 +43,8 @@ if __name__ == "__main__":
     bitmap = GlobalEdgeBitmap(create=True)
     name = bitmap.name()
 
-    pool = Pool(cpu_count())
+    # pool = Pool(cpu_count())
+    pool = Pool(2)
     try:
         while True:
             pool.starmap(run_one_case, [(name,)] * 8)
