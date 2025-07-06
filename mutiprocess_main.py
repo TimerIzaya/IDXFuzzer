@@ -22,7 +22,7 @@ def gen_case(case_id):
     ir = generate_ir_program()
     with open(f"{root}/{case_id}.json", "w") as f:
         json.dump(ir.to_dict(), f, indent=2)
-    js_code = IRToJSLifter.convertLayer(ir, 0)
+    js_code = IRToJSLifter.lift(ir)
     html_path = f"{root}/{case_id}.html"
     wrap_js_in_html(js_code, html_path)
     return html_path, root
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     name = bitmap.name()
 
     # pool = Pool(cpu_count())
-    pool = Pool(2)
+    pool = Pool(8)
     try:
         while True:
             pool.starmap(run_one_case, [(name,)] * 8)

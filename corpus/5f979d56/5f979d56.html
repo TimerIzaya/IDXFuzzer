@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+let db;
+const openRequest = window.indexedDB.open('str_9428', '61')
+openRequest.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db = event.target.result;
+    var objectStore_0 = db.createObjectStore('objectStore_182', {autoIncrement: false});
+    var objectStore_1 = db.createObjectStore('objectStore_183', {keypath: 'NxnxBAT', autoIncrement: true});
+    var index_153 = objectStore_0.createIndex('index_153', 'test');
+    db.deleteObjectStore('objectStore_182')
+    var index_154 = objectStore_1.createIndex('index_154', 'test', {unique: true});
+    db.deleteObjectStore('objectStore_183')
+    var objectStore_2 = db.createObjectStore('objectStore_184', {keypath: 'FiHs', autoIncrement: true});
+    var add_0 = objectStore_2.add({f0_p: '<array>', f1_d: '<string>', f2_o: '<array>'}, 'jpDeB');
+    var put_0 = objectStore_2.put({f0_x: '<null>', f1_i: '<number>', f2_w: '<string>', f3_s: '<array>', f4_c: '<string>', f5_s: '<boolean>', f6_x: '<object>'}, 'dDNzGkxmQlqV');
+};
+const deleteRequest = indexedDB.deleteDatabase('str_4122')
+deleteRequest.onblocked = (event) => {
+    console.log('delete db onblocked triggered')
+};
+deleteRequest.onsuccess = (event) => {
+    console.log('delete db onsuccess triggered')
+};
+deleteRequest.onerror = (event) => {
+    console.log('delete db onerror triggered')
+};setTimeout(() => { window.close(); }, 200);
+</script></body></html>

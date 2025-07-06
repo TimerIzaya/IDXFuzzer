@@ -9,7 +9,8 @@ class IRToJSLifter:
     @staticmethod
     def lift(root_layer: Layer) -> str:
         IRToJSLifter._visited_layers = set()
-        return "\n".join(IRToJSLifter.convertLayer(root_layer))
+        layers = IRToJSLifter.convertLayer(root_layer)
+        return "\n".join(layers)
 
     @staticmethod
     def convertLayer(layer: Layer, indent_level: int = 0):
