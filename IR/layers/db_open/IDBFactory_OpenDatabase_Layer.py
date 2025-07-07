@@ -1,3 +1,4 @@
+import random
 from IR.layers.Global import Global
 from IR.type.IDBType import IDBType
 from schema.IDBSchemaParser import IDBSchemaParser
@@ -26,7 +27,8 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
         # 单独生成 name/version 参数，便于注册数据库
         open_params = method.getParams().raw()
         dbName = IRParamValueGenerator.generateValueByParamInfo(open_params[0])  # string
-        versionNumber = IRParamValueGenerator.generateValueByParamInfo(open_params[1])  # number?
+        versionNumber = random.randint(1, 2**53 - 1)
+
 
         #注意 这里只是尝试open一个叫dbName的db, 具体赋值的变量要放在onsuccess层里去注册
         Global.smctx.registerDatabase(dbName, versionNumber)

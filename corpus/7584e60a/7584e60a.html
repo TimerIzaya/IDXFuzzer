@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+let db;
+const openRequest = window.indexedDB.open('str_1037', 5902791923658989)
+openRequest.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db = event.target.result;
+    var objectStore_0 = db.createObjectStore('objectStore_145');
+    var clear_0 = objectStore_0.clear();
+    var index_168 = objectStore_0.createIndex('index_168', 'test');
+    var put_0 = objectStore_0.put({f0_t: '<number>', f1_p: '<object>', f2_k: '<array>', f3_e: '<string>', f4_l: '<object>'}, 'ZjLYxipPqv');
+    var index_169 = objectStore_0.createIndex('index_169', 'test', {unique: true, multiEntry: true});
+    var count_0 = objectStore_0.count();
+    var index_0 = objectStore_0.index('index_168');
+    db.deleteObjectStore('objectStore_145')
+    var objectStore_1 = db.createObjectStore('objectStore_146');
+    var put_1 = objectStore_1.put({f0_d: '<object>', f1_m: '<number>', f2_n: '<array>', f3_c: '<boolean>', f4_j: '<number>', f5_o: '<boolean>', f6_e: '<number>'}, 'GJXxCHc');
+    var get_0;
+    try{
+        KeyRange_0 = IDBKeyRange.bound('GJXxCHc', 'GJXxCHc', true, true);
+        get_0 = objectStore_1.get(KeyRange_0);
+    }
+    catch (e){
+        KeyRange_1 = IDBKeyRange.only('GJXxCHc');
+        get_0 = objectStore_1.get(KeyRange_1);
+    }
+
+    var get_1;
+    try{
+        KeyRange_2 = IDBKeyRange.only('GJXxCHc');
+        get_1 = objectStore_1.get(KeyRange_2);
+    }
+    catch (e){
+        KeyRange_3 = IDBKeyRange.only('GJXxCHc');
+        get_1 = objectStore_1.get(KeyRange_3);
+    }
+
+    var put_2 = objectStore_1.put({f0_l: '<string>', f1_v: '<array>'}, 'hpfLk');
+    var index_170 = objectStore_1.createIndex('index_170', 'test', {unique: true, multiEntry: true});
+    var count_1;
+    try{
+        KeyRange_4 = IDBKeyRange.only('GJXxCHc');
+        count_1 = objectStore_1.count(KeyRange_4);
+    }
+    catch (e){
+        KeyRange_5 = IDBKeyRange.only('hpfLk');
+        count_1 = objectStore_1.count(KeyRange_5);
+    }
+
+    var delete_0;
+    try{
+        KeyRange_6 = IDBKeyRange.only('hpfLk');
+        delete_0 = objectStore_1.delete(KeyRange_6);
+    }
+    catch (e){
+        KeyRange_7 = IDBKeyRange.only('hpfLk');
+        delete_0 = objectStore_1.delete(KeyRange_7);
+    }
+
+    var count_2;
+    try{
+        KeyRange_8 = IDBKeyRange.lowerBound('GJXxCHc', true);
+        count_2 = objectStore_1.count(KeyRange_8);
+    }
+    catch (e){
+        KeyRange_9 = IDBKeyRange.only('hpfLk');
+        count_2 = objectStore_1.count(KeyRange_9);
+    }
+
+    var clear_1 = objectStore_1.clear();
+    var objectStore_2 = db.createObjectStore('objectStore_147', {keypath: 'HIziqyd', autoIncrement: false});
+    var count_3;
+    try{
+        KeyRange_10 = IDBKeyRange.only('hpfLk');
+        count_3 = objectStore_1.count(KeyRange_10);
+    }
+    catch (e){
+        KeyRange_11 = IDBKeyRange.only('hpfLk');
+        count_3 = objectStore_1.count(KeyRange_11);
+    }
+
+    var objectStore_3 = db.createObjectStore('objectStore_148', {autoIncrement: true});
+    var put_3 = objectStore_2.put({f0_d: '<array>', f1_j: '<null>', f2_z: '<array>', f3_s: '<string>', f4_j: '<array>', f5_o: '<boolean>', f6_h: '<number>', f7_u: '<boolean>', f8_u: '<number>', f9_k: '<object>'}, 'RbJgOmV');
+    var index_171 = objectStore_1.createIndex('index_171', 'test', {unique: true, multiEntry: false});
+    var put_4 = objectStore_1.put({f0_p: '<array>'}, 'GjAKXi');
+    var objectStore_4 = db.createObjectStore('objectStore_149');
+    var clear_2 = objectStore_4.clear();
+};
+const deleteRequest = indexedDB.deleteDatabase('str_983')
+deleteRequest.onblocked = (event) => {
+    console.log('delete db onblocked triggered')
+};
+deleteRequest.onsuccess = (event) => {
+    console.log('delete db onsuccess triggered')
+};
+deleteRequest.onerror = (event) => {
+    console.log('delete db onerror triggered')
+};setTimeout(() => { window.close(); }, 200);
+</script></body></html>

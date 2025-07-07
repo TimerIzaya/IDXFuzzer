@@ -17,7 +17,9 @@ def run_and_update_coverage(html_path: str,
 
     html_path = os.path.abspath(html_path)
     crash_dir = "/timer/IDXFuzzer/crashes"
+    timeout_dir = os.path.join(crash_dir, "timeout")
     os.makedirs(crash_dir, exist_ok=True)
+    os.makedirs(timeout_dir, exist_ok=True)
 
     out_dir = os.path.dirname(html_path)
     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
@@ -47,7 +49,15 @@ def run_and_update_coverage(html_path: str,
             subprocess.run(cmd, check=True,
                            stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL,
-                           env=env)
+                           env=env,
+                           timeout=5)  # ← 加了 timeout
+        except subprocess.TimeoutExpired:
+            print(f"[!] Timeout: {html_path}")
+            shutil.copy(html_path, timeout_dir)
+            json_path = html_path.replace(".html", ".json")
+            if os.path.exists(json_path):
+                shutil.copy(json_path, timeout_dir)
+            return -1, 0.0
         except subprocess.CalledProcessError:
             print(f"[!] Crash detected: {html_path}")
             shutil.copy(html_path, crash_dir)
@@ -57,30 +67,26 @@ def run_and_update_coverage(html_path: str,
             return -1, 0.0
         t2 = now_ms()
 
-        raw_bin_files = glob.glob(bin_glob)
-        bin_files: list[str] = []
-        for f in raw_bin_files:
-            try:
-                mtime = os.path.getmtime(f)
-                bin_files.append((f, mtime))
-            except FileNotFoundError:
-                continue
-
-        bin_files.sort(key=lambda x: x[1], reverse=True)
-        bin_files = [f for f, _ in bin_files]
-
+        bin_files = glob.glob(bin_glob)
         if not bin_files:
-            print("[!] No coverage file found.")
+            print(f"[!] No coverage file found in {out_dir}")
             return 0, total_edges
 
-        cov_file = bin_files[0]
-        new_edges = edge_bitmap.update_from_file(cov_file)
+        total_new_edges = 0
+        for cov_file in bin_files:
+            total_new_edges += edge_bitmap.update_from_file(cov_file)
+            try:
+                os.remove(cov_file)
+            except FileNotFoundError:
+                pass
+
         coverage = np.count_nonzero(edge_bitmap.bitmap) / total_edges * 100
-        print(f"new_edge: {new_edges:<8} time: {t2 - t1} ms     coverage: {coverage:.4f}%")
+        pid = os.getpid()
+        # print(f"[PID {pid}] new_edge: {total_new_edges:<8} time: {t2 - t1} ms     coverage: {coverage:.4f}%")
+        return total_new_edges, coverage
 
-        try:
-            os.remove(cov_file)
-        except FileNotFoundError:
-            pass
 
-        return new_edges, coverage
+# if __name__ == "__main__":  
+#     bitmap = GlobalEdgeBitmap(create=True)
+#     name = bitmap.name()
+#     run_and_update_coverage("crashes/timeout/8903bd1a.html", name)

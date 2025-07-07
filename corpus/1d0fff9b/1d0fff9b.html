@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+let db;
+const openRequest = window.indexedDB.open('str_1316', 8295717481368969)
+openRequest.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db = event.target.result;
+    var objectStore_0 = db.createObjectStore('objectStore_95', {autoIncrement: true});
+    var index_99 = objectStore_0.createIndex('index_99', 'test', {multiEntry: true});
+    db.deleteObjectStore('objectStore_95')
+    var objectStore_1 = db.createObjectStore('objectStore_96', {keypath: 'yWlChEATa', autoIncrement: false});
+    var index_100 = objectStore_1.createIndex('index_100', 'test', {unique: true});
+    var index_101 = objectStore_1.createIndex('index_101', 'test', {multiEntry: true});
+    var index_102 = objectStore_1.createIndex('index_102', 'test');
+    var add_0 = objectStore_1.add({f0_v: '<null>'}, 'ViRQFZrtKNzF');
+    var put_0 = objectStore_1.put({f0_w: '<string>', f1_s: '<boolean>', f2_d: '<array>', f3_m: '<array>', f4_z: '<null>'}, 'myjbBNARvr');
+    db.deleteObjectStore('objectStore_96')
+};
+const deleteRequest = indexedDB.deleteDatabase('str_4882')
+deleteRequest.onblocked = (event) => {
+    console.log('delete db onblocked triggered')
+};
+deleteRequest.onsuccess = (event) => {
+    console.log('delete db onsuccess triggered')
+};
+deleteRequest.onerror = (event) => {
+    console.log('delete db onerror triggered')
+};setTimeout(() => { window.close(); }, 200);
+</script></body></html>
