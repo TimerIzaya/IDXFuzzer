@@ -9,9 +9,8 @@ def run_and_update_coverage(html_path: str,
     运行 content_shell 执行 html_path，对全局 edge_bitmap 做增量更新，
     返回 (new_edges, coverage_percent)。
 
-    - 不清理历史 sancov_bitmap 文件；
-    - 读取最新 .bin 后立即删除该文件，避免磁盘堆积；
-    - 多进程并发安全：抓取 getmtime 时文件若消失则跳过。
+    - 每个进程只读取自己目录下的 sancov_bitmap；
+    - 读取完 .bin 后立即删除；
     """
     def now_ms() -> int:
         return int(time.time() * 1000)
@@ -20,7 +19,8 @@ def run_and_update_coverage(html_path: str,
     crash_dir = "/timer/IDXFuzzer/crashes"
     os.makedirs(crash_dir, exist_ok=True)
 
-    bin_glob = "/tmp/sancov_bitmap_*.bin"
+    out_dir = os.path.dirname(html_path)
+    bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
 
     with tempfile.TemporaryDirectory(prefix="chrome-tmp-") as real_tmp:
         tmp_dir = tmp_dir or real_tmp
@@ -39,13 +39,16 @@ def run_and_update_coverage(html_path: str,
             f"file://{html_path}"
         ]
 
+        env = os.environ.copy()
+        env["SANCOV_OUTPUT_DIR"] = out_dir
+
         t1 = now_ms()
         try:
             subprocess.run(cmd, check=True,
                            stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL)
+                           stderr=subprocess.DEVNULL,
+                           env=env)
         except subprocess.CalledProcessError:
-            # 保存触发崩溃的输入
             print(f"[!] Crash detected: {html_path}")
             shutil.copy(html_path, crash_dir)
             json_path = html_path.replace(".html", ".json")
@@ -54,12 +57,11 @@ def run_and_update_coverage(html_path: str,
             return -1, 0.0
         t2 = now_ms()
 
-        # --- 安全收集 .bin 文件 ---
         raw_bin_files = glob.glob(bin_glob)
         bin_files: list[str] = []
         for f in raw_bin_files:
             try:
-                mtime = os.path.getmtime(f)         # 如果文件此时被删会抛异常
+                mtime = os.path.getmtime(f)
                 bin_files.append((f, mtime))
             except FileNotFoundError:
                 continue
@@ -72,17 +74,13 @@ def run_and_update_coverage(html_path: str,
             return 0, total_edges
 
         cov_file = bin_files[0]
-
-        # --- 更新位图 ---
         new_edges = edge_bitmap.update_from_file(cov_file)
         coverage = np.count_nonzero(edge_bitmap.bitmap) / total_edges * 100
         print(f"new_edge: {new_edges:<8} time: {t2 - t1} ms     coverage: {coverage:.4f}%")
 
-        # --- 读取后删除当前 .bin ---
         try:
             os.remove(cov_file)
         except FileNotFoundError:
-            # 并发场景下若已被其他进程删掉可忽略
             pass
 
         return new_edges, coverage

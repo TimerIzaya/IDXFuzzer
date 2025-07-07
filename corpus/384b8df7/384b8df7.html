@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+let db;
+const openRequest = window.indexedDB.open('str_9396')
+openRequest.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db = event.target.result;
+    var objectStore_0 = db.createObjectStore('objectStore_23', {keypath: 'omgRIC'});
+    var objectStore_1 = db.createObjectStore('objectStore_24', {keypath: 'xaXKLutlym', autoIncrement: false});
+    db.deleteObjectStore('objectStore_24')
+    db.deleteObjectStore('objectStore_23')
+};
+const deleteRequest = indexedDB.deleteDatabase('str_3566')
+deleteRequest.onblocked = (event) => {
+    console.log('delete db onblocked triggered')
+};
+deleteRequest.onsuccess = (event) => {
+    console.log('delete db onsuccess triggered')
+};
+deleteRequest.onerror = (event) => {
+    console.log('delete db onerror triggered')
+};setTimeout(() => { window.close(); }, 200);
+</script></body></html>
