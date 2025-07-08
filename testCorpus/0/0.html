@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+globalThis.apis = [];
+let db;
+const openRequest = window.indexedDB.open('str_6491', 6170350887639986)
+openRequest.onupgradeneeded = (event) => {
+    apis.push(0); // API-0
+    console.log('db onupgraded trigered');
+    db = event.target.result;
+    apis.push(1); // API-1
+    var objectStore_0 = db.createObjectStore('objectStore_0', {keypath: 'QAWBtLChH'});
+    apis.push(2); // API-2
+    var index_0 = objectStore_0.createIndex('index_0', 'test', {unique: false});
+    apis.push(3); // API-3
+    var index_1 = objectStore_0.createIndex('index_1', 'test', {unique: true, multiEntry: false});
+    apis.push(4); // API-4
+    var objectStore_1 = db.createObjectStore('objectStore_1', {autoIncrement: true});
+    apis.push(5); // API-5
+    var clear_0 = objectStore_1.clear();
+    apis.push(6); // API-6
+    var index_2 = objectStore_1.createIndex('index_2', 'test');
+    apis.push(7); // API-7
+    var clear_1 = objectStore_1.clear();
+    apis.push(8); // API-8
+    var objectStore_2 = db.createObjectStore('objectStore_2');
+    clear_1.onsuccess = (event) => {
+        var clear_2;
+        apis.push(9); // API-9
+        clear_2 = objectStore_0.clear();
+        apis.push(10); // API-10
+        db.deleteObjectStore('objectStore_0')
+        var clear_3;
+        apis.push(11); // API-11
+        clear_3 = objectStore_2.clear();
+        clear_1.onsuccess = (event) => {
+            var put_0;
+            apis.push(12); // API-12
+            put_0 = objectStore_2.put({f0_x: '<boolean>', f1_b: '<null>', f2_j: '<object>', f3_l: '<string>', f4_t: '<null>'}, 'oBIyfbqV');
+            var index_0;
+            apis.push(13); // API-13
+            index_0 = objectStore_1.index('index_2');
+            clear_2.onsuccess = (event) => {
+                var index_3;
+                apis.push(14); // API-14
+                index_3 = objectStore_2.createIndex('index_3', 'test', {multiEntry: true});
+                var add_0;
+                apis.push(15); // API-15
+                add_0 = objectStore_2.add({f0_i: '<object>'}, 'stMBLcWpx');
+                clear_1.onsuccess = (event) => {
+                    var put_1;
+                    apis.push(16); // API-16
+                    put_1 = objectStore_2.put({f0_o: '<string>', f1_x: '<number>', f2_j: '<string>', f3_i: '<string>', f4_c: '<null>', f5_q: '<object>', f6_i: '<null>', f7_c: '<number>'}, 'sODsYgjByuRZ');
+                    var clear_4;
+                    apis.push(17); // API-17
+                    clear_4 = objectStore_2.clear();
+                    var index_1;
+                    apis.push(18); // API-18
+                    index_1 = objectStore_1.index('index_2');
+                    var get_0;
+                    try{
+                        apis.push(19); // API-19
+                        KeyRange_0 = IDBKeyRange.lowerBound('stMBLcWpx', true);
+                        apis.push(20); // API-20
+                        get_0 = objectStore_2.get(KeyRange_0);
+                    }
+                    catch (e){
+                    }
+
+                    var index_4;
+                    apis.push(21); // API-21
+                    index_4 = objectStore_2.createIndex('index_4', 'test', {unique: false});
+                    apis.push(22); // API-22
+                    objectStore_2.deleteIndex('index_4')
+                    var clear_5;
+                    apis.push(23); // API-23
+                    clear_5 = objectStore_1.clear();
+                };
+                var add_1;
+                apis.push(24); // API-24
+                add_1 = objectStore_1.add({f0_k: '<null>', f1_c: '<boolean>'}, 'GpKAj');
+                var get_1;
+                try{
+                    apis.push(25); // API-25
+                    KeyRange_2 = IDBKeyRange.bound('stMBLcWpx', 'oBIyfbqV', true, false);
+                    apis.push(26); // API-26
+                    get_1 = objectStore_2.get(KeyRange_2);
+                }
+                catch (e){
+                }
+
+                apis.push(27); // API-27
+                db.deleteObjectStore('objectStore_2')
+                var index_5;
+                apis.push(28); // API-28
+                index_5 = objectStore_1.createIndex('index_5', 'test');
+            };
+            var put_2;
+            apis.push(29); // API-29
+            put_2 = objectStore_1.put({f0_g: '<array>', f1_a: '<boolean>'}, 'vAO');
+            var count_0;
+            apis.push(30); // API-30
+            count_0 = objectStore_1.count();
+            var index_6;
+            apis.push(31); // API-31
+            index_6 = objectStore_1.createIndex('index_6', 'test', {unique: false});
+            apis.push(32); // API-32
+            objectStore_1.deleteIndex('index_6')
+        };
+        var delete_0;
+        try{
+            apis.push(33); // API-33
+            KeyRange_4 = IDBKeyRange.bound('vAO', 'vAO', true, true);
+            apis.push(34); // API-34
+            delete_0 = objectStore_1.delete(KeyRange_4);
+        }
+        catch (e){
+        }
+
+        var count_1;
+        try{
+            apis.push(35); // API-35
+            KeyRange_6 = IDBKeyRange.bound('GpKAj', 'vAO', true, true);
+            apis.push(36); // API-36
+            count_1 = objectStore_1.count(KeyRange_6);
+        }
+        catch (e){
+        }
+
+        var index_7;
+        apis.push(37); // API-37
+        index_7 = objectStore_1.createIndex('index_7', 'test', {multiEntry: false});
+        var index_8;
+        apis.push(38); // API-38
+        index_8 = objectStore_1.createIndex('index_8', 'test');
+    };
+    apis.push(39); // API-39
+    var count_2 = objectStore_1.count();
+    apis.push(40); // API-40
+    var index_9 = objectStore_1.createIndex('index_9', 'test', {unique: true, multiEntry: true});
+    var get_2;
+    try{
+        apis.push(41); // API-41
+        KeyRange_8 = IDBKeyRange.bound('vAO', 'GpKAj', true, true);
+        apis.push(42); // API-42
+        get_2 = objectStore_1.get(KeyRange_8);
+    }
+    catch (e){
+    }
+
+    apis.push(43); // API-43
+    var clear_6 = objectStore_1.clear();
+    apis.push(44); // API-44
+    db.deleteObjectStore('objectStore_1')
+    apis.push(45); // API-45
+    var objectStore_3 = db.createObjectStore('objectStore_3', {autoIncrement: false});
+    apis.push(46); // API-46
+    var clear_7 = objectStore_3.clear();
+    apis.push(47); // API-47
+    db.deleteObjectStore('objectStore_3')
+    apis.push(48); // API-48
+    var objectStore_4 = db.createObjectStore('objectStore_4', {autoIncrement: false});
+};
+apis.push(49); // API-49
+const deleteRequest = indexedDB.deleteDatabase('str_6491')
+deleteRequest.onblocked = (event) => {
+    apis.push(50); // API-50
+    console.log('delete db onblocked triggered')
+};
+deleteRequest.onsuccess = (event) => {
+    apis.push(51); // API-51
+    console.log('delete db onsuccess triggered')
+};
+deleteRequest.onerror = (event) => {
+    apis.push(52); // API-52
+    console.log('delete db onerror triggered')
+};
+setTimeout(() => {
+  const sortedApis = [...apis].sort((a, b) => a - b);
+  const uniqueApis = [...new Set(sortedApis)];
+  const total = api_counter = Math.max(...sortedApis) + 1;
+  const covered = uniqueApis.length;
+  const coverage = ((covered / total) * 100).toFixed(2);
+
+  const missed = [];
+  for (let i = 0; i < total; i++) {
+    if (!uniqueApis.includes(i)) missed.push(i);
+  }
+
+  console.log("API_EXEC_RESULT", JSON.stringify(sortedApis));
+  console.log("===== IDX Fuzzer Stats =====");
+  console.log(`🌐  API 总数     : ${total}`);
+  console.log(`✅  实际执行数   : ${covered}`);
+  console.log(`❌  未执行数     : ${missed.length}`);
+  console.log(`📊  覆盖率       : ${covered}/${total} = ${coverage}%`);
+  if (missed.length > 0) {
+    console.log(`🕳️  未执行编号列表: [${missed.join(", ")}]`);
+  }
+  console.log("============================");
+}, 300);
+setTimeout(() => { window.close(); }, 200);
+</script></body></html>

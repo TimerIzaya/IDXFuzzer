@@ -5,7 +5,6 @@ from IR.type.IDBType import IDBType
 from config import OPTIONAL_JUMP
 from schema.SchemaClass import ParamInfo
 
-
 class IRNode:
     def to_dict(self):
         raise NotImplementedError

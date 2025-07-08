@@ -1,20 +1,16 @@
-import json
 import os
 import re
-import shutil
-from pathlib import Path
 
 from IR.IRFuzzer import generate_ir_program
-from IR.layers.Layer import Layer
-from coverage.run_cov import GlobalEdgeBitmap, run_and_update_coverage
 from lifter.IRToJSLifter import IRToJSLifter
+from mutiprocess_main import wrap_js_in_html
 
 CORPUS_ROOT = "/timer/IDXFuzzer/corpus"
 from pathlib import Path
 
 
 
-def modify_js_in_place(js_path_str: str):
+def modify_js_in_place(js_path_str: str) -> list:
     js_path = Path(js_path_str)
 
     with js_path.open("r", encoding="utf-8") as f:
@@ -70,8 +66,10 @@ setTimeout(() => {
 }, 300);
 ''')
 
-    with js_path.open("w", encoding="utf-8") as f:
-        f.writelines(modified_lines)
+    return modified_lines
+
+    # with js_path.open("w", encoding="utf-8") as f:
+    #     f.writelines(modified_lines)
 
 
 def genCase(number) -> str:
@@ -80,15 +78,18 @@ def genCase(number) -> str:
     os.makedirs(rootDir, exist_ok=True)
 
     lines = IRToJSLifter.lift(IR)
-    FILE = "demo.js"
+    FILE = "testCorpus/0/demo.js"
     with open(FILE, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    modify_js_in_place(FILE)
+
+    lines = modify_js_in_place(FILE)
+    wrap_js_in_html(lines, "testCorpus/0/0.html")
 
 
 
 if __name__ == "__main__":
     genCase(0)
+
 
 

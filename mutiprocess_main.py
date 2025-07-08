@@ -21,7 +21,7 @@ import numpy as np
 
 from IR.IRFuzzer import generate_ir_program
 from lifter.IRToJSLifter import IRToJSLifter
-from coverage.run_cov import run_and_update_coverage
+from coverage.run_cov_in_linux import run_and_update_coverage
 from coverage.bitmap import GlobalEdgeBitmap
 
 # ---------- 常量路径 ----------
