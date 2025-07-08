@@ -12,7 +12,7 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
     layer_type = LayerType.EXECUTION
 
     # 预计有多少os api 实际因为有些os不合法 一定小于等于这个数
-    EXPECT_OPS = 20000
+    EXPECT_OPS = 20
     # EXPECT_OPS = 50
 
     expectOpCnt = 0
@@ -35,8 +35,8 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
         # 这组操作跑随机跑N轮
         round = random.randint(2, 10)
         for i in range(round):
-            minOptCnt = int(IDBDatabase_SchemaOps_Layer.EXPECT_OPS / round / 8)
-            maxOptCnt = int(IDBDatabase_SchemaOps_Layer.EXPECT_OPS / round / 4)
+            # minOptCnt = int(IDBDatabase_SchemaOps_Layer.EXPECT_OPS / round / 8)
+            # maxOptCnt = int(IDBDatabase_SchemaOps_Layer.EXPECT_OPS / round / 4)
             # IDBDatabase_SchemaOps_Layer.genOsApi(body, random.randint(minOptCnt, maxOptCnt))
             IDBDatabase_SchemaOps_Layer.genOsApi(body, 10)
 
@@ -53,11 +53,19 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
             layer_type=IDBDatabase_SchemaOps_Layer.layer_type
         )
 
+
+    '''
+    举例说明
+    a = x.y()
+    a.onsuccess{
+        x.y1()
+    }
+    delete x  
+    '''
     @staticmethod
     def buildNestedOnsuccess(depth: int) -> AssignmentExpression | None:
         if depth <= 0 or IDBDatabase_SchemaOps_Layer.expectOpCnt > IDBDatabase_SchemaOps_Layer.EXPECT_OPS:
             return None
-
 
         # 如果还有更深层，递归构建内层的 handler
         idbRequestVar = Global.irctx.getVariableByType(IDBType.IDBRequest)

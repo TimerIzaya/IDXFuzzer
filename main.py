@@ -1,80 +1,94 @@
 import json
 import os
+import re
 import shutil
+from pathlib import Path
+
 from IR.IRFuzzer import generate_ir_program
 from IR.layers.Layer import Layer
 from coverage.run_cov import GlobalEdgeBitmap, run_and_update_coverage
 from lifter.IRToJSLifter import IRToJSLifter
 
 CORPUS_ROOT = "/timer/IDXFuzzer/corpus"
+from pathlib import Path
 
-def wrap_js_in_html(lines, html_output_path: str):
-    html_template = \
-    f"""<!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>IndexedDB Test</title>
-        </head>
-        <body>
-          <script>
-            {lines}
-            setTimeout(() => {{window.close();}}, 200);
-          </script>
-        </body>
-        </html>
-        """
 
-    with open(html_output_path, 'w', encoding='utf-8') as html_file:
-        html_file.write(html_template)
 
-def initCorpus():
-    corpus_dir = "./corpus"
+def modify_js_in_place(js_path_str: str):
+    js_path = Path(js_path_str)
 
-    # 删除目录（包括内容）
-    if os.path.exists(corpus_dir):
-        shutil.rmtree(corpus_dir)
-        print("Deleted existing corpus directory.")
+    with js_path.open("r", encoding="utf-8") as f:
+        original_lines = f.readlines()
 
-    # 重新创建空目录
-    os.makedirs(corpus_dir)
-    print("Recreated empty corpus directory.")
+    modified_lines = []
+    modified_lines.append("globalThis.apis = [];\n")
+    api_counter = 0  # 插桩编号从0开始
+
+    # 控制语句前缀，避免在其前插桩破坏语法
+    skip_prefixes = ("try", "catch", "finally", "else", "if", "for", "while", "do", "switch")
+
+    # 匹配真实API调用：形如 xxx = yyy.zzz(...) 或 yyy.zzz(...)
+    api_call_regex = re.compile(r"[\w\s]*=?\s*[\w\d_$]+\.[\w\d_$]+\s*\(")
+
+    for line in original_lines:
+        stripped = line.strip()
+        indent = line[:len(line) - len(line.lstrip())]
+
+        # 非空非注释行，非结构控制语句，并且是 API 调用形式
+        if (stripped and not stripped.startswith("//")
+            and not any(stripped.startswith(p) for p in skip_prefixes)
+            and api_call_regex.match(stripped)):
+            modified_lines.append(f"{indent}apis.push({api_counter}); // API-{api_counter}\n")
+            api_counter += 1
+
+        modified_lines.append(line)
+
+    # 尾部追加统计输出
+    modified_lines.append('''
+setTimeout(() => {
+  const sortedApis = [...apis].sort((a, b) => a - b);
+  const uniqueApis = [...new Set(sortedApis)];
+  const total = api_counter = Math.max(...sortedApis) + 1;
+  const covered = uniqueApis.length;
+  const coverage = ((covered / total) * 100).toFixed(2);
+
+  const missed = [];
+  for (let i = 0; i < total; i++) {
+    if (!uniqueApis.includes(i)) missed.push(i);
+  }
+
+  console.log("API_EXEC_RESULT", JSON.stringify(sortedApis));
+  console.log("===== IDX Fuzzer Stats =====");
+  console.log(`🌐  API 总数     : ${total}`);
+  console.log(`✅  实际执行数   : ${covered}`);
+  console.log(`❌  未执行数     : ${missed.length}`);
+  console.log(`📊  覆盖率       : ${covered}/${total} = ${coverage}%`);
+  if (missed.length > 0) {
+    console.log(`🕳️  未执行编号列表: [${missed.join(", ")}]`);
+  }
+  console.log("============================");
+}, 300);
+''')
+
+    with js_path.open("w", encoding="utf-8") as f:
+        f.writelines(modified_lines)
 
 
 def genCase(number) -> str:
     IR = generate_ir_program()
-    IRJson = json.dumps(IR.to_dict(), indent=2)
     rootDir = f"{CORPUS_ROOT}/{number}"
     os.makedirs(rootDir, exist_ok=True)
-    IRPath = f"{rootDir}/{number}.json"
 
-    with open(IRPath, "w", encoding="utf-8") as f:
-        f.write(IRJson)
+    lines = IRToJSLifter.lift(IR)
+    FILE = "demo.js"
+    with open(FILE, "w", encoding="utf-8") as f:
+        f.writelines(lines)
 
-    # # 这里绕一圈是为了测试lifter相互转化的能力
-    # with open(IRPath, "r") as f:
-    #     ir_data = json.load(f)
-    #
-    # # lines = IRToJSLifter.convertLayer(IR, 0)
-    # root_layer = Layer.from_dict(ir_data)
-    lines = IRToJSLifter.convertLayer(IR, 0)
+    modify_js_in_place(FILE)
 
-    s = f"{rootDir}/{number}.html"
-    wrap_js_in_html(lines, s)
+
 
 if __name__ == "__main__":
-    initCorpus()
-    bm = GlobalEdgeBitmap()
-
-    no = 0
-    while True:
-        genCase(no)
-        HTML_PATH = f'corpus/{no}/{no}.html'
-        new_edges, coverage = run_and_update_coverage(HTML_PATH, bm)
-        if new_edges == 0:
-            shutil.rmtree(f"{CORPUS_ROOT}/{no}")
-        else:
-            no = no + 1
-
+    genCase(0)
 
 

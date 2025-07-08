@@ -267,8 +267,8 @@ def useKeyRangeOrNot(nodes, recVar, osVar, os, METHOD_NAME, args):
                 AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
             ],
             catchBody=[
-                stableKeyRangeAssign,
-                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
+                # stableKeyRangeAssign,
+                # AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
             ]
         )
         nodes.append(tryCatch)
@@ -288,8 +288,8 @@ def useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args):
             AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
         ],
         catchBody=[
-            stableKeyRangeAssign,
-            AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
+            # stableKeyRangeAssign,
+            # AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
         ]
     )
     nodes.append(tryCatch)
