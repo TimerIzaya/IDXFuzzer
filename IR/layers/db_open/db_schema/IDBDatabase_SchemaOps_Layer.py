@@ -1,8 +1,8 @@
 from IR.IRNodes import *
 from IR.layers.Layer import LayerType, Layer
 from IR.layers.LayerBuilder import LayerBuilder
-from IR.layers.db_open.db_schema.db_schema_opt.AtomicSchemaOps import *
-from IR.layers.db_open.db_schema.db_schema_opt.SchemaOptDispatcher import SchemaOptDispatcher
+from IR.layers.db_schema_opt.AtomicSchemaOps import *
+from IR.layers.db_schema_opt.SchemaOptDispatcher import SchemaOptDispatcher
 import random
 
 
@@ -12,8 +12,7 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
     layer_type = LayerType.EXECUTION
 
     # 预计有多少os api 实际因为有些os不合法 一定小于等于这个数
-    EXPECT_OPS = 2000
-    # EXPECT_OPS = 50
+    EXPECT_OPS = 5
 
     expectOpCnt = 0
 
@@ -35,10 +34,10 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
         # 这组操作跑随机跑N轮
         round = random.randint(2, 10)
         for i in range(round):
-            # minOptCnt = int(IDBDatabase_SchemaOps_Layer.EXPECT_OPS / round / 8)
-            # maxOptCnt = int(IDBDatabase_SchemaOps_Layer.EXPECT_OPS / round / 4)
-            # IDBDatabase_SchemaOps_Layer.genOsApi(body, random.randint(minOptCnt, maxOptCnt))
-            IDBDatabase_SchemaOps_Layer.genOsApi(body, 10)
+            minOptCnt = int(IDBDatabase_SchemaOps_Layer.EXPECT_OPS / round / 8)
+            maxOptCnt = int(IDBDatabase_SchemaOps_Layer.EXPECT_OPS / round / 4)
+            IDBDatabase_SchemaOps_Layer.genOsApi(body, random.randint(minOptCnt, maxOptCnt))
+            # IDBDatabase_SchemaOps_Layer.genOsApi(body, 10)
 
             # 正常执行完一定会有一堆IDBRequest事件等着取结果，随机取结果
             if random.random() > 0.5:
@@ -83,8 +82,8 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
             body.append(nestedHandler)
 
         # 填充body里的api
-        IDBDatabase_SchemaOps_Layer.genOsApi(body=body, cnt=5)
-        # IDBDatabase_SchemaOps_Layer.genOsApi(body=body, cnt=random.randint(depth, depth * 3))
+        # IDBDatabase_SchemaOps_Layer.genOsApi(body=body, cnt=5)
+        IDBDatabase_SchemaOps_Layer.genOsApi(body=body, cnt=random.randint(0, 3))
 
         # 退出该层，该扔的全扔了
         discardVars = Global.irctx.exitLayer()

@@ -1,6 +1,3 @@
-<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
-<body><script>
 let db;
 const openRequest = window.indexedDB.open('str_4711', 217894676954923)
 openRequest.onupgradeneeded = (event) => {
@@ -17,5 +14,4 @@ deleteRequest.onsuccess = (event) => {
 };
 deleteRequest.onerror = (event) => {
     console.log('delete db onerror triggered')
-};setTimeout(() => { window.close(); }, 200);
-</script></body></html>
+};

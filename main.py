@@ -78,12 +78,12 @@ def genCase(number) -> str:
     os.makedirs(rootDir, exist_ok=True)
 
     lines = IRToJSLifter.lift(IR)
-    FILE = "testCorpus/0/demo.js"
+    FILE = "testCorpus/0/0.js"
     with open(FILE, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
 
-    lines = modify_js_in_place(FILE)
+    # lines = modify_js_in_place(FILE)
     wrap_js_in_html(lines, "testCorpus/0/0.html")
 
 
