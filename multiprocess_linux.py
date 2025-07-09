@@ -150,6 +150,8 @@ def init_output_dirs() -> None:
 if __name__ == "__main__":
     init_output_dirs()
 
+    PROCESS_COUNT = cpu_count() - 2
+
     # 创建全局 bitmap（shm 文件），子进程只需通过名称复用
     bitmap = GlobalEdgeBitmap(create=True)
     bitmap_name = bitmap.name()
@@ -168,7 +170,7 @@ if __name__ == "__main__":
 
     # 进程池：预留 2 核给系统 / Chrome，本机核心数 - 2
     pool = Pool(
-        cpu_count() - 2,
+        PROCESS_COUNT,
         initializer=init_worker,
         initargs=(total_edge_counter, timeout_counter)
     )
@@ -176,7 +178,7 @@ if __name__ == "__main__":
     try:
         # 每批投递 8 个任务，可根据机器性能调整
         while True:
-            pool.starmap(run_one_case, [(bitmap_name,)] * 8)
+            pool.starmap(run_one_case, [(bitmap_name,)] * (PROCESS_COUNT + 2))
     except KeyboardInterrupt:
         print("Interrupted by user.")
     finally:
