@@ -1,26 +1,29 @@
 import os
+
+from config import EDGE_TOTAL_COUNT
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.RemoteExecutor import RemoteExecutor
 
 
-def run_html_and_get_coverage(case_no: str,
+SHARE_ROOT_CORPUS = "/mnt/vmshare/corpus"
+SHARE_ROOT_CRASHES = "/mnt/vmshare/crashes"
+SHARE_ROOT_TIMEOUT = "/mnt/vmshare/timeout"
+
+def run_html_and_get_coverage_remote(case_no: str,
                                edge_bitmap: GlobalEdgeBitmap,
-                               remote: RemoteExecutor,
-                               total_edges: int = 1 << 24):
+                               remote: RemoteExecutor):
     """
     - 远程执行 content_shell；
     - Bin 结果移动到共享目录 /mnt/vmshare；
     - 本地分析 bin 文件；
     - 删除 bin 文件。
     """
-    remote_out_dir = "/mnt/vmshare/testCorpus"
-    remote_html_path = f"/mnt/vmshare/testCorpus/{case_no}/{case_no}.html"
+    remote_html_path = f"/{SHARE_ROOT_CORPUS}/{case_no}/{case_no}.html"
 
     # 设置远程环境变量
-    env = f"SANCOV_OUTPUT_DIR={remote_out_dir}/{case_no}"
+    env = f"SANCOV_OUTPUT_DIR={SHARE_ROOT_CORPUS}/{case_no}"
 
     tmp_dir = "$(mktemp -d -p /tmp chrome-tmp-XXXXXX)"
-    crash_dir = "/timer/IDXFuzzer/crashes"
     cmd = f"{env} timeout -s KILL 5s /timer/chromium/src/out/IndexedDBSanCov/content_shell " \
           f"--no-sandbox --headless=new --ozone-platform=headless " \
           f"--disable-gpu --disable-plugins --disable-extensions " \
@@ -29,20 +32,22 @@ def run_html_and_get_coverage(case_no: str,
           f"--no-default-browser-check --password-store=basic " \
           f"--use-mock-keychain --disable-hang-monitor " \
           f"--run-all-compositor-stages-before-draw " \
+          f"--disable-logging --log-level=3" \
           f"--virtual-time-budget=2000 --user-data-dir={tmp_dir} " \
-          f"--enable-crash-reporter --crash-dumps-dir={crash_dir} " \
-          f"file://{remote_html_path}"
+          f"--enable-crash-reporter --crash-dumps-dir={SHARE_ROOT_CRASHES} " \
+          f"file://{remote_html_path} > /dev/null 2>&1"
 
-    print("[+] SSH: Running content_shell remotely")
+    # print("[+] SSH: Running content_shell remotely")
     out, err = remote.exec(cmd)
     if out:
-        print(out)
+        pass
+        # print(out)
     if err:
-        print(err)
+        pass
+        # print(err)
 
     # 本地处理 coverage
-    local_bin_path = os.path.join(r"C:\TimerIzaya\VMShare\testCorpus", str(case_no), "sancov_bitmap_*.bin")
-    # bin_glob = os.path.join(os.path.dirname(local_bin_path), "sancov_bitmap_*.bin")
+    local_bin_path = os.path.join(r"C:\TimerIzaya\VMShare\corpus", str(case_no), "sancov_bitmap_*.bin")
 
     import glob
     import numpy as np
@@ -57,7 +62,7 @@ def run_html_and_get_coverage(case_no: str,
         total_new_edges += edge_bitmap.update_from_file(cov_file)
         os.remove(cov_file)
 
-    coverage = np.count_nonzero(edge_bitmap.bitmap) / total_edges * 100
+    coverage = np.count_nonzero(edge_bitmap.bitmap) / EDGE_TOTAL_COUNT * 100
     return total_new_edges, coverage
 
 
@@ -69,7 +74,7 @@ if __name__ == "__main__":
     )
 
     bitmap = GlobalEdgeBitmap()
-    html_name = "testCorpus/0/0.html"
-    new_edges, coverage = run_html_and_get_coverage(0, bitmap, remote)
+    html_name = "corpus/0/0.html"
+    new_edges, coverage = run_html_and_get_coverage_remote(0, bitmap, remote)
 
     print(f"[+] New edges: {new_edges}, coverage: {coverage:.4f}%")

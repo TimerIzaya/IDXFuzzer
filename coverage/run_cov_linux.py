@@ -1,10 +1,11 @@
 import os, time, glob, subprocess, numpy as np, tempfile, shutil
+
+from config import EDGE_TOTAL_COUNT
 from coverage.bitmap import GlobalEdgeBitmap
 
-def run_and_update_coverage(html_path: str,
+def run_and_update_coverage_linux(html_path: str,
                             edge_bitmap: GlobalEdgeBitmap,
-                            tmp_dir: str | None = None,
-                            total_edges: int = 1 << 24):
+                            tmp_dir: str | None = None):
     """
     运行 content_shell 执行 html_path，对全局 edge_bitmap 做增量更新，
     返回 (new_edges, coverage_percent)。
@@ -70,7 +71,7 @@ def run_and_update_coverage(html_path: str,
         bin_files = glob.glob(bin_glob)
         if not bin_files:
             print(f"[!] No coverage file found in {out_dir}")
-            return 0, total_edges
+            return 0, EDGE_TOTAL_COUNT
 
         total_new_edges = 0
         for cov_file in bin_files:
@@ -80,7 +81,7 @@ def run_and_update_coverage(html_path: str,
             except FileNotFoundError:
                 pass
 
-        coverage = np.count_nonzero(edge_bitmap.bitmap) / total_edges * 100
+        coverage = np.count_nonzero(edge_bitmap.bitmap) / EDGE_TOTAL_COUNT * 100
         pid = os.getpid()
         # print(f"[PID {pid}] new_edge: {total_new_edges:<8} time: {t2 - t1} ms     coverage: {coverage:.4f}%")
         return total_new_edges, coverage

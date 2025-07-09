@@ -20,14 +20,20 @@ from multiprocessing import Pool, cpu_count, Value
 import numpy as np
 
 from IR.IRFuzzer import generate_ir_program
+from config import EDGE_TOTAL_COUNT
+from coverage.RemoteExecutor import RemoteExecutor
+from coverage.run_cov_remote import run_html_and_get_coverage_remote, SHARE_ROOT_CORPUS, SHARE_ROOT_CRASHES, \
+    SHARE_ROOT_TIMEOUT
 from lifter.IRToJSLifter import IRToJSLifter
-from coverage.run_cov_in_linux import run_and_update_coverage
 from coverage.bitmap import GlobalEdgeBitmap
 
 # ---------- 常量路径 ----------
-CORPUS_ROOT = "/timer/IDXFuzzer/corpus"
-CRASH_ROOT = "/timer/IDXFuzzer/crashes"
-TIMEOUT_DIR = os.path.join(CRASH_ROOT, "timeout")
+CORPUS_ROOT = r"C:\TimerIzaya\VMShare\corpus"
+CRASH_ROOT = r"C:\TimerIzaya\VMShare\crashes"
+TIMEOUT_DIR = r"C:\TimerIzaya\VMShare\timeout"
+
+
+CPU_COUNT = cpu_count() - 2
 
 
 # ---------- 工具函数 ----------
@@ -72,23 +78,30 @@ def init_worker(edge_counter: Value, timeout_counter: Value) -> None:
     Pool initializer：在每个子进程中把共享 Value 绑定到全局变量。
     必须使用此方式，避免 Value 对象被 pickle 造成 RuntimeError。
     """
-    global _shared_total_edges, _shared_timeout_cnt
+    global _shared_total_edges, _shared_timeout_cnt, _shared_remote
     _shared_total_edges = edge_counter
     _shared_timeout_cnt = timeout_counter
 
+    # 👇 每个进程只初始化一次 SSH
+    from coverage.RemoteExecutor import RemoteExecutor
+    _shared_remote = RemoteExecutor(
+        hostname="192.168.31.174",
+        username="root",
+        key_path=r"C:\\Users\\TimerIzaya\\.ssh\\id_ed25519"
+    )
+
+    if _shared_remote is None:
+        raise RuntimeError("SSH RemoteExecutor not initialized in child process.")
 
 # ---------- Pool 工作函数 ----------
-def run_one_case(bitmap_name: str) -> bool:
-    """
-    生成并执行单个测试用例
-    - 返回 True 表示该用例产生了新边
-    """
+def run_one_case(bitmap_name) -> bool:
+    global _shared_remote
     cid = make_uid()
     html_path, case_root = gen_case(cid)
 
     # 打开共享 bitmap（只读写位图，不负责统计）
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    new_edges, _ = run_and_update_coverage(html_path, bitmap)
+    new_edges, _ = run_html_and_get_coverage_remote(cid, bitmap, _shared_remote)
     bitmap.close()
 
     # 更新共享计数器
@@ -121,7 +134,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
             1 for f in os.listdir(CORPUS_ROOT)
             if os.path.isdir(os.path.join(CORPUS_ROOT, f))
         )
-        coverage_pct = np.count_nonzero(bitmap.bitmap) / bitmap.size * 100
+        coverage_pct = np.count_nonzero(bitmap.bitmap) / EDGE_TOTAL_COUNT * 100
 
         print("\n========== IDX Fuzzer Stats ==========")
         print(f"{'Elapsed Time':<20}: {h:02d}h {m:02d}m {s:02d}s")
@@ -150,6 +163,8 @@ def init_output_dirs() -> None:
 if __name__ == "__main__":
     init_output_dirs()
 
+    PROCESS_COUNT = 1
+
     # 创建全局 bitmap（shm 文件），子进程只需通过名称复用
     bitmap = GlobalEdgeBitmap(create=True)
     bitmap_name = bitmap.name()
@@ -166,9 +181,8 @@ if __name__ == "__main__":
         daemon=True
     ).start()
 
-    # 进程池：预留 2 核给系统 / Chrome，本机核心数 - 2
     pool = Pool(
-        cpu_count() - 2,
+        PROCESS_COUNT,
         initializer=init_worker,
         initargs=(total_edge_counter, timeout_counter)
     )
@@ -176,7 +190,7 @@ if __name__ == "__main__":
     try:
         # 每批投递 8 个任务，可根据机器性能调整
         while True:
-            pool.starmap(run_one_case, [(bitmap_name,)] * 8)
+            pool.starmap(run_one_case, [(bitmap_name,)] * PROCESS_COUNT)
     except KeyboardInterrupt:
         print("Interrupted by user.")
     finally:

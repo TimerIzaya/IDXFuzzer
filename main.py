@@ -3,7 +3,7 @@ import re
 
 from IR.IRFuzzer import generate_ir_program
 from lifter.IRToJSLifter import IRToJSLifter
-from mutiprocess_main import wrap_js_in_html
+from mutiprocess_linux import wrap_js_in_html
 
 CORPUS_ROOT = "/timer/IDXFuzzer/corpus"
 from pathlib import Path

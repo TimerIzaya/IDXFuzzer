@@ -12,7 +12,7 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
     layer_type = LayerType.EXECUTION
 
     # 预计有多少os api 实际因为有些os不合法 一定小于等于这个数
-    EXPECT_OPS = 20
+    EXPECT_OPS = 2000
     # EXPECT_OPS = 50
 
     expectOpCnt = 0
