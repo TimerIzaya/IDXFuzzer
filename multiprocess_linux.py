@@ -178,7 +178,7 @@ if __name__ == "__main__":
     try:
         # 每批投递 8 个任务，可根据机器性能调整
         while True:
-            pool.starmap(run_one_case, [(bitmap_name,)] * (PROCESS_COUNT + 2))
+            pool.starmap(run_one_case, [(bitmap_name,)] * (PROCESS_COUNT * 2))
     except KeyboardInterrupt:
         print("Interrupted by user.")
     finally:
