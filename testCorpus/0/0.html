@@ -2,10 +2,33 @@
 <html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
 <body><script>
 let db;
-const openRequest = window.indexedDB.open('str_3728', 4201772381286887)
+const openRequest = window.indexedDB.open('str_5901', 4666511576990651)
+openRequest.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db = event.target.result;
+    var objectStore_0 = db.createObjectStore('objectStore_0', {autoIncrement: true});
+    var objectStore_1 = db.createObjectStore('objectStore_1', {keypath: 'uFOpCUXmKot.yEMU.onO.ewhwCnPrQm.kba'});
+};
 openRequest.onsuccess = (event) => {
     console.log('db onsuccess triggered')
     db = openRequest.result;
+    const txn_0 = db.transaction(['objectStore_0', 'objectStore_1'], 'readwrite', {durability:"default"})
+    txn_0.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_0.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_0.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    db.onversionchange = (event) => {
+        console.log('The version of this database has changed, release this connection');
+        db.close()
+    };
+    db.onclose = (event) => {
+        console.log('The database connection is unexpectedly closed');
+    };
 };
 openRequest.onerror = (event) => {
     console.log('open db onerror triggered')
@@ -17,12 +40,7 @@ openRequest.onerror = (event) => {
 openRequest.onblocked = (event) => {
     console.log('open db blocked triggered')
 };
-openRequest.onupgradeneeded = (event) => {
-    console.log('db onupgraded trigered');
-    db = event.target.result;
-    var objectStore_0 = db.createObjectStore('objectStore_0');
-};
-const deleteRequest = indexedDB.deleteDatabase('str_3728')
+const deleteRequest = indexedDB.deleteDatabase('str_5901')
 deleteRequest.onblocked = (event) => {
     console.log('delete db onblocked triggered')
 };

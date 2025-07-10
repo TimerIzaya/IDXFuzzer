@@ -36,19 +36,15 @@ class IDBOpenDBRequest_onsuccess_Layer(LayerBuilder):
         )
         body.append(assignDb)
 
-        # 构建 transaction 层
-        # txn_layer = IDBDatabase_Transaction_Layer.build()
-        # children.append(txn_layer)
+        txn_layer = IDBDatabase_Transaction_Layer.build()
+        children.append(txn_layer)
 
-        # 构建 db.onversionchange 层
-        # version_layer = IDBDatabase_onversionchange_Layer.build()
-        # children.append(version_layer)
+        version_layer = IDBDatabase_onversionchange_Layer.build()
+        children.append(version_layer)
 
-        # 构建 db.onclose 层
-        # close_layer = IDBDatabase_onclose_Layer.build()
-        # children.append(close_layer)
+        close_layer = IDBDatabase_onclose_Layer.build()
+        children.append(close_layer)
 
-        # 构造 request.onsuccess = function(event) { ... }
         handler = AssignmentExpression(
             left=MemberExpression(openRequestIdent, "onsuccess"),
             right=FunctionExpression([Identifier("event")], body)

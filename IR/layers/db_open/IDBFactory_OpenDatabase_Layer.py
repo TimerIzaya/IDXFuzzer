@@ -26,7 +26,8 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
         # 单独生成 name/version 参数，便于注册数据库
         open_params = method.getParams().raw()
         dbName = IRParamValueGenerator.generateValueByParamInfo(open_params[0])  # string
-        versionNumber = random.randint(1, 2**53 - 1)
+
+        versionNumber = random.randint(1, 2 ** 53 - 1)
 
         #注意 这里只是尝试open一个叫dbName的db, 具体赋值的变量要放在onsuccess层里去注册
         Global.smctx.registerDatabase(dbName, versionNumber)
@@ -50,10 +51,10 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
             name=IDBFactory_OpenDatabase_Layer.name,
             ir_nodes=[call],
             children=[
+                IDBOpenDBRequest_onupgradeneeded_Layer.build(),
                 IDBOpenDBRequest_onsuccess_Layer.build(),
                 IDBOpenDBRequest_onerror_Layer.build(),
-                IDBOpenDBRequest_onblocked_Layer.build(),
-                IDBOpenDBRequest_onupgradeneeded_Layer.build()
+                IDBOpenDBRequest_onblocked_Layer.build()
             ],
             layer_type=IDBFactory_OpenDatabase_Layer.layer_type
         )

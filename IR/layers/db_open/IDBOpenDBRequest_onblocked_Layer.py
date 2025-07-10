@@ -16,7 +16,6 @@ class IDBOpenDBRequest_onblocked_Layer(LayerBuilder):
             CallExpression(Identifier("console"), "log", [Literal("open db blocked triggered")])
         ]
 
-        # request.onblocked = function(event) { ... }
         open_request_id = Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest)
         handler = AssignmentExpression(
             left=MemberExpression(open_request_id, "onblocked"),

@@ -545,8 +545,8 @@ AtomicSchemaWeights = {
     count: 5,
     delete: 5,
     get: 5,
-    # getAll: 5,
-    # getAllKeys: 5,
+    getAll: 5,
+    getAllKeys: 5,
     index: 5,
     put: 5,
 }

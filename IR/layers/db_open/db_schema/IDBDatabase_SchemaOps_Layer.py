@@ -29,6 +29,7 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
         body = []
         # todo 测试用  默认要加一个，不然后续可能一直难生成 后续删掉
         body.extend(createObjectStore())
+        body.extend(createObjectStore())
 
         # 生成opt + 处理opt event
         # 这组操作跑随机跑N轮

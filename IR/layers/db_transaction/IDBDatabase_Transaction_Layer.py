@@ -26,21 +26,22 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
         args = []
         # txn需要用到的os str
         txnOSS = Global.smctx.pickRandomTxnObjectStores()
+        args.append(Identifier(str(txnOSS)))
+
+
         # 包装一层Identifier
         txnOSS = [Identifier(i) for i in txnOSS]
         Global.smctx.registerTxn(txnOSS)
 
-        args.append(txnOSS)
 
         mode = random.choice(["readwrite", "readonly"])
-        durability = "durability:{" + random.choice(["strict", "default", "relaxed"]) + "}"
-        args.append(Identifier(mode))
+        durability = "{durability:\"" + random.choice(["strict", "default", "relaxed"]) + "\"}"
+        args.append(Literal(str(mode)))
         args.append(Identifier(durability))
 
         # mode和durability 同步更新到schema上下文
         Global.smctx.currentDB.txn.mode = mode
         Global.smctx.currentDB.txn.durability = durability
-
 
         dbIdent = Global.irctx.getIdentifierByType(IDBType.IDBDatabase)
         txnName = Global.smctx.newTxnName()
@@ -56,7 +57,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
         Global.irctx.registerVariable(Variable(txnName, IDBType.IDBTransaction))
 
         children = list(filter(None, [
-            IDBObjectStore_DataOps_Layer.build(),
+            # IDBObjectStore_DataOps_Layer.build(),
             IDBTransaction_oncomplete_Layer.build(),
             IDBTransaction_onabort_Layer.build(),
             IDBTransaction_onerror_Layer.build(),

@@ -74,8 +74,6 @@ def drop_all_indexes():
 def reset_schema():
     return [
         *deleteObjectStore(),
-        *deleteObjectStore(),
-        *createObjectStore(),
         *createIndex()
     ]
 
