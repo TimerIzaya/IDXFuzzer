@@ -2,13 +2,27 @@
 <html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
 <body><script>
 let db;
-const openRequest = window.indexedDB.open('str_4711', 217894676954923)
+const openRequest = window.indexedDB.open('str_3728', 4201772381286887)
+openRequest.onsuccess = (event) => {
+    console.log('db onsuccess triggered')
+    db = openRequest.result;
+};
+openRequest.onerror = (event) => {
+    console.log('open db onerror triggered')
+    var errorResult;
+    errorResult = event.target.error;
+    console.log(errorResult.message)
+    console.log(errorResult.name)
+};
+openRequest.onblocked = (event) => {
+    console.log('open db blocked triggered')
+};
 openRequest.onupgradeneeded = (event) => {
     console.log('db onupgraded trigered');
     db = event.target.result;
-    var objectStore_0 = db.createObjectStore('objectStore_0', {autoIncrement: false});
+    var objectStore_0 = db.createObjectStore('objectStore_0');
 };
-const deleteRequest = indexedDB.deleteDatabase('str_4711')
+const deleteRequest = indexedDB.deleteDatabase('str_3728')
 deleteRequest.onblocked = (event) => {
     console.log('delete db onblocked triggered')
 };

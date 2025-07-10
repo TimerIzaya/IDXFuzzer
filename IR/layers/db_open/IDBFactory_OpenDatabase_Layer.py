@@ -1,16 +1,15 @@
 import random
 from IR.layers.Global import Global
+from IR.layers.db_open.IDBOpenDBRequest_onblocked_Layer import IDBOpenDBRequest_onblocked_Layer
+from IR.layers.db_open.IDBOpenDBRequest_onerror_Layer import IDBOpenDBRequest_onerror_Layer
+from IR.layers.db_open.IDBOpenDBRequest_onsuccess_Layer import IDBOpenDBRequest_onsuccess_Layer
 from IR.type.IDBType import IDBType
 from schema.IDBSchemaParser import IDBSchemaParser
 from IR.IRNodes import CallExpression, Identifier, Literal
-from IR.context.IRContext import IRContext, Variable
+from IR.context.IRContext import Variable
 from config import FATHER
-from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.IRParamValueGenerator import IRParamValueGenerator
-from IR.layers.db_open.IDBOpenDBRequest_onblocked_Layer import IDBOpenDBRequest_onblocked_Layer
-from IR.layers.db_open.IDBOpenDBRequest_onerror_Layer import IDBOpenDBRequest_onerror_Layer
-from IR.layers.db_open.db_schema.IDBOpenDBRequest_onupgradeneeded_Layer import IDBOpenDBRequest_onupgradeneeded_Layer
-from IR.layers.db_open.IDBOpenDBRequest_onsuccess_Layer import IDBOpenDBRequest_onsuccess_Layer
+from IR.layers.db_open.IDBOpenDBRequest_onupgradeneeded_Layer import IDBOpenDBRequest_onupgradeneeded_Layer
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 
@@ -28,7 +27,6 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
         open_params = method.getParams().raw()
         dbName = IRParamValueGenerator.generateValueByParamInfo(open_params[0])  # string
         versionNumber = random.randint(1, 2**53 - 1)
-
 
         #注意 这里只是尝试open一个叫dbName的db, 具体赋值的变量要放在onsuccess层里去注册
         Global.smctx.registerDatabase(dbName, versionNumber)
@@ -52,6 +50,9 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
             name=IDBFactory_OpenDatabase_Layer.name,
             ir_nodes=[call],
             children=[
+                IDBOpenDBRequest_onsuccess_Layer.build(),
+                IDBOpenDBRequest_onerror_Layer.build(),
+                IDBOpenDBRequest_onblocked_Layer.build(),
                 IDBOpenDBRequest_onupgradeneeded_Layer.build()
             ],
             layer_type=IDBFactory_OpenDatabase_Layer.layer_type
