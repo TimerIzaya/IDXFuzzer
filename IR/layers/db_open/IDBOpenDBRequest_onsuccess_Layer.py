@@ -50,6 +50,7 @@ class IDBOpenDBRequest_onsuccess_Layer(LayerBuilder):
             right=FunctionExpression([Identifier("event")], body)
         )
 
+        children = [i for i in children if i is not  None]
         return Layer(
             name=IDBOpenDBRequest_onsuccess_Layer.name,
             ir_nodes=[handler],
