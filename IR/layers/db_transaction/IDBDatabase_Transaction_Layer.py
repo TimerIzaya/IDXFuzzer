@@ -20,7 +20,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
     @staticmethod
     def build() -> Layer | None:
         if not Global.smctx.getObjectStores():
-            print("[TransactionLayer] skipped: no object store available")
+            # print("[TransactionLayer] skipped: no object store available")
             return None
 
         args = []
