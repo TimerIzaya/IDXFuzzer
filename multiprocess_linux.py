@@ -150,7 +150,8 @@ def init_output_dirs() -> None:
 if __name__ == "__main__":
     init_output_dirs()
 
-    PROCESS_COUNT = cpu_count() - 2
+    # PROCESS_COUNT = cpu_count() - 2
+    PROCESS_COUNT = 1
 
     # 创建全局 bitmap（shm 文件），子进程只需通过名称复用
     bitmap = GlobalEdgeBitmap(create=True)

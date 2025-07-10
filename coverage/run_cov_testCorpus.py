@@ -3,7 +3,10 @@ import os, time, glob, subprocess, numpy as np, tempfile, shutil
 from config import EDGE_TOTAL_COUNT
 from coverage.bitmap import GlobalEdgeBitmap
 
-def run_and_update_coverage_linux(html_path: str,
+
+
+# 输入一个目录，然后直接给html地址，他妈的
+def run_and_update_coverage_testCorpus(html_path: str,
                             edge_bitmap: GlobalEdgeBitmap,
                             tmp_dir: str | None = None):
     """
@@ -22,7 +25,8 @@ def run_and_update_coverage_linux(html_path: str,
     os.makedirs(crash_dir, exist_ok=True)
     os.makedirs(timeout_dir, exist_ok=True)
 
-    out_dir = os.path.dirname(html_path)
+    out_dir = html_path.removesuffix(".html")
+    os.makedirs(out_dir, exist_ok=True)
     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
 
     with tempfile.TemporaryDirectory(prefix="chrome-tmp-") as real_tmp:
