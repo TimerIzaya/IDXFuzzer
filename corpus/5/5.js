@@ -1,1193 +1,1042 @@
 let db;
-const openRequest = window.indexedDB.open('str_2162', 6944503080180800)
+const openRequest = window.indexedDB.open('str_7570', 7786084189267070)
 openRequest.onupgradeneeded = (event) => {
     console.log('db onupgraded trigered');
     db = event.target.result;
-    var objectStore_0 = db.createObjectStore('objectStore_55');
-    var index_49 = objectStore_0.createIndex('index_49', 'test', {unique: false, multiEntry: true});
-    var index_0 = objectStore_0.index('index_49');
+    var objectStore_0 = db.createObjectStore('objectStore_72', {autoIncrement: true});
+    var index_57 = objectStore_0.createIndex('index_57', 'test', {unique: true});
+    var put_0 = objectStore_0.put({f0_f: '<object>', f1_a: '<object>', f2_f: '<array>', f3_w: '<array>', f4_e: '<object>'}, 'CSjETQCfROR');
     var clear_0 = objectStore_0.clear();
-    var objectStore_1 = db.createObjectStore('objectStore_56', {keypath: 'QvsIuPV'});
-    var put_0 = objectStore_0.put({f0_l: '<number>', f1_w: '<null>'}, 'vKU');
-    var getAll_0;
+    var add_0 = objectStore_0.add({f0_w: '<string>', f1_y: '<array>', f2_f: '<boolean>', f3_z: '<array>', f4_j: '<null>'}, 'hOjz');
+    var get_0;
     try{
-        KeyRange_0 = IDBKeyRange.bound('vKU', 'vKU', false, false);
-        getAll_0 = objectStore_0.getAll(KeyRange_0, 119257060);
+        KeyRange_0 = IDBKeyRange.only('hOjz');
+        get_0 = objectStore_0.get(KeyRange_0);
     }
     catch (e){
-        KeyRange_1 = IDBKeyRange.only('vKU');
-        getAll_0 = objectStore_0.getAll(KeyRange_1);
+    }
+
+    var index_58 = objectStore_0.createIndex('index_58', 'test', {unique: false, multiEntry: false});
+    var getAllKeys_0 = objectStore_0.getAllKeys();
+    objectStore_0.deleteIndex('index_57')
+    var index_0 = objectStore_0.index('index_58');
+    var getAll_0 = objectStore_0.getAll(2938834904);
+    var get_1;
+    try{
+        KeyRange_2 = IDBKeyRange.lowerBound('hOjz', false);
+        get_1 = objectStore_0.get(KeyRange_2);
+    }
+    catch (e){
     }
 
     var clear_1 = objectStore_0.clear();
-    var index_50 = objectStore_1.createIndex('index_50', 'test', {unique: true, multiEntry: true});
-    var index_51 = objectStore_1.createIndex('index_51', 'test');
-    var put_1 = objectStore_0.put({f0_k: '<object>', f1_e: '<null>', f2_s: '<array>', f3_d: '<boolean>', f4_g: '<number>', f5_g: '<object>', f6_n: '<object>', f7_u: '<number>', f8_j: '<string>'}, 'OoMo');
-    var put_2 = objectStore_1.put({f0_r: '<array>', f1_v: '<boolean>'}, 'LCsNmvadn');
-    var get_0;
-    try{
-        KeyRange_2 = IDBKeyRange.only('LCsNmvadn');
-        get_0 = objectStore_1.get(KeyRange_2);
-    }
-    catch (e){
-    }
-
-    var getAll_1 = objectStore_0.getAll();
-    var objectStore_2 = db.createObjectStore('objectStore_57', {keypath: 'OtL', autoIncrement: false});
-    var index_52 = objectStore_2.createIndex('index_52', 'test');
-    var index_53 = objectStore_0.createIndex('index_53', 'test', {unique: true, multiEntry: false});
-    var get_1;
-    try{
-        KeyRange_4 = IDBKeyRange.lowerBound('LCsNmvadn', false);
-        get_1 = objectStore_1.get(KeyRange_4);
-    }
-    catch (e){
-    }
-
-    var clear_2 = objectStore_2.clear();
-    var count_0 = objectStore_1.count();
-    var index_1 = objectStore_2.index('index_52');
+    var getAll_1 = objectStore_0.getAll(4208451161);
     var get_2;
     try{
-        KeyRange_6 = IDBKeyRange.only('LCsNmvadn');
-        get_2 = objectStore_1.get(KeyRange_6);
+        KeyRange_4 = IDBKeyRange.only('CSjETQCfROR');
+        get_2 = objectStore_0.get(KeyRange_4);
     }
     catch (e){
     }
 
-    var add_0 = objectStore_2.add({f0_f: '<string>', f1_x: '<null>'}, 'aTAUjoX');
-    var objectStore_3 = db.createObjectStore('objectStore_58', {autoIncrement: false});
-    var objectStore_4 = db.createObjectStore('objectStore_59', {keypath: 'pLpIAbP', autoIncrement: false});
+    var count_0 = objectStore_0.count();
+    db.deleteObjectStore('objectStore_72')
+    var objectStore_1 = db.createObjectStore('objectStore_73');
+    var objectStore_2 = db.createObjectStore('objectStore_74', {keypath: 'MKlMTSDNckMg', autoIncrement: false});
+    var clear_2 = objectStore_1.clear();
+    var index_59 = objectStore_1.createIndex('index_59', 'test', {unique: false, multiEntry: true});
     var clear_3 = objectStore_1.clear();
+    db.deleteObjectStore('objectStore_73')
+    db.deleteObjectStore('objectStore_74')
+    var objectStore_3 = db.createObjectStore('objectStore_75', {autoIncrement: false});
+    var put_1 = objectStore_3.put({f0_f: '<string>', f1_h: '<boolean>', f2_q: '<boolean>', f3_s: '<array>', f4_e: '<array>'}, 'NYkbGd');
+    var objectStore_4 = db.createObjectStore('objectStore_76', {keypath: 'quSAeABfAQCk', autoIncrement: true});
+    var put_2 = objectStore_3.put({f0_f: '<object>'}, 'wrVkeJEv');
+    var getAllKeys_1 = objectStore_3.getAllKeys();
+    var put_3 = objectStore_3.put({f0_k: '<object>', f1_i: '<object>', f2_r: '<boolean>', f3_a: '<array>', f4_q: '<object>', f5_z: '<null>', f6_t: '<string>'}, 'uUwdGWsm');
     var clear_4 = objectStore_3.clear();
-    var add_1 = objectStore_3.add({f0_w: '<number>', f1_w: '<null>', f2_n: '<array>', f3_n: '<object>', f4_x: '<number>', f5_f: '<number>', f6_j: '<array>', f7_z: '<boolean>'}, 'hfhTEPRUek');
-    var objectStore_5 = db.createObjectStore('objectStore_60', {keypath: 'qQuOtT'});
-    var clear_5 = objectStore_0.clear();
-    var clear_6 = objectStore_5.clear();
-    var index_54 = objectStore_2.createIndex('index_54', 'test', {unique: false, multiEntry: false});
-    var index_55 = objectStore_5.createIndex('index_55', 'test');
-    var clear_7 = objectStore_1.clear();
-    var delete_0;
-    try{
-        KeyRange_8 = IDBKeyRange.lowerBound('aTAUjoX', false);
-        delete_0 = objectStore_2.delete(KeyRange_8);
-    }
-    catch (e){
-    }
-
-    var index_56 = objectStore_2.createIndex('index_56', 'test', {unique: false});
+    var index_60 = objectStore_4.createIndex('index_60', 'test', {unique: true});
+    var put_4 = objectStore_4.put({f0_c: '<object>', f1_t: '<object>', f2_t: '<array>', f3_c: '<boolean>', f4_t: '<object>'}, 'uyZhoW');
+    var index_1 = objectStore_4.index('index_60');
+    var count_1 = objectStore_4.count();
+    var clear_5 = objectStore_4.clear();
+    var put_5 = objectStore_3.put({f0_t: '<string>'}, 'noGUBkGJf');
+    var put_6 = objectStore_3.put({f0_f: '<string>', f1_p: '<array>', f2_z: '<boolean>', f3_t: '<array>', f4_u: '<string>'}, 'UZnA');
+    var getAll_2 = objectStore_4.getAll(3220745268);
     var get_3;
     try{
-        KeyRange_10 = IDBKeyRange.bound('aTAUjoX', 'aTAUjoX', false, false);
-        get_3 = objectStore_2.get(KeyRange_10);
+        KeyRange_6 = IDBKeyRange.only('uyZhoW');
+        get_3 = objectStore_4.get(KeyRange_6);
     }
     catch (e){
     }
 
-    var delete_1;
-    try{
-        KeyRange_12 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', false, true);
-        delete_1 = objectStore_3.delete(KeyRange_12);
-    }
-    catch (e){
-    }
-
-    var getAllKeys_0 = objectStore_2.getAllKeys(3062473523);
-    var index_57 = objectStore_5.createIndex('index_57', 'test', {unique: true});
-    var add_2 = objectStore_1.add({f0_r: '<boolean>', f1_c: '<string>', f2_p: '<array>', f3_r: '<boolean>', f4_q: '<array>', f5_z: '<boolean>', f6_w: '<number>', f7_a: '<string>', f8_j: '<object>'}, 'rEBhLEMif');
-    var delete_2;
-    try{
-        KeyRange_14 = IDBKeyRange.only('hfhTEPRUek');
-        delete_2 = objectStore_3.delete(KeyRange_14);
-    }
-    catch (e){
-    }
-
-    var clear_8 = objectStore_0.clear();
-    var index_2 = objectStore_2.index('index_56');
-    var index_58 = objectStore_5.createIndex('index_58', 'test');
+    var put_7 = objectStore_4.put({f0_l: '<null>'}, 'kchINvrtJc');
     var get_4;
     try{
-        KeyRange_16 = IDBKeyRange.only('vKU');
-        get_4 = objectStore_0.get(KeyRange_16);
+        KeyRange_8 = IDBKeyRange.lowerBound('wrVkeJEv', true);
+        get_4 = objectStore_3.get(KeyRange_8);
     }
     catch (e){
     }
 
-    var put_3 = objectStore_1.put({f0_e: '<object>', f1_z: '<null>', f2_h: '<array>', f3_j: '<array>', f4_h: '<array>', f5_c: '<null>', f6_d: '<string>'}, 'KvGZf');
     var get_5;
     try{
-        KeyRange_18 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', false, false);
-        get_5 = objectStore_3.get(KeyRange_18);
+        KeyRange_10 = IDBKeyRange.bound('uyZhoW', 'kchINvrtJc', false, false);
+        get_5 = objectStore_4.get(KeyRange_10);
     }
     catch (e){
     }
 
-    db.deleteObjectStore('objectStore_60')
-    var objectStore_6 = db.createObjectStore('objectStore_61', {keypath: 'VgjuNlPERWP', autoIncrement: false});
-    var index_59 = objectStore_0.createIndex('index_59', 'test');
-    var put_4 = objectStore_0.put({f0_b: '<null>', f1_a: '<object>', f2_x: '<string>', f3_m: '<array>'}, 'mUZiWMNR');
-    var clear_9 = objectStore_0.clear();
-    var add_3 = objectStore_4.add({f0_h: '<string>', f1_l: '<number>', f2_f: '<string>', f3_r: '<boolean>', f4_i: '<null>', f5_m: '<boolean>', f6_k: '<null>', f7_a: '<object>'}, 'ASq');
-    var put_5 = objectStore_1.put({f0_t: '<array>', f1_g: '<number>', f2_k: '<boolean>'}, 'BqgHxhzXg');
-    var put_6 = objectStore_6.put({f0_c: '<null>', f1_g: '<array>', f2_c: '<null>'}, 'jJAFtWoD');
-    var put_7 = objectStore_2.put({f0_v: '<string>', f1_z: '<array>', f2_u: '<boolean>', f3_q: '<null>', f4_g: '<object>', f5_p: '<array>'}, 'wPzbGaYN');
-    var getAllKeys_1;
-    try{
-        KeyRange_20 = IDBKeyRange.bound('BqgHxhzXg', 'KvGZf', true, true);
-        getAllKeys_1 = objectStore_1.getAllKeys(KeyRange_20);
-    }
-    catch (e){
-        KeyRange_21 = IDBKeyRange.only('LCsNmvadn');
-        getAllKeys_1 = objectStore_1.getAllKeys(KeyRange_21);
-    }
-
-    var getAllKeys_2 = objectStore_2.getAllKeys(2273739395);
-    var objectStore_7 = db.createObjectStore('objectStore_62', {keypath: 'ABT'});
-    var put_8 = objectStore_2.put({f0_a: '<null>', f1_d: '<boolean>', f2_a: '<string>'}, 'yziBZthIP');
-    var add_4 = objectStore_0.add({f0_d: '<boolean>'}, 'GgeCPP');
-    var objectStore_8 = db.createObjectStore('objectStore_63');
-    var objectStore_9 = db.createObjectStore('objectStore_64');
-    objectStore_0.deleteIndex('index_53')
-    var add_5 = objectStore_6.add({f0_j: '<array>'}, 'IxJqM');
-    var clear_10 = objectStore_3.clear();
-    var clear_11 = objectStore_6.clear();
-    var add_6 = objectStore_2.add({f0_n: '<array>', f1_j: '<number>', f2_e: '<boolean>', f3_c: '<string>', f4_l: '<array>', f5_p: '<array>', f6_b: '<array>', f7_r: '<null>', f8_w: '<array>'}, 'uWzGWNay');
-    var count_1;
-    try{
-        KeyRange_22 = IDBKeyRange.bound('GgeCPP', 'OoMo', false, false);
-        count_1 = objectStore_0.count(KeyRange_22);
-    }
-    catch (e){
-    }
-
-    var getAll_2 = objectStore_0.getAll(318118273);
-    var clear_12 = objectStore_2.clear();
-    var put_9 = objectStore_9.put({f0_x: '<string>', f1_l: '<array>', f2_d: '<null>', f3_p: '<string>', f4_c: '<string>', f5_e: '<boolean>', f6_s: '<boolean>'}, 'mGA');
+    db.deleteObjectStore('objectStore_75')
     var get_6;
     try{
-        KeyRange_24 = IDBKeyRange.only('ASq');
-        get_6 = objectStore_4.get(KeyRange_24);
+        KeyRange_12 = IDBKeyRange.bound('kchINvrtJc', 'uyZhoW', false, true);
+        get_6 = objectStore_4.get(KeyRange_12);
     }
     catch (e){
     }
 
-    var add_7 = objectStore_2.add({f0_s: '<string>', f1_j: '<object>', f2_t: '<array>', f3_l: '<string>', f4_m: '<number>', f5_s: '<number>'}, 'oWsn');
     var get_7;
     try{
-        KeyRange_26 = IDBKeyRange.bound('jJAFtWoD', 'jJAFtWoD', true, false);
-        get_7 = objectStore_6.get(KeyRange_26);
+        KeyRange_14 = IDBKeyRange.lowerBound('kchINvrtJc', false);
+        get_7 = objectStore_4.get(KeyRange_14);
     }
     catch (e){
     }
 
+    var add_1 = objectStore_4.add({f0_e: '<array>', f1_o: '<boolean>', f2_x: '<array>', f3_k: '<null>', f4_s: '<null>', f5_i: '<string>', f6_l: '<array>', f7_v: '<null>', f8_v: '<array>'}, 'zRmUMnLK');
+    var getAll_3 = objectStore_4.getAll(4092772641);
+    var put_8 = objectStore_4.put({f0_u: '<boolean>', f1_h: '<null>', f2_h: '<boolean>', f3_j: '<array>', f4_u: '<boolean>', f5_s: '<number>', f6_e: '<array>'}, 'eGqmvJp');
+    var put_9 = objectStore_4.put({f0_o: '<boolean>', f1_o: '<string>', f2_f: '<string>', f3_w: '<string>'}, 'AUmhBvIlQS');
     var get_8;
     try{
-        KeyRange_28 = IDBKeyRange.lowerBound('OoMo', false);
-        get_8 = objectStore_0.get(KeyRange_28);
+        KeyRange_16 = IDBKeyRange.only('kchINvrtJc');
+        get_8 = objectStore_4.get(KeyRange_16);
     }
     catch (e){
     }
 
-    var get_9;
+    var add_2 = objectStore_4.add({f0_k: '<null>', f1_y: '<object>', f2_v: '<string>'}, 'mGQOtwen');
+    var delete_0;
     try{
-        KeyRange_30 = IDBKeyRange.bound('wPzbGaYN', 'wPzbGaYN', true, true);
-        get_9 = objectStore_2.get(KeyRange_30);
+        KeyRange_18 = IDBKeyRange.only('uyZhoW');
+        delete_0 = objectStore_4.delete(KeyRange_18);
     }
     catch (e){
     }
 
-    var add_8 = objectStore_0.add({f0_l: '<number>', f1_j: '<string>', f2_y: '<boolean>', f3_l: '<string>', f4_s: '<null>'}, 'GDiv');
-    var clear_13 = objectStore_6.clear();
-    var count_2;
+    var objectStore_5 = db.createObjectStore('objectStore_77', {keypath: 'RDGf', autoIncrement: true});
+    var getAllKeys_2;
     try{
-        KeyRange_32 = IDBKeyRange.lowerBound('KvGZf', false);
-        count_2 = objectStore_1.count(KeyRange_32);
+        KeyRange_20 = IDBKeyRange.only('zRmUMnLK');
+        getAllKeys_2 = objectStore_4.getAllKeys(KeyRange_20, 1603809988);
     }
     catch (e){
+        KeyRange_21 = IDBKeyRange.only('uyZhoW');
+        getAllKeys_2 = objectStore_4.getAllKeys(KeyRange_21);
     }
 
-    objectStore_1.deleteIndex('index_51')
-    var count_3;
-    try{
-        KeyRange_34 = IDBKeyRange.only('hfhTEPRUek');
-        count_3 = objectStore_3.count(KeyRange_34);
-    }
-    catch (e){
-    }
-
-    var add_9 = objectStore_8.add({f0_v: '<null>', f1_f: '<null>', f2_t: '<string>', f3_x: '<object>', f4_c: '<boolean>', f5_x: '<array>', f6_j: '<array>', f7_k: '<string>', f8_k: '<boolean>', f9_v: '<string>'}, 'qbUjoZ');
-    var clear_14 = objectStore_8.clear();
-    var get_10;
-    try{
-        KeyRange_36 = IDBKeyRange.only('hfhTEPRUek');
-        get_10 = objectStore_3.get(KeyRange_36);
-    }
-    catch (e){
-    }
-
-    var put_10 = objectStore_7.put({f0_a: '<boolean>', f1_s: '<boolean>', f2_c: '<boolean>', f3_u: '<array>', f4_z: '<boolean>', f5_f: '<array>', f6_p: '<string>', f7_z: '<array>'}, 'QnI');
-    var index_60 = objectStore_4.createIndex('index_60', 'test', {unique: true, multiEntry: true});
-    var clear_15 = objectStore_4.clear();
-    var getAllKeys_3 = objectStore_2.getAllKeys();
 };
 openRequest.onsuccess = (event) => {
     console.log('db onsuccess triggered')
     db = openRequest.result;
-    const txn_50 = db.transaction(['objectStore_61'], 'readonly', {durability:"strict"})
-    var objectStore_61 = txn_50.objectStore('objectStore_61');
-    var getAllKeys_4;
+    const txn_60 = db.transaction(['objectStore_76'], 'readwrite', {durability:"relaxed"})
+    var objectStore_76 = txn_60.objectStore('objectStore_76');
+    var delete_1;
     try{
-        KeyRange_38 = IDBKeyRange.only('jJAFtWoD');
-        getAllKeys_4 = objectStore_61.getAllKeys(KeyRange_38);
-    }
-    catch (e){
-        KeyRange_39 = IDBKeyRange.only('jJAFtWoD');
-        getAllKeys_4 = objectStore_61.getAllKeys(KeyRange_39);
-    }
-
-    var getAll_3 = objectStore_61.getAll();
-    var get_11;
-    try{
-        KeyRange_40 = IDBKeyRange.lowerBound('jJAFtWoD', true);
-        get_11 = objectStore_61.get(KeyRange_40);
+        KeyRange_22 = IDBKeyRange.lowerBound('AUmhBvIlQS', false);
+        delete_1 = objectStore_76.delete(KeyRange_22);
     }
     catch (e){
     }
 
-    var getAllKeys_5;
+    var delete_2;
     try{
-        KeyRange_42 = IDBKeyRange.lowerBound('IxJqM', false);
-        getAllKeys_5 = objectStore_61.getAllKeys(KeyRange_42);
+        KeyRange_24 = IDBKeyRange.bound('uyZhoW', 'eGqmvJp', false, true);
+        delete_2 = objectStore_76.delete(KeyRange_24);
     }
     catch (e){
-        KeyRange_43 = IDBKeyRange.only('jJAFtWoD');
-        getAllKeys_5 = objectStore_61.getAllKeys(KeyRange_43);
     }
 
+    var count_2 = objectStore_76.count();
+    var get_9;
+    try{
+        KeyRange_26 = IDBKeyRange.lowerBound('kchINvrtJc', false);
+        get_9 = objectStore_76.get(KeyRange_26);
+    }
+    catch (e){
+    }
+
+    var count_3 = objectStore_76.count();
     var count_4;
     try{
-        KeyRange_44 = IDBKeyRange.bound('IxJqM', 'IxJqM', false, false);
-        count_4 = objectStore_61.count(KeyRange_44);
-    }
-    catch (e){
-    }
-
-    var get_12;
-    try{
-        KeyRange_46 = IDBKeyRange.bound('IxJqM', 'jJAFtWoD', false, false);
-        get_12 = objectStore_61.get(KeyRange_46);
+        KeyRange_28 = IDBKeyRange.lowerBound('AUmhBvIlQS', true);
+        count_4 = objectStore_76.count(KeyRange_28);
     }
     catch (e){
     }
 
     var count_5;
     try{
-        KeyRange_48 = IDBKeyRange.only('IxJqM');
-        count_5 = objectStore_61.count(KeyRange_48);
+        KeyRange_30 = IDBKeyRange.bound('AUmhBvIlQS', 'kchINvrtJc', false, false);
+        count_5 = objectStore_76.count(KeyRange_30);
     }
     catch (e){
     }
 
-    var getAllKeys_6;
+    var clear_6 = objectStore_76.clear();
+    var clear_7 = objectStore_76.clear();
+    var count_6 = objectStore_76.count();
+    var clear_8 = objectStore_76.clear();
+    var get_10;
     try{
-        KeyRange_50 = IDBKeyRange.lowerBound('jJAFtWoD', true);
-        getAllKeys_6 = objectStore_61.getAllKeys(KeyRange_50, 3552434688);
+        KeyRange_32 = IDBKeyRange.bound('mGQOtwen', 'AUmhBvIlQS', true, false);
+        get_10 = objectStore_76.get(KeyRange_32);
     }
     catch (e){
-        KeyRange_51 = IDBKeyRange.only('jJAFtWoD');
-        getAllKeys_6 = objectStore_61.getAllKeys(KeyRange_51);
     }
 
-    var count_6 = objectStore_61.count();
-    var get_13;
+    var put_10 = objectStore_76.put({f0_w: '<number>', f1_l: '<array>', f2_o: '<null>', f3_o: '<string>', f4_q: '<number>', f5_j: '<number>', f6_t: '<boolean>', f7_v: '<object>'}, 'bMOa');
+    var get_11;
     try{
-        KeyRange_52 = IDBKeyRange.bound('IxJqM', 'IxJqM', true, true);
-        get_13 = objectStore_61.get(KeyRange_52);
+        KeyRange_34 = IDBKeyRange.bound('kchINvrtJc', 'uyZhoW', false, false);
+        get_11 = objectStore_76.get(KeyRange_34);
     }
     catch (e){
     }
 
-    var count_7 = objectStore_61.count();
-    var count_8 = objectStore_61.count();
-    var getAllKeys_7;
+    var add_3 = objectStore_76.add({f0_b: '<object>', f1_d: '<object>', f2_a: '<null>', f3_u: '<string>', f4_z: '<null>'}, 'HOxQFTaMaV');
+    var get_12;
     try{
-        KeyRange_54 = IDBKeyRange.lowerBound('IxJqM', true);
-        getAllKeys_7 = objectStore_61.getAllKeys(KeyRange_54, 1188839520);
+        KeyRange_36 = IDBKeyRange.only('HOxQFTaMaV');
+        get_12 = objectStore_76.get(KeyRange_36);
     }
     catch (e){
-        KeyRange_55 = IDBKeyRange.only('IxJqM');
-        getAllKeys_7 = objectStore_61.getAllKeys(KeyRange_55);
     }
 
-    var count_9 = objectStore_61.count();
-    var getAllKeys_8 = objectStore_61.getAllKeys();
-    var getAll_4 = objectStore_61.getAll();
-    var getAllKeys_9 = objectStore_61.getAllKeys();
-    var count_10;
+    var getAllKeys_3;
     try{
-        KeyRange_56 = IDBKeyRange.lowerBound('IxJqM', false);
-        count_10 = objectStore_61.count(KeyRange_56);
+        KeyRange_38 = IDBKeyRange.lowerBound('mGQOtwen', true);
+        getAllKeys_3 = objectStore_76.getAllKeys(KeyRange_38, 2100037819);
     }
     catch (e){
+        KeyRange_39 = IDBKeyRange.only('bMOa');
+        getAllKeys_3 = objectStore_76.getAllKeys(KeyRange_39);
     }
 
-    var count_11 = objectStore_61.count();
-    txn_50.oncomplete = (event) => {
+    txn_60.oncomplete = (event) => {
         console.log('Transaction completed successfully');
     };
-    txn_50.onabort = (event) => {
+    txn_60.onabort = (event) => {
         console.log('Transaction was aborted');
     };
-    txn_50.onerror = (event) => {
+    txn_60.onerror = (event) => {
         console.log('Transaction error occurred');
     };
-    const txn_51 = db.transaction(['objectStore_62'], 'readonly', {durability:"strict"})
-    var objectStore_62 = txn_51.objectStore('objectStore_62');
-    var count_12;
+    const txn_61 = db.transaction(['objectStore_77'], 'readwrite', {durability:"default"})
+    var objectStore_77 = txn_61.objectStore('objectStore_77');
+    var add_4 = objectStore_77.add({f0_g: '<string>', f1_b: '<array>'}, 'lIbrYGvPn');
+    var getAllKeys_4 = objectStore_77.getAllKeys(2047108978);
+    var add_5 = objectStore_77.add({f0_m: '<number>', f1_g: '<boolean>', f2_x: '<string>', f3_z: '<string>', f4_t: '<null>', f5_e: '<string>'}, 'UwosxttH');
+    var get_13;
     try{
-        KeyRange_58 = IDBKeyRange.bound('QnI', 'QnI', false, false);
-        count_12 = objectStore_62.count(KeyRange_58);
+        KeyRange_40 = IDBKeyRange.lowerBound('UwosxttH', false);
+        get_13 = objectStore_77.get(KeyRange_40);
     }
     catch (e){
     }
 
+    var add_6 = objectStore_77.add({f0_t: '<object>', f1_b: '<boolean>', f2_f: '<array>', f3_b: '<null>', f4_q: '<boolean>', f5_g: '<number>'}, 'PaPqmOoF');
+    var clear_9 = objectStore_77.clear();
+    var getAllKeys_5 = objectStore_77.getAllKeys(1866911744);
+    var put_11 = objectStore_77.put({f0_w: '<object>'}, 'qAWKpAw');
     var get_14;
     try{
-        KeyRange_60 = IDBKeyRange.only('QnI');
-        get_14 = objectStore_62.get(KeyRange_60);
+        KeyRange_42 = IDBKeyRange.bound('PaPqmOoF', 'PaPqmOoF', true, false);
+        get_14 = objectStore_77.get(KeyRange_42);
     }
     catch (e){
     }
 
+    var put_12 = objectStore_77.put({f0_j: '<array>', f1_d: '<number>', f2_x: '<null>', f3_a: '<array>', f4_x: '<null>'}, 'pOzFI');
+    var add_7 = objectStore_77.add({f0_g: '<array>', f1_d: '<boolean>', f2_w: '<array>'}, 'Vqfl');
+    var add_8 = objectStore_77.add({f0_g: '<string>'}, 'aYDDZDNNg');
+    var delete_3;
+    try{
+        KeyRange_44 = IDBKeyRange.only('pOzFI');
+        delete_3 = objectStore_77.delete(KeyRange_44);
+    }
+    catch (e){
+    }
+
+    var put_13 = objectStore_77.put({f0_z: '<null>', f1_m: '<string>', f2_y: '<boolean>', f3_t: '<object>'}, 'GwQLUs');
+    var delete_4;
+    try{
+        KeyRange_46 = IDBKeyRange.lowerBound('GwQLUs', false);
+        delete_4 = objectStore_77.delete(KeyRange_46);
+    }
+    catch (e){
+    }
+
+    var getAll_4;
+    try{
+        KeyRange_48 = IDBKeyRange.lowerBound('pOzFI', true);
+        getAll_4 = objectStore_77.getAll(KeyRange_48);
+    }
+    catch (e){
+        KeyRange_49 = IDBKeyRange.only('GwQLUs');
+        getAll_4 = objectStore_77.getAll(KeyRange_49);
+    }
+
+    var add_9 = objectStore_77.add({f0_s: '<boolean>', f1_y: '<boolean>', f2_g: '<object>', f3_x: '<string>', f4_w: '<object>', f5_w: '<array>', f6_p: '<null>'}, 'vLX');
+    txn_61.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_61.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_61.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_62 = db.transaction(['objectStore_76', 'objectStore_77'], 'readwrite', {durability:"relaxed"})
+    var objectStore_76 = txn_62.objectStore('objectStore_76');
+    var getAll_5;
+    try{
+        KeyRange_50 = IDBKeyRange.lowerBound('eGqmvJp', true);
+        getAll_5 = objectStore_76.getAll(KeyRange_50);
+    }
+    catch (e){
+        KeyRange_51 = IDBKeyRange.only('AUmhBvIlQS');
+        getAll_5 = objectStore_76.getAll(KeyRange_51);
+    }
+
+    var clear_10 = objectStore_76.clear();
+    var index_2 = objectStore_76.index('index_60');
+    var clear_11 = objectStore_76.clear();
+    var put_14 = objectStore_76.put({f0_i: '<string>', f1_c: '<array>', f2_a: '<null>', f3_s: '<object>', f4_q: '<number>', f5_c: '<array>', f6_c: '<object>', f7_t: '<array>', f8_s: '<boolean>'}, 'slixdHSDv');
+    var put_15 = objectStore_76.put({f0_v: '<boolean>', f1_i: '<number>', f2_g: '<number>', f3_x: '<boolean>'}, 'XeMuKLDDsI');
+    var clear_12 = objectStore_76.clear();
+    var add_10 = objectStore_76.add({f0_o: '<null>', f1_a: '<number>', f2_q: '<object>'}, 'RpFmDvmm');
+    var clear_13 = objectStore_76.clear();
+    var delete_5;
+    try{
+        KeyRange_52 = IDBKeyRange.bound('zRmUMnLK', 'mGQOtwen', true, true);
+        delete_5 = objectStore_76.delete(KeyRange_52);
+    }
+    catch (e){
+    }
+
+    var put_16 = objectStore_76.put({f0_r: '<number>', f1_u: '<object>', f2_t: '<array>', f3_x: '<boolean>', f4_r: '<object>', f5_i: '<string>', f6_c: '<object>', f7_n: '<number>'}, 'JeajXMMmNk');
+    var clear_14 = objectStore_76.clear();
+    var clear_15 = objectStore_76.clear();
+    var clear_16 = objectStore_76.clear();
+    var add_11 = objectStore_76.add({f0_q: '<array>', f1_o: '<null>', f2_q: '<array>', f3_u: '<string>', f4_f: '<boolean>', f5_h: '<object>'}, 'jYoR');
+    var clear_17 = objectStore_76.clear();
+    var add_12 = objectStore_76.add({f0_u: '<array>', f1_b: '<array>', f2_e: '<object>', f3_x: '<boolean>', f4_d: '<null>', f5_m: '<boolean>', f6_l: '<boolean>', f7_u: '<object>', f8_c: '<number>'}, 'fcmsZi');
+    var put_17 = objectStore_76.put({f0_v: '<boolean>'}, 'STjHMr');
+    txn_62.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_62.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_62.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_63 = db.transaction(['objectStore_76'], 'readwrite', {durability:"default"})
+    var objectStore_76 = txn_63.objectStore('objectStore_76');
     var get_15;
     try{
-        KeyRange_62 = IDBKeyRange.bound('QnI', 'QnI', false, false);
-        get_15 = objectStore_62.get(KeyRange_62);
+        KeyRange_54 = IDBKeyRange.bound('AUmhBvIlQS', 'bMOa', false, false);
+        get_15 = objectStore_76.get(KeyRange_54);
     }
     catch (e){
     }
 
-    var getAll_5 = objectStore_62.getAll();
-    var count_13 = objectStore_62.count();
-    var getAllKeys_10;
+    var count_7;
     try{
-        KeyRange_64 = IDBKeyRange.bound('QnI', 'QnI', false, true);
-        getAllKeys_10 = objectStore_62.getAllKeys(KeyRange_64);
+        KeyRange_56 = IDBKeyRange.only('fcmsZi');
+        count_7 = objectStore_76.count(KeyRange_56);
     }
     catch (e){
-        KeyRange_65 = IDBKeyRange.only('QnI');
-        getAllKeys_10 = objectStore_62.getAllKeys(KeyRange_65);
     }
 
+    var put_18 = objectStore_76.put({f0_u: '<number>', f1_k: '<string>', f2_l: '<object>'}, 'DCmiwPn');
+    var clear_18 = objectStore_76.clear();
+    var getAllKeys_6 = objectStore_76.getAllKeys(3227750944);
+    var put_19 = objectStore_76.put({f0_a: '<object>', f1_v: '<number>', f2_m: '<array>', f3_e: '<number>', f4_u: '<object>', f5_s: '<string>'}, 'GzqVjwo');
+    var getAll_6;
+    try{
+        KeyRange_58 = IDBKeyRange.lowerBound('GzqVjwo', true);
+        getAll_6 = objectStore_76.getAll(KeyRange_58, 585950121);
+    }
+    catch (e){
+        KeyRange_59 = IDBKeyRange.only('eGqmvJp');
+        getAll_6 = objectStore_76.getAll(KeyRange_59);
+    }
+
+    var getAll_7;
+    try{
+        KeyRange_60 = IDBKeyRange.bound('kchINvrtJc', 'jYoR', true, false);
+        getAll_7 = objectStore_76.getAll(KeyRange_60, 748875905);
+    }
+    catch (e){
+        KeyRange_61 = IDBKeyRange.only('fcmsZi');
+        getAll_7 = objectStore_76.getAll(KeyRange_61);
+    }
+
+    var delete_6;
+    try{
+        KeyRange_62 = IDBKeyRange.lowerBound('fcmsZi', true);
+        delete_6 = objectStore_76.delete(KeyRange_62);
+    }
+    catch (e){
+    }
+
+    var add_13 = objectStore_76.add({f0_q: '<array>', f1_i: '<object>', f2_z: '<number>'}, 'FSEX');
+    var put_20 = objectStore_76.put({f0_b: '<number>', f1_u: '<array>', f2_m: '<boolean>', f3_h: '<array>'}, 'smOxaBJPVaiF');
+    var delete_7;
+    try{
+        KeyRange_64 = IDBKeyRange.lowerBound('STjHMr', false);
+        delete_7 = objectStore_76.delete(KeyRange_64);
+    }
+    catch (e){
+    }
+
+    var count_8;
+    try{
+        KeyRange_66 = IDBKeyRange.bound('mGQOtwen', 'uyZhoW', true, true);
+        count_8 = objectStore_76.count(KeyRange_66);
+    }
+    catch (e){
+    }
+
+    var getAll_8 = objectStore_76.getAll();
+    var put_21 = objectStore_76.put({f0_o: '<null>', f1_k: '<object>', f2_n: '<number>'}, 'gcwGDYNWjxe');
     var get_16;
     try{
-        KeyRange_66 = IDBKeyRange.bound('QnI', 'QnI', false, true);
-        get_16 = objectStore_62.get(KeyRange_66);
+        KeyRange_68 = IDBKeyRange.only('zRmUMnLK');
+        get_16 = objectStore_76.get(KeyRange_68);
     }
     catch (e){
     }
 
-    var count_14 = objectStore_62.count();
+    txn_63.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_63.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_63.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_64 = db.transaction(['objectStore_77'], 'readwrite', {durability:"default"})
+    var objectStore_77 = txn_64.objectStore('objectStore_77');
+    var put_22 = objectStore_77.put({f0_o: '<number>', f1_k: '<null>', f2_e: '<object>', f3_f: '<null>', f4_v: '<null>'}, 'umHaX');
+    var delete_8;
+    try{
+        KeyRange_70 = IDBKeyRange.lowerBound('umHaX', true);
+        delete_8 = objectStore_77.delete(KeyRange_70);
+    }
+    catch (e){
+    }
+
+    var add_14 = objectStore_77.add({f0_f: '<string>', f1_e: '<string>', f2_j: '<array>', f3_n: '<array>', f4_y: '<array>', f5_k: '<null>', f6_o: '<string>', f7_r: '<object>', f8_q: '<boolean>', f9_f: '<number>'}, 'OnIyoXRJ');
+    var put_23 = objectStore_77.put({f0_h: '<object>'}, 'zZokh');
+    var count_9;
+    try{
+        KeyRange_72 = IDBKeyRange.bound('GwQLUs', 'Vqfl', true, true);
+        count_9 = objectStore_77.count(KeyRange_72);
+    }
+    catch (e){
+    }
+
+    var clear_19 = objectStore_77.clear();
+    var add_15 = objectStore_77.add({f0_d: '<object>', f1_e: '<null>', f2_t: '<boolean>', f3_f: '<number>', f4_c: '<number>'}, 'GKZdkKqpu');
     var get_17;
     try{
-        KeyRange_68 = IDBKeyRange.bound('QnI', 'QnI', false, true);
-        get_17 = objectStore_62.get(KeyRange_68);
+        KeyRange_74 = IDBKeyRange.bound('OnIyoXRJ', 'zZokh', false, false);
+        get_17 = objectStore_77.get(KeyRange_74);
     }
     catch (e){
     }
 
-    var count_15;
-    try{
-        KeyRange_70 = IDBKeyRange.lowerBound('QnI', false);
-        count_15 = objectStore_62.count(KeyRange_70);
-    }
-    catch (e){
-    }
-
-    var count_16;
-    try{
-        KeyRange_72 = IDBKeyRange.bound('QnI', 'QnI', true, true);
-        count_16 = objectStore_62.count(KeyRange_72);
-    }
-    catch (e){
-    }
-
-    var count_17 = objectStore_62.count();
+    var clear_20 = objectStore_77.clear();
+    var put_24 = objectStore_77.put({f0_j: '<number>', f1_s: '<object>', f2_l: '<number>', f3_i: '<boolean>', f4_e: '<null>', f5_y: '<boolean>', f6_f: '<null>', f7_q: '<string>', f8_v: '<null>', f9_z: '<object>'}, 'CxlT');
+    var put_25 = objectStore_77.put({f0_w: '<array>', f1_o: '<null>'}, 'zvtnUshmqB');
+    var getAllKeys_7 = objectStore_77.getAllKeys(3999427555);
     var get_18;
     try{
-        KeyRange_74 = IDBKeyRange.bound('QnI', 'QnI', false, false);
-        get_18 = objectStore_62.get(KeyRange_74);
+        KeyRange_76 = IDBKeyRange.bound('Vqfl', 'zvtnUshmqB', true, false);
+        get_18 = objectStore_77.get(KeyRange_76);
     }
     catch (e){
     }
 
     var get_19;
     try{
-        KeyRange_76 = IDBKeyRange.lowerBound('QnI', false);
-        get_19 = objectStore_62.get(KeyRange_76);
+        KeyRange_78 = IDBKeyRange.bound('Vqfl', 'umHaX', false, false);
+        get_19 = objectStore_77.get(KeyRange_78);
     }
     catch (e){
     }
 
     var get_20;
     try{
-        KeyRange_78 = IDBKeyRange.only('QnI');
-        get_20 = objectStore_62.get(KeyRange_78);
+        KeyRange_80 = IDBKeyRange.lowerBound('zZokh', false);
+        get_20 = objectStore_77.get(KeyRange_80);
     }
     catch (e){
     }
 
+    txn_64.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_64.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_64.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_65 = db.transaction(['objectStore_76'], 'readwrite', {durability:"default"})
+    var objectStore_76 = txn_65.objectStore('objectStore_76');
+    var put_26 = objectStore_76.put({f0_m: '<number>', f1_j: '<null>', f2_p: '<null>', f3_t: '<number>', f4_b: '<object>', f5_j: '<null>', f6_s: '<null>', f7_s: '<array>', f8_g: '<array>'}, 'WfIniz');
+    var clear_21 = objectStore_76.clear();
+    var count_10;
+    try{
+        KeyRange_82 = IDBKeyRange.lowerBound('smOxaBJPVaiF', false);
+        count_10 = objectStore_76.count(KeyRange_82);
+    }
+    catch (e){
+    }
+
+    var add_16 = objectStore_76.add({f0_f: '<string>', f1_v: '<null>', f2_o: '<boolean>', f3_l: '<string>', f4_h: '<object>'}, 'YDEZ');
+    var clear_22 = objectStore_76.clear();
+    var add_17 = objectStore_76.add({f0_s: '<boolean>', f1_p: '<number>', f2_r: '<null>'}, 'GolvyXnhhI');
     var get_21;
     try{
-        KeyRange_80 = IDBKeyRange.bound('QnI', 'QnI', true, false);
-        get_21 = objectStore_62.get(KeyRange_80);
+        KeyRange_84 = IDBKeyRange.bound('GzqVjwo', 'YDEZ', false, true);
+        get_21 = objectStore_76.get(KeyRange_84);
     }
     catch (e){
     }
 
-    txn_51.oncomplete = (event) => {
-        console.log('Transaction completed successfully');
-    };
-    txn_51.onabort = (event) => {
-        console.log('Transaction was aborted');
-    };
-    txn_51.onerror = (event) => {
-        console.log('Transaction error occurred');
-    };
-    const txn_52 = db.transaction(['objectStore_57'], 'readwrite', {durability:"strict"})
-    var objectStore_57 = txn_52.objectStore('objectStore_57');
-    var put_11 = objectStore_57.put({f0_u: '<boolean>'}, 'WQVNr');
-    var clear_16 = objectStore_57.clear();
-    var count_18 = objectStore_57.count();
-    var put_12 = objectStore_57.put({f0_u: '<object>', f1_q: '<array>', f2_i: '<null>', f3_w: '<null>', f4_b: '<array>', f5_s: '<boolean>', f6_q: '<number>', f7_f: '<null>', f8_v: '<object>', f9_f: '<object>'}, 'svwC');
-    var getAll_6 = objectStore_57.getAll(3071896345);
-    var clear_17 = objectStore_57.clear();
-    var get_22;
+    var put_27 = objectStore_76.put({f0_b: '<object>', f1_l: '<number>', f2_m: '<number>', f3_a: '<object>', f4_d: '<object>', f5_b: '<array>', f6_i: '<object>', f7_y: '<string>'}, 'LggFIWaksX');
+    var count_11;
     try{
-        KeyRange_82 = IDBKeyRange.bound('WQVNr', 'wPzbGaYN', false, true);
-        get_22 = objectStore_57.get(KeyRange_82);
+        KeyRange_86 = IDBKeyRange.only('kchINvrtJc');
+        count_11 = objectStore_76.count(KeyRange_86);
     }
     catch (e){
     }
 
-    var get_23;
+    var getAll_9;
     try{
-        KeyRange_84 = IDBKeyRange.bound('wPzbGaYN', 'svwC', true, true);
-        get_23 = objectStore_57.get(KeyRange_84);
+        KeyRange_88 = IDBKeyRange.lowerBound('fcmsZi', true);
+        getAll_9 = objectStore_76.getAll(KeyRange_88);
     }
     catch (e){
-    }
-
-    var getAll_7 = objectStore_57.getAll();
-    var add_10 = objectStore_57.add({f0_c: '<boolean>', f1_j: '<number>'}, 'msIsqQpdlO');
-    var get_24;
-    try{
-        KeyRange_86 = IDBKeyRange.lowerBound('aTAUjoX', false);
-        get_24 = objectStore_57.get(KeyRange_86);
-    }
-    catch (e){
-    }
-
-    var clear_18 = objectStore_57.clear();
-    var count_19 = objectStore_57.count();
-    var add_11 = objectStore_57.add({f0_m: '<boolean>', f1_t: '<number>', f2_u: '<string>', f3_l: '<null>', f4_u: '<string>', f5_b: '<boolean>', f6_b: '<array>', f7_v: '<number>', f8_n: '<object>', f9_w: '<array>'}, 'xTRJyItzbIMf');
-    var put_13 = objectStore_57.put({f0_i: '<string>', f1_c: '<array>', f2_e: '<number>', f3_h: '<number>', f4_g: '<number>', f5_i: '<boolean>', f6_n: '<boolean>', f7_l: '<null>'}, 'BXIaKVZXRSR');
-    var put_14 = objectStore_57.put({f0_s: '<array>', f1_l: '<boolean>', f2_y: '<null>', f3_m: '<object>', f4_w: '<null>'}, 'eCBDPdDtzU');
-    var add_12 = objectStore_57.add({f0_g: '<number>', f1_f: '<array>', f2_e: '<array>', f3_x: '<boolean>', f4_y: '<string>', f5_q: '<array>', f6_x: '<object>', f7_r: '<null>', f8_q: '<string>', f9_z: '<number>'}, 'LlEhGVYj');
-    var getAllKeys_11;
-    try{
-        KeyRange_88 = IDBKeyRange.only('yziBZthIP');
-        getAllKeys_11 = objectStore_57.getAllKeys(KeyRange_88);
-    }
-    catch (e){
-        KeyRange_89 = IDBKeyRange.only('LlEhGVYj');
-        getAllKeys_11 = objectStore_57.getAllKeys(KeyRange_89);
-    }
-
-    var delete_3;
-    try{
-        KeyRange_90 = IDBKeyRange.bound('svwC', 'uWzGWNay', false, true);
-        delete_3 = objectStore_57.delete(KeyRange_90);
-    }
-    catch (e){
-    }
-
-    var get_25;
-    try{
-        KeyRange_92 = IDBKeyRange.bound('msIsqQpdlO', 'WQVNr', false, false);
-        get_25 = objectStore_57.get(KeyRange_92);
-    }
-    catch (e){
-    }
-
-    var clear_19 = objectStore_57.clear();
-    txn_52.oncomplete = (event) => {
-        console.log('Transaction completed successfully');
-    };
-    txn_52.onabort = (event) => {
-        console.log('Transaction was aborted');
-    };
-    txn_52.onerror = (event) => {
-        console.log('Transaction error occurred');
-    };
-    const txn_53 = db.transaction(['objectStore_62'], 'readwrite', {durability:"strict"})
-    var objectStore_62 = txn_53.objectStore('objectStore_62');
-    var put_15 = objectStore_62.put({f0_g: '<string>', f1_k: '<number>', f2_v: '<boolean>', f3_m: '<array>', f4_d: '<number>', f5_x: '<array>', f6_r: '<boolean>', f7_r: '<null>', f8_u: '<number>', f9_m: '<object>'}, 'bniwqyhODH');
-    var count_20 = objectStore_62.count();
-    var getAllKeys_12 = objectStore_62.getAllKeys();
-    var delete_4;
-    try{
-        KeyRange_94 = IDBKeyRange.bound('bniwqyhODH', 'bniwqyhODH', false, true);
-        delete_4 = objectStore_62.delete(KeyRange_94);
-    }
-    catch (e){
-    }
-
-    var add_13 = objectStore_62.add({f0_t: '<string>', f1_o: '<object>', f2_d: '<array>', f3_w: '<number>', f4_i: '<number>', f5_g: '<null>', f6_l: '<string>', f7_g: '<string>', f8_v: '<null>', f9_y: '<object>'}, 'ajz');
-    var getAllKeys_13;
-    try{
-        KeyRange_96 = IDBKeyRange.lowerBound('QnI', false);
-        getAllKeys_13 = objectStore_62.getAllKeys(KeyRange_96);
-    }
-    catch (e){
-        KeyRange_97 = IDBKeyRange.only('QnI');
-        getAllKeys_13 = objectStore_62.getAllKeys(KeyRange_97);
-    }
-
-    var get_26;
-    try{
-        KeyRange_98 = IDBKeyRange.bound('QnI', 'ajz', false, false);
-        get_26 = objectStore_62.get(KeyRange_98);
-    }
-    catch (e){
-    }
-
-    var put_16 = objectStore_62.put({f0_p: '<object>', f1_x: '<number>', f2_o: '<string>', f3_y: '<boolean>', f4_k: '<object>', f5_j: '<number>'}, 'NPzGTcmZ');
-    var put_17 = objectStore_62.put({f0_e: '<object>', f1_h: '<boolean>', f2_v: '<string>'}, 'QUpF');
-    var getAllKeys_14 = objectStore_62.getAllKeys();
-    var getAll_8 = objectStore_62.getAll(426021482);
-    var get_27;
-    try{
-        KeyRange_100 = IDBKeyRange.bound('QUpF', 'bniwqyhODH', false, false);
-        get_27 = objectStore_62.get(KeyRange_100);
-    }
-    catch (e){
-    }
-
-    var getAllKeys_15;
-    try{
-        KeyRange_102 = IDBKeyRange.bound('bniwqyhODH', 'bniwqyhODH', true, false);
-        getAllKeys_15 = objectStore_62.getAllKeys(KeyRange_102, 215173918);
-    }
-    catch (e){
-        KeyRange_103 = IDBKeyRange.only('QUpF');
-        getAllKeys_15 = objectStore_62.getAllKeys(KeyRange_103);
-    }
-
-    var getAll_9 = objectStore_62.getAll();
-    var count_21;
-    try{
-        KeyRange_104 = IDBKeyRange.only('QUpF');
-        count_21 = objectStore_62.count(KeyRange_104);
-    }
-    catch (e){
-    }
-
-    var count_22;
-    try{
-        KeyRange_106 = IDBKeyRange.lowerBound('ajz', true);
-        count_22 = objectStore_62.count(KeyRange_106);
-    }
-    catch (e){
-    }
-
-    var add_14 = objectStore_62.add({f0_g: '<null>', f1_z: '<string>', f2_k: '<object>', f3_c: '<array>', f4_g: '<number>', f5_k: '<number>', f6_j: '<boolean>', f7_q: '<string>', f8_m: '<null>'}, 'Felc');
-    txn_53.oncomplete = (event) => {
-        console.log('Transaction completed successfully');
-    };
-    txn_53.onabort = (event) => {
-        console.log('Transaction was aborted');
-    };
-    txn_53.onerror = (event) => {
-        console.log('Transaction error occurred');
-    };
-    const txn_54 = db.transaction(['objectStore_64'], 'readonly', {durability:"strict"})
-    var objectStore_64 = txn_54.objectStore('objectStore_64');
-    var get_28;
-    try{
-        KeyRange_108 = IDBKeyRange.bound('mGA', 'mGA', false, true);
-        get_28 = objectStore_64.get(KeyRange_108);
-    }
-    catch (e){
+        KeyRange_89 = IDBKeyRange.only('LggFIWaksX');
+        getAll_9 = objectStore_76.getAll(KeyRange_89);
     }
 
     var getAll_10;
     try{
-        KeyRange_110 = IDBKeyRange.lowerBound('mGA', false);
-        getAll_10 = objectStore_64.getAll(KeyRange_110);
+        KeyRange_90 = IDBKeyRange.bound('smOxaBJPVaiF', 'FSEX', true, true);
+        getAll_10 = objectStore_76.getAll(KeyRange_90);
     }
     catch (e){
-        KeyRange_111 = IDBKeyRange.only('mGA');
-        getAll_10 = objectStore_64.getAll(KeyRange_111);
+        KeyRange_91 = IDBKeyRange.only('FSEX');
+        getAll_10 = objectStore_76.getAll(KeyRange_91);
     }
 
+    var put_28 = objectStore_76.put({f0_u: '<boolean>', f1_d: '<boolean>'}, 'yye');
+    var count_12;
+    try{
+        KeyRange_92 = IDBKeyRange.bound('FSEX', 'GzqVjwo', false, true);
+        count_12 = objectStore_76.count(KeyRange_92);
+    }
+    catch (e){
+    }
+
+    var clear_23 = objectStore_76.clear();
+    var get_22;
+    try{
+        KeyRange_94 = IDBKeyRange.only('AUmhBvIlQS');
+        get_22 = objectStore_76.get(KeyRange_94);
+    }
+    catch (e){
+    }
+
+    var put_29 = objectStore_76.put({f0_h: '<array>'}, 'xhrbiYgO');
+    var put_30 = objectStore_76.put({f0_x: '<object>', f1_j: '<boolean>', f2_f: '<boolean>', f3_g: '<null>', f4_w: '<object>', f5_a: '<boolean>', f6_r: '<string>', f7_p: '<array>', f8_m: '<boolean>'}, 'mgwEUagDY');
+    var add_18 = objectStore_76.add({f0_m: '<number>'}, 'EVSqe');
+    var clear_24 = objectStore_76.clear();
+    txn_65.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_65.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_65.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_66 = db.transaction(['objectStore_77'], 'readwrite', {durability:"strict"})
+    var objectStore_77 = txn_66.objectStore('objectStore_77');
+    var get_23;
+    try{
+        KeyRange_96 = IDBKeyRange.only('zvtnUshmqB');
+        get_23 = objectStore_77.get(KeyRange_96);
+    }
+    catch (e){
+    }
+
+    var getAllKeys_8;
+    try{
+        KeyRange_98 = IDBKeyRange.lowerBound('pOzFI', false);
+        getAllKeys_8 = objectStore_77.getAllKeys(KeyRange_98, 2008644289);
+    }
+    catch (e){
+        KeyRange_99 = IDBKeyRange.only('CxlT');
+        getAllKeys_8 = objectStore_77.getAllKeys(KeyRange_99);
+    }
+
+    var add_19 = objectStore_77.add({f0_v: '<string>', f1_l: '<boolean>', f2_x: '<object>', f3_c: '<null>', f4_t: '<number>', f5_o: '<null>', f6_e: '<array>'}, 'CRwYGlYWdOOn');
+    var put_31 = objectStore_77.put({f0_z: '<number>', f1_u: '<object>', f2_l: '<number>'}, 'IIOO');
+    var get_24;
+    try{
+        KeyRange_100 = IDBKeyRange.only('UwosxttH');
+        get_24 = objectStore_77.get(KeyRange_100);
+    }
+    catch (e){
+    }
+
+    var clear_25 = objectStore_77.clear();
+    var clear_26 = objectStore_77.clear();
+    var put_32 = objectStore_77.put({f0_a: '<null>', f1_p: '<object>', f2_o: '<object>', f3_k: '<object>', f4_n: '<number>', f5_s: '<null>', f6_b: '<array>', f7_q: '<number>', f8_d: '<object>'}, 'hvknBnSX');
+    var getAllKeys_9;
+    try{
+        KeyRange_102 = IDBKeyRange.lowerBound('qAWKpAw', true);
+        getAllKeys_9 = objectStore_77.getAllKeys(KeyRange_102, 4148059268);
+    }
+    catch (e){
+        KeyRange_103 = IDBKeyRange.only('hvknBnSX');
+        getAllKeys_9 = objectStore_77.getAllKeys(KeyRange_103);
+    }
+
+    var put_33 = objectStore_77.put({f0_q: '<number>', f1_x: '<boolean>', f2_e: '<number>', f3_c: '<object>'}, 'fjUVhODgWJh');
+    var get_25;
+    try{
+        KeyRange_104 = IDBKeyRange.bound('pOzFI', 'CRwYGlYWdOOn', true, false);
+        get_25 = objectStore_77.get(KeyRange_104);
+    }
+    catch (e){
+    }
+
+    var clear_27 = objectStore_77.clear();
+    var add_20 = objectStore_77.add({f0_b: '<object>', f1_o: '<number>', f2_h: '<null>', f3_k: '<boolean>', f4_n: '<string>', f5_u: '<boolean>', f6_o: '<object>', f7_j: '<null>', f8_c: '<object>'}, 'NlYCQB');
+    var count_13;
+    try{
+        KeyRange_106 = IDBKeyRange.lowerBound('GKZdkKqpu', false);
+        count_13 = objectStore_77.count(KeyRange_106);
+    }
+    catch (e){
+    }
+
+    txn_66.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_66.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_66.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_67 = db.transaction(['objectStore_76'], 'readonly', {durability:"strict"})
+    var objectStore_76 = txn_67.objectStore('objectStore_76');
+    var count_14 = objectStore_76.count();
+    var count_15 = objectStore_76.count();
+    var count_16 = objectStore_76.count();
+    var count_17 = objectStore_76.count();
+    var getAll_11 = objectStore_76.getAll(3938230758);
+    var getAll_12;
+    try{
+        KeyRange_108 = IDBKeyRange.lowerBound('GzqVjwo', false);
+        getAll_12 = objectStore_76.getAll(KeyRange_108, 904884710);
+    }
+    catch (e){
+        KeyRange_109 = IDBKeyRange.only('LggFIWaksX');
+        getAll_12 = objectStore_76.getAll(KeyRange_109);
+    }
+
+    var get_26;
+    try{
+        KeyRange_110 = IDBKeyRange.only('fcmsZi');
+        get_26 = objectStore_76.get(KeyRange_110);
+    }
+    catch (e){
+    }
+
+    var get_27;
+    try{
+        KeyRange_112 = IDBKeyRange.bound('RpFmDvmm', 'JeajXMMmNk', true, false);
+        get_27 = objectStore_76.get(KeyRange_112);
+    }
+    catch (e){
+    }
+
+    var getAllKeys_10;
+    try{
+        KeyRange_114 = IDBKeyRange.only('xhrbiYgO');
+        getAllKeys_10 = objectStore_76.getAllKeys(KeyRange_114, 682754486);
+    }
+    catch (e){
+        KeyRange_115 = IDBKeyRange.only('FSEX');
+        getAllKeys_10 = objectStore_76.getAllKeys(KeyRange_115);
+    }
+
+    var getAllKeys_11;
+    try{
+        KeyRange_116 = IDBKeyRange.bound('eGqmvJp', 'DCmiwPn', false, true);
+        getAllKeys_11 = objectStore_76.getAllKeys(KeyRange_116, 3167538645);
+    }
+    catch (e){
+        KeyRange_117 = IDBKeyRange.only('smOxaBJPVaiF');
+        getAllKeys_11 = objectStore_76.getAllKeys(KeyRange_117);
+    }
+
+    var getAllKeys_12;
+    try{
+        KeyRange_118 = IDBKeyRange.bound('kchINvrtJc', 'STjHMr', false, false);
+        getAllKeys_12 = objectStore_76.getAllKeys(KeyRange_118, 263148893);
+    }
+    catch (e){
+        KeyRange_119 = IDBKeyRange.only('DCmiwPn');
+        getAllKeys_12 = objectStore_76.getAllKeys(KeyRange_119);
+    }
+
+    var get_28;
+    try{
+        KeyRange_120 = IDBKeyRange.lowerBound('FSEX', true);
+        get_28 = objectStore_76.get(KeyRange_120);
+    }
+    catch (e){
+    }
+
+    var count_18;
+    try{
+        KeyRange_122 = IDBKeyRange.bound('slixdHSDv', 'jYoR', true, false);
+        count_18 = objectStore_76.count(KeyRange_122);
+    }
+    catch (e){
+    }
+
+    var count_19 = objectStore_76.count();
     var get_29;
     try{
-        KeyRange_112 = IDBKeyRange.lowerBound('mGA', false);
-        get_29 = objectStore_64.get(KeyRange_112);
+        KeyRange_124 = IDBKeyRange.lowerBound('yye', true);
+        get_29 = objectStore_76.get(KeyRange_124);
     }
     catch (e){
     }
 
-    var getAllKeys_16;
-    try{
-        KeyRange_114 = IDBKeyRange.bound('mGA', 'mGA', true, false);
-        getAllKeys_16 = objectStore_64.getAllKeys(KeyRange_114);
-    }
-    catch (e){
-        KeyRange_115 = IDBKeyRange.only('mGA');
-        getAllKeys_16 = objectStore_64.getAllKeys(KeyRange_115);
-    }
-
-    var count_23;
-    try{
-        KeyRange_116 = IDBKeyRange.only('mGA');
-        count_23 = objectStore_64.count(KeyRange_116);
-    }
-    catch (e){
-    }
-
-    var getAllKeys_17;
-    try{
-        KeyRange_118 = IDBKeyRange.bound('mGA', 'mGA', true, true);
-        getAllKeys_17 = objectStore_64.getAllKeys(KeyRange_118);
-    }
-    catch (e){
-        KeyRange_119 = IDBKeyRange.only('mGA');
-        getAllKeys_17 = objectStore_64.getAllKeys(KeyRange_119);
-    }
-
-    var count_24 = objectStore_64.count();
+    var count_20 = objectStore_76.count();
+    var count_21 = objectStore_76.count();
     var get_30;
     try{
-        KeyRange_120 = IDBKeyRange.bound('mGA', 'mGA', true, false);
-        get_30 = objectStore_64.get(KeyRange_120);
+        KeyRange_126 = IDBKeyRange.lowerBound('gcwGDYNWjxe', false);
+        get_30 = objectStore_76.get(KeyRange_126);
     }
     catch (e){
     }
 
     var get_31;
     try{
-        KeyRange_122 = IDBKeyRange.bound('mGA', 'mGA', false, false);
-        get_31 = objectStore_64.get(KeyRange_122);
+        KeyRange_128 = IDBKeyRange.bound('mgwEUagDY', 'xhrbiYgO', false, true);
+        get_31 = objectStore_76.get(KeyRange_128);
     }
     catch (e){
     }
 
-    var getAllKeys_18 = objectStore_64.getAllKeys(2368120098);
-    var count_25 = objectStore_64.count();
-    var count_26;
+    txn_67.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_67.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_67.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_68 = db.transaction(['objectStore_76'], 'readonly', {durability:"relaxed"})
+    var objectStore_76 = txn_68.objectStore('objectStore_76');
+    var count_22;
     try{
-        KeyRange_124 = IDBKeyRange.lowerBound('mGA', true);
-        count_26 = objectStore_64.count(KeyRange_124);
+        KeyRange_130 = IDBKeyRange.only('mgwEUagDY');
+        count_22 = objectStore_76.count(KeyRange_130);
     }
     catch (e){
     }
 
     var get_32;
     try{
-        KeyRange_126 = IDBKeyRange.lowerBound('mGA', true);
-        get_32 = objectStore_64.get(KeyRange_126);
+        KeyRange_132 = IDBKeyRange.bound('slixdHSDv', 'mGQOtwen', false, true);
+        get_32 = objectStore_76.get(KeyRange_132);
     }
     catch (e){
     }
 
+    var getAllKeys_13 = objectStore_76.getAllKeys(1597368331);
+    var count_23 = objectStore_76.count();
     var get_33;
     try{
-        KeyRange_128 = IDBKeyRange.only('mGA');
-        get_33 = objectStore_64.get(KeyRange_128);
+        KeyRange_134 = IDBKeyRange.only('gcwGDYNWjxe');
+        get_33 = objectStore_76.get(KeyRange_134);
     }
     catch (e){
     }
 
     var get_34;
     try{
-        KeyRange_130 = IDBKeyRange.bound('mGA', 'mGA', false, false);
-        get_34 = objectStore_64.get(KeyRange_130);
+        KeyRange_136 = IDBKeyRange.bound('bMOa', 'eGqmvJp', false, true);
+        get_34 = objectStore_76.get(KeyRange_136);
     }
     catch (e){
     }
 
-    var count_27 = objectStore_64.count();
-    txn_54.oncomplete = (event) => {
-        console.log('Transaction completed successfully');
-    };
-    txn_54.onabort = (event) => {
-        console.log('Transaction was aborted');
-    };
-    txn_54.onerror = (event) => {
-        console.log('Transaction error occurred');
-    };
-    const txn_55 = db.transaction(['objectStore_56'], 'readwrite', {durability:"strict"})
-    var objectStore_56 = txn_55.objectStore('objectStore_56');
-    var put_18 = objectStore_56.put({f0_f: '<number>'}, 'jGHCIZPvf');
-    var put_19 = objectStore_56.put({f0_s: '<number>', f1_c: '<number>', f2_g: '<number>', f3_p: '<object>'}, 'KQoyPg');
-    var getAllKeys_19 = objectStore_56.getAllKeys(226372390);
-    var getAll_11 = objectStore_56.getAll();
-    var count_28;
+    var count_24;
     try{
-        KeyRange_132 = IDBKeyRange.only('KQoyPg');
-        count_28 = objectStore_56.count(KeyRange_132);
+        KeyRange_138 = IDBKeyRange.only('kchINvrtJc');
+        count_24 = objectStore_76.count(KeyRange_138);
     }
     catch (e){
     }
 
-    var clear_20 = objectStore_56.clear();
-    var delete_5;
+    var count_25 = objectStore_76.count();
+    var getAll_13 = objectStore_76.getAll(4217585118);
+    var getAllKeys_14;
     try{
-        KeyRange_134 = IDBKeyRange.bound('KQoyPg', 'KQoyPg', false, true);
-        delete_5 = objectStore_56.delete(KeyRange_134);
+        KeyRange_140 = IDBKeyRange.only('HOxQFTaMaV');
+        getAllKeys_14 = objectStore_76.getAllKeys(KeyRange_140);
     }
     catch (e){
+        KeyRange_141 = IDBKeyRange.only('JeajXMMmNk');
+        getAllKeys_14 = objectStore_76.getAllKeys(KeyRange_141);
     }
 
-    var getAll_12 = objectStore_56.getAll();
+    var index_3 = objectStore_76.index('index_60');
     var get_35;
     try{
-        KeyRange_136 = IDBKeyRange.bound('BqgHxhzXg', 'LCsNmvadn', false, true);
-        get_35 = objectStore_56.get(KeyRange_136);
+        KeyRange_142 = IDBKeyRange.bound('mgwEUagDY', 'LggFIWaksX', false, false);
+        get_35 = objectStore_76.get(KeyRange_142);
     }
     catch (e){
     }
 
-    var add_15 = objectStore_56.add({f0_l: '<null>', f1_l: '<null>', f2_s: '<object>', f3_k: '<object>', f4_s: '<null>', f5_p: '<number>'}, 'sJMvFlIyPvd');
-    var add_16 = objectStore_56.add({f0_k: '<string>', f1_t: '<boolean>', f2_a: '<number>', f3_i: '<array>', f4_b: '<boolean>', f5_r: '<boolean>'}, 'aHeejSUR');
-    var clear_21 = objectStore_56.clear();
-    var add_17 = objectStore_56.add({f0_f: '<string>', f1_v: '<string>', f2_y: '<boolean>'}, 'sigLZ');
-    var put_20 = objectStore_56.put({f0_v: '<boolean>', f1_n: '<number>'}, 'ePUISpNnO');
-    var add_18 = objectStore_56.add({f0_n: '<boolean>', f1_o: '<boolean>', f2_i: '<array>', f3_l: '<string>', f4_b: '<object>', f5_a: '<number>', f6_x: '<array>', f7_b: '<null>', f8_m: '<null>', f9_u: '<boolean>'}, 'TLT');
-    txn_55.oncomplete = (event) => {
-        console.log('Transaction completed successfully');
-    };
-    txn_55.onabort = (event) => {
-        console.log('Transaction was aborted');
-    };
-    txn_55.onerror = (event) => {
-        console.log('Transaction error occurred');
-    };
-    const txn_56 = db.transaction(['objectStore_59'], 'readwrite', {durability:"default"})
-    var objectStore_59 = txn_56.objectStore('objectStore_59');
-    var clear_22 = objectStore_59.clear();
-    var add_19 = objectStore_59.add({f0_a: '<array>', f1_l: '<number>', f2_a: '<object>', f3_t: '<object>', f4_g: '<object>'}, 'Onqs');
-    var add_20 = objectStore_59.add({f0_h: '<string>', f1_r: '<null>'}, 'cLqvY');
-    var clear_23 = objectStore_59.clear();
-    var put_21 = objectStore_59.put({f0_p: '<array>', f1_m: '<number>', f2_v: '<number>', f3_x: '<null>'}, 'WxJsgLtJt');
-    var getAll_13;
+    var getAllKeys_15 = objectStore_76.getAllKeys();
+    var getAllKeys_16;
     try{
-        KeyRange_138 = IDBKeyRange.only('ASq');
-        getAll_13 = objectStore_59.getAll(KeyRange_138, 2060471461);
+        KeyRange_144 = IDBKeyRange.lowerBound('FSEX', false);
+        getAllKeys_16 = objectStore_76.getAllKeys(KeyRange_144, 1941477265);
     }
     catch (e){
-        KeyRange_139 = IDBKeyRange.only('ASq');
-        getAll_13 = objectStore_59.getAll(KeyRange_139);
+        KeyRange_145 = IDBKeyRange.only('eGqmvJp');
+        getAllKeys_16 = objectStore_76.getAllKeys(KeyRange_145);
     }
 
-    var count_29;
+    var count_26;
     try{
-        KeyRange_140 = IDBKeyRange.lowerBound('ASq', false);
-        count_29 = objectStore_59.count(KeyRange_140);
+        KeyRange_146 = IDBKeyRange.lowerBound('WfIniz', true);
+        count_26 = objectStore_76.count(KeyRange_146);
     }
     catch (e){
     }
 
-    var put_22 = objectStore_59.put({f0_k: '<string>', f1_u: '<null>', f2_q: '<null>', f3_q: '<array>', f4_p: '<null>', f5_v: '<string>', f6_q: '<object>', f7_g: '<object>', f8_m: '<boolean>', f9_b: '<string>'}, 'GkCayMPHaC');
-    var count_30;
+    var getAllKeys_17;
     try{
-        KeyRange_142 = IDBKeyRange.lowerBound('ASq', false);
-        count_30 = objectStore_59.count(KeyRange_142);
+        KeyRange_148 = IDBKeyRange.bound('STjHMr', 'fcmsZi', false, true);
+        getAllKeys_17 = objectStore_76.getAllKeys(KeyRange_148);
     }
     catch (e){
+        KeyRange_149 = IDBKeyRange.only('yye');
+        getAllKeys_17 = objectStore_76.getAllKeys(KeyRange_149);
     }
 
-    var put_23 = objectStore_59.put({f0_y: '<string>', f1_u: '<null>', f2_v: '<string>', f3_h: '<object>', f4_b: '<array>', f5_b: '<array>', f6_z: '<object>', f7_i: '<array>', f8_a: '<null>', f9_h: '<string>'}, 'gTqLPTDLnj');
-    var clear_24 = objectStore_59.clear();
-    var getAll_14 = objectStore_59.getAll();
-    var add_21 = objectStore_59.add({f0_y: '<array>', f1_q: '<number>', f2_b: '<number>'}, 'hQklWJslTaz');
-    var put_24 = objectStore_59.put({f0_m: '<boolean>', f1_a: '<null>'}, 'doER');
     var get_36;
     try{
-        KeyRange_144 = IDBKeyRange.bound('Onqs', 'ASq', true, false);
-        get_36 = objectStore_59.get(KeyRange_144);
+        KeyRange_150 = IDBKeyRange.bound('uyZhoW', 'GolvyXnhhI', false, false);
+        get_36 = objectStore_76.get(KeyRange_150);
     }
     catch (e){
     }
 
-    var delete_6;
-    try{
-        KeyRange_146 = IDBKeyRange.lowerBound('WxJsgLtJt', false);
-        delete_6 = objectStore_59.delete(KeyRange_146);
-    }
-    catch (e){
-    }
-
-    var count_31;
-    try{
-        KeyRange_148 = IDBKeyRange.only('ASq');
-        count_31 = objectStore_59.count(KeyRange_148);
-    }
-    catch (e){
-    }
-
-    var getAll_15;
-    try{
-        KeyRange_150 = IDBKeyRange.bound('cLqvY', 'ASq', false, false);
-        getAll_15 = objectStore_59.getAll(KeyRange_150);
-    }
-    catch (e){
-        KeyRange_151 = IDBKeyRange.only('hQklWJslTaz');
-        getAll_15 = objectStore_59.getAll(KeyRange_151);
-    }
-
-    txn_56.oncomplete = (event) => {
-        console.log('Transaction completed successfully');
-    };
-    txn_56.onabort = (event) => {
-        console.log('Transaction was aborted');
-    };
-    txn_56.onerror = (event) => {
-        console.log('Transaction error occurred');
-    };
-    const txn_57 = db.transaction(['objectStore_62', 'objectStore_58', 'objectStore_57'], 'readonly', {durability:"strict"})
-    var objectStore_58 = txn_57.objectStore('objectStore_58');
-    var count_32 = objectStore_58.count();
     var get_37;
     try{
-        KeyRange_152 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', false, false);
-        get_37 = objectStore_58.get(KeyRange_152);
+        KeyRange_152 = IDBKeyRange.bound('GzqVjwo', 'JeajXMMmNk', true, true);
+        get_37 = objectStore_76.get(KeyRange_152);
     }
     catch (e){
     }
 
-    var getAll_16 = objectStore_58.getAll(3382384482);
     var get_38;
     try{
-        KeyRange_154 = IDBKeyRange.lowerBound('hfhTEPRUek', true);
-        get_38 = objectStore_58.get(KeyRange_154);
+        KeyRange_154 = IDBKeyRange.lowerBound('GzqVjwo', true);
+        get_38 = objectStore_76.get(KeyRange_154);
     }
     catch (e){
     }
 
-    var count_33 = objectStore_58.count();
     var get_39;
     try{
-        KeyRange_156 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', true, false);
-        get_39 = objectStore_58.get(KeyRange_156);
+        KeyRange_156 = IDBKeyRange.lowerBound('uyZhoW', false);
+        get_39 = objectStore_76.get(KeyRange_156);
     }
     catch (e){
     }
 
-    var getAll_17;
-    try{
-        KeyRange_158 = IDBKeyRange.only('hfhTEPRUek');
-        getAll_17 = objectStore_58.getAll(KeyRange_158);
-    }
-    catch (e){
-        KeyRange_159 = IDBKeyRange.only('hfhTEPRUek');
-        getAll_17 = objectStore_58.getAll(KeyRange_159);
-    }
-
-    var count_34 = objectStore_58.count();
+    var getAll_14 = objectStore_76.getAll(3064065988);
+    var getAll_15 = objectStore_76.getAll();
     var get_40;
     try{
-        KeyRange_160 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', false, true);
-        get_40 = objectStore_58.get(KeyRange_160);
+        KeyRange_158 = IDBKeyRange.bound('uyZhoW', 'kchINvrtJc', false, false);
+        get_40 = objectStore_76.get(KeyRange_158);
     }
     catch (e){
     }
 
-    var getAll_18;
+    txn_68.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_68.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_68.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_69 = db.transaction(['objectStore_77', 'objectStore_76'], 'readonly', {durability:"strict"})
+    var objectStore_77 = txn_69.objectStore('objectStore_77');
+    var count_27 = objectStore_77.count();
+    var count_28 = objectStore_77.count();
+    var count_29;
     try{
-        KeyRange_162 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', false, true);
-        getAll_18 = objectStore_58.getAll(KeyRange_162);
+        KeyRange_160 = IDBKeyRange.only('zvtnUshmqB');
+        count_29 = objectStore_77.count(KeyRange_160);
     }
     catch (e){
-        KeyRange_163 = IDBKeyRange.only('hfhTEPRUek');
-        getAll_18 = objectStore_58.getAll(KeyRange_163);
-    }
-
-    var getAll_19;
-    try{
-        KeyRange_164 = IDBKeyRange.lowerBound('hfhTEPRUek', true);
-        getAll_19 = objectStore_58.getAll(KeyRange_164);
-    }
-    catch (e){
-        KeyRange_165 = IDBKeyRange.only('hfhTEPRUek');
-        getAll_19 = objectStore_58.getAll(KeyRange_165);
     }
 
     var get_41;
     try{
-        KeyRange_166 = IDBKeyRange.lowerBound('hfhTEPRUek', false);
-        get_41 = objectStore_58.get(KeyRange_166);
-    }
-    catch (e){
-    }
-
-    var count_35;
-    try{
-        KeyRange_168 = IDBKeyRange.lowerBound('hfhTEPRUek', false);
-        count_35 = objectStore_58.count(KeyRange_168);
+        KeyRange_162 = IDBKeyRange.bound('zvtnUshmqB', 'umHaX', false, true);
+        get_41 = objectStore_77.get(KeyRange_162);
     }
     catch (e){
     }
 
     var get_42;
     try{
-        KeyRange_170 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', true, true);
-        get_42 = objectStore_58.get(KeyRange_170);
+        KeyRange_164 = IDBKeyRange.bound('aYDDZDNNg', 'vLX', true, false);
+        get_42 = objectStore_77.get(KeyRange_164);
     }
     catch (e){
     }
 
     var get_43;
     try{
-        KeyRange_172 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', true, false);
-        get_43 = objectStore_58.get(KeyRange_172);
+        KeyRange_166 = IDBKeyRange.bound('aYDDZDNNg', 'GKZdkKqpu', false, false);
+        get_43 = objectStore_77.get(KeyRange_166);
     }
     catch (e){
     }
 
-    var count_36 = objectStore_58.count();
     var get_44;
     try{
-        KeyRange_174 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', true, false);
-        get_44 = objectStore_58.get(KeyRange_174);
+        KeyRange_168 = IDBKeyRange.bound('CxlT', 'CRwYGlYWdOOn', false, true);
+        get_44 = objectStore_77.get(KeyRange_168);
     }
     catch (e){
     }
 
-    var getAllKeys_20;
+    var getAllKeys_18 = objectStore_77.getAllKeys();
+    var count_30;
     try{
-        KeyRange_176 = IDBKeyRange.only('hfhTEPRUek');
-        getAllKeys_20 = objectStore_58.getAllKeys(KeyRange_176, 2519733806);
+        KeyRange_170 = IDBKeyRange.bound('lIbrYGvPn', 'Vqfl', true, true);
+        count_30 = objectStore_77.count(KeyRange_170);
     }
     catch (e){
-        KeyRange_177 = IDBKeyRange.only('hfhTEPRUek');
-        getAllKeys_20 = objectStore_58.getAllKeys(KeyRange_177);
+    }
+
+    var count_31;
+    try{
+        KeyRange_172 = IDBKeyRange.bound('CxlT', 'hvknBnSX', true, true);
+        count_31 = objectStore_77.count(KeyRange_172);
+    }
+    catch (e){
     }
 
     var get_45;
     try{
-        KeyRange_178 = IDBKeyRange.only('hfhTEPRUek');
-        get_45 = objectStore_58.get(KeyRange_178);
+        KeyRange_174 = IDBKeyRange.bound('vLX', 'zZokh', true, false);
+        get_45 = objectStore_77.get(KeyRange_174);
     }
     catch (e){
     }
 
+    var getAll_16 = objectStore_77.getAll();
+    var getAll_17 = objectStore_77.getAll(1213732148);
     var get_46;
     try{
-        KeyRange_180 = IDBKeyRange.bound('hfhTEPRUek', 'hfhTEPRUek', false, false);
-        get_46 = objectStore_58.get(KeyRange_180);
+        KeyRange_176 = IDBKeyRange.bound('zZokh', 'aYDDZDNNg', false, true);
+        get_46 = objectStore_77.get(KeyRange_176);
     }
     catch (e){
     }
 
     var get_47;
     try{
-        KeyRange_182 = IDBKeyRange.lowerBound('hfhTEPRUek', false);
-        get_47 = objectStore_58.get(KeyRange_182);
+        KeyRange_178 = IDBKeyRange.lowerBound('aYDDZDNNg', false);
+        get_47 = objectStore_77.get(KeyRange_178);
     }
     catch (e){
     }
 
     var get_48;
     try{
-        KeyRange_184 = IDBKeyRange.lowerBound('hfhTEPRUek', false);
-        get_48 = objectStore_58.get(KeyRange_184);
+        KeyRange_180 = IDBKeyRange.lowerBound('lIbrYGvPn', true);
+        get_48 = objectStore_77.get(KeyRange_180);
     }
     catch (e){
     }
 
-    var getAll_20 = objectStore_58.getAll(2077337627);
-    txn_57.oncomplete = (event) => {
-        console.log('Transaction completed successfully');
-    };
-    txn_57.onabort = (event) => {
-        console.log('Transaction was aborted');
-    };
-    txn_57.onerror = (event) => {
-        console.log('Transaction error occurred');
-    };
-    const txn_58 = db.transaction(['objectStore_64', 'objectStore_56'], 'readonly', {durability:"relaxed"})
-    var objectStore_64 = txn_58.objectStore('objectStore_64');
-    var getAllKeys_21 = objectStore_64.getAllKeys();
-    var count_37 = objectStore_64.count();
+    var count_32 = objectStore_77.count();
+    var count_33 = objectStore_77.count();
     var get_49;
     try{
-        KeyRange_186 = IDBKeyRange.bound('mGA', 'mGA', true, false);
-        get_49 = objectStore_64.get(KeyRange_186);
+        KeyRange_182 = IDBKeyRange.bound('CRwYGlYWdOOn', 'CRwYGlYWdOOn', false, false);
+        get_49 = objectStore_77.get(KeyRange_182);
     }
     catch (e){
     }
 
-    var getAllKeys_22;
+    var count_34 = objectStore_77.count();
+    var getAll_18;
     try{
-        KeyRange_188 = IDBKeyRange.only('mGA');
-        getAllKeys_22 = objectStore_64.getAllKeys(KeyRange_188);
+        KeyRange_184 = IDBKeyRange.only('CRwYGlYWdOOn');
+        getAll_18 = objectStore_77.getAll(KeyRange_184, 2065399036);
     }
     catch (e){
-        KeyRange_189 = IDBKeyRange.only('mGA');
-        getAllKeys_22 = objectStore_64.getAllKeys(KeyRange_189);
+        KeyRange_185 = IDBKeyRange.only('fjUVhODgWJh');
+        getAll_18 = objectStore_77.getAll(KeyRange_185);
     }
 
-    var getAllKeys_23;
-    try{
-        KeyRange_190 = IDBKeyRange.only('mGA');
-        getAllKeys_23 = objectStore_64.getAllKeys(KeyRange_190);
-    }
-    catch (e){
-        KeyRange_191 = IDBKeyRange.only('mGA');
-        getAllKeys_23 = objectStore_64.getAllKeys(KeyRange_191);
-    }
-
-    var count_38 = objectStore_64.count();
-    var get_50;
-    try{
-        KeyRange_192 = IDBKeyRange.bound('mGA', 'mGA', true, true);
-        get_50 = objectStore_64.get(KeyRange_192);
-    }
-    catch (e){
-    }
-
-    var getAllKeys_24;
-    try{
-        KeyRange_194 = IDBKeyRange.only('mGA');
-        getAllKeys_24 = objectStore_64.getAllKeys(KeyRange_194);
-    }
-    catch (e){
-        KeyRange_195 = IDBKeyRange.only('mGA');
-        getAllKeys_24 = objectStore_64.getAllKeys(KeyRange_195);
-    }
-
-    var get_51;
-    try{
-        KeyRange_196 = IDBKeyRange.only('mGA');
-        get_51 = objectStore_64.get(KeyRange_196);
-    }
-    catch (e){
-    }
-
-    var count_39 = objectStore_64.count();
-    var getAll_21 = objectStore_64.getAll(2127743259);
-    var getAllKeys_25 = objectStore_64.getAllKeys();
-    var getAll_22;
-    try{
-        KeyRange_198 = IDBKeyRange.bound('mGA', 'mGA', true, true);
-        getAll_22 = objectStore_64.getAll(KeyRange_198, 362719336);
-    }
-    catch (e){
-        KeyRange_199 = IDBKeyRange.only('mGA');
-        getAll_22 = objectStore_64.getAll(KeyRange_199);
-    }
-
-    var getAllKeys_26;
-    try{
-        KeyRange_200 = IDBKeyRange.only('mGA');
-        getAllKeys_26 = objectStore_64.getAllKeys(KeyRange_200, 352846292);
-    }
-    catch (e){
-        KeyRange_201 = IDBKeyRange.only('mGA');
-        getAllKeys_26 = objectStore_64.getAllKeys(KeyRange_201);
-    }
-
-    var count_40 = objectStore_64.count();
-    var count_41;
-    try{
-        KeyRange_202 = IDBKeyRange.lowerBound('mGA', true);
-        count_41 = objectStore_64.count(KeyRange_202);
-    }
-    catch (e){
-    }
-
-    var get_52;
-    try{
-        KeyRange_204 = IDBKeyRange.lowerBound('mGA', false);
-        get_52 = objectStore_64.get(KeyRange_204);
-    }
-    catch (e){
-    }
-
-    txn_58.oncomplete = (event) => {
+    var count_35 = objectStore_77.count();
+    txn_69.oncomplete = (event) => {
         console.log('Transaction completed successfully');
     };
-    txn_58.onabort = (event) => {
+    txn_69.onabort = (event) => {
         console.log('Transaction was aborted');
     };
-    txn_58.onerror = (event) => {
-        console.log('Transaction error occurred');
-    };
-    const txn_59 = db.transaction(['objectStore_62'], 'readwrite', {durability:"strict"})
-    var objectStore_62 = txn_59.objectStore('objectStore_62');
-    var getAll_23 = objectStore_62.getAll();
-    var clear_25 = objectStore_62.clear();
-    var delete_7;
-    try{
-        KeyRange_206 = IDBKeyRange.bound('NPzGTcmZ', 'QUpF', true, false);
-        delete_7 = objectStore_62.delete(KeyRange_206);
-    }
-    catch (e){
-    }
-
-    var get_53;
-    try{
-        KeyRange_208 = IDBKeyRange.bound('ajz', 'NPzGTcmZ', true, true);
-        get_53 = objectStore_62.get(KeyRange_208);
-    }
-    catch (e){
-    }
-
-    var delete_8;
-    try{
-        KeyRange_210 = IDBKeyRange.bound('ajz', 'Felc', false, true);
-        delete_8 = objectStore_62.delete(KeyRange_210);
-    }
-    catch (e){
-    }
-
-    var count_42 = objectStore_62.count();
-    var count_43 = objectStore_62.count();
-    var add_22 = objectStore_62.add({f0_q: '<string>', f1_u: '<boolean>', f2_f: '<array>', f3_t: '<string>'}, 'ypjYqSnz');
-    var get_54;
-    try{
-        KeyRange_212 = IDBKeyRange.bound('Felc', 'ajz', true, false);
-        get_54 = objectStore_62.get(KeyRange_212);
-    }
-    catch (e){
-    }
-
-    var get_55;
-    try{
-        KeyRange_214 = IDBKeyRange.lowerBound('ajz', false);
-        get_55 = objectStore_62.get(KeyRange_214);
-    }
-    catch (e){
-    }
-
-    var clear_26 = objectStore_62.clear();
-    var count_44 = objectStore_62.count();
-    var getAll_24 = objectStore_62.getAll();
-    var add_23 = objectStore_62.add({f0_d: '<null>', f1_d: '<string>', f2_q: '<null>'}, 'DSkcw');
-    var clear_27 = objectStore_62.clear();
-    var clear_28 = objectStore_62.clear();
-    var clear_29 = objectStore_62.clear();
-    txn_59.oncomplete = (event) => {
-        console.log('Transaction completed successfully');
-    };
-    txn_59.onabort = (event) => {
-        console.log('Transaction was aborted');
-    };
-    txn_59.onerror = (event) => {
+    txn_69.onerror = (event) => {
         console.log('Transaction error occurred');
     };
     db.onversionchange = (event) => {
@@ -1208,7 +1057,7 @@ openRequest.onerror = (event) => {
 openRequest.onblocked = (event) => {
     console.log('open db blocked triggered')
 };
-const deleteRequest = indexedDB.deleteDatabase('str_4336')
+const deleteRequest = indexedDB.deleteDatabase('str_853')
 deleteRequest.onblocked = (event) => {
     console.log('delete db onblocked triggered')
 };
