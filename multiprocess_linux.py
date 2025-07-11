@@ -44,7 +44,7 @@ def wrap_js_in_html(lines, out_path: str) -> None:
             "<title>IndexedDB</title></head>\n<body><script>\n"
         )
         f.writelines(lines)
-        f.write("setTimeout(() => { window.close(); }, 500);\n</script></body></html>")
+        f.write("setTimeout(() => { window.close(); }, 1000);\n</script></body></html>")
 
 
 def gen_case(case_id: str):
