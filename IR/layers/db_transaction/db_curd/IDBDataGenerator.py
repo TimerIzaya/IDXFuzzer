@@ -13,7 +13,7 @@ class BaseGenerator:
     defaultMaxDepth = 3
     defaultMaxFields = 10
     defaultStringMinLen = 3
-    defaultStringMaxLen = 12
+    defaultStringMaxLen = 999
 
     @staticmethod
     def generate(typeName: str, key=None):
@@ -39,7 +39,7 @@ class BaseGenerator:
     def _generatePrimitive():
         return random.choice([
             BaseGenerator._randomString(),
-            random.randint(0, 100),
+            random.randint(0,99999),
             True, False, None
         ])
 
