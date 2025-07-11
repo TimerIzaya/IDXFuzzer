@@ -122,7 +122,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
             1 for f in os.listdir(CORPUS_ROOT)
             if os.path.isdir(os.path.join(CORPUS_ROOT, f))
         )
-        coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT
+        coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
 
         print("\n========== IDX Fuzzer Stats ==========")
         print(f"{'Elapsed Time':<20}: {h:02d}h {m:02d}m {s:02d}s")

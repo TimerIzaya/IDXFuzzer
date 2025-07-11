@@ -11,6 +11,7 @@ import os, time, threading, shutil
 from multiprocessing import Pool, cpu_count, Value
 import numpy as np
 
+import config
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.run_cov_testCorpus import run_and_update_coverage_testCorpus
 
@@ -71,7 +72,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
         h, rem  = divmod(elapsed, 3600)
         m, s    = divmod(rem, 60)
 
-        coverage_pct = np.count_nonzero(bitmap.bitmap) / bitmap.size * 100
+        coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
         done = processed_counter.value
         print("\n========== IDX Fuzzer Stats ==========")
         print(f"{'Elapsed Time':<18}: {h:02d}h {m:02d}m {s:02d}s")
