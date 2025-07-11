@@ -15,6 +15,7 @@ import uuid
 import shutil
 import time
 import threading
+from itertools import repeat
 from multiprocessing import Pool, cpu_count, Value
 
 import numpy as np
@@ -152,7 +153,7 @@ def init_output_dirs() -> None:
 if __name__ == "__main__":
     init_output_dirs()
 
-    PROCESS_COUNT = cpu_count() * 2
+    PROCESS_COUNT = cpu_count()
 
     # 创建全局 bitmap（shm 文件），子进程只需通过名称复用
     bitmap = GlobalEdgeBitmap(create=True)
@@ -180,7 +181,12 @@ if __name__ == "__main__":
     try:
         # 每批投递 8 个任务，可根据机器性能调整
         while True:
-            pool.starmap(run_one_case, [(bitmap_name,)] * (PROCESS_COUNT * 2))
+            # 产生无限参数流
+            args = repeat((bitmap_name,), PROCESS_COUNT )
+
+            # 每次调度一个任务，实时调度、非阻塞等待整批完成
+            for _ in pool.imap_unordered(run_one_case, args, chunksize=1):
+                break  # 不关心结果，只要触发调度。立刻进入下一批
     except KeyboardInterrupt:
         print("Interrupted by user.")
     finally:
