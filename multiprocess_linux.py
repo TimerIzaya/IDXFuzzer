@@ -181,12 +181,10 @@ if __name__ == "__main__":
     try:
         # 每批投递 8 个任务，可根据机器性能调整
         while True:
-            # 产生无限参数流
-            args = repeat((bitmap_name,), PROCESS_COUNT )
+            args = repeat(bitmap_name, PROCESS_COUNT * 2)  # ✅ 不加 tuple
 
-            # 每次调度一个任务，实时调度、非阻塞等待整批完成
             for _ in pool.imap_unordered(run_one_case, args, chunksize=1):
-                break  # 不关心结果，只要触发调度。立刻进入下一批
+                break
     except KeyboardInterrupt:
         print("Interrupted by user.")
     finally:
