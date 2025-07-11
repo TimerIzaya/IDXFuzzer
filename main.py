@@ -5,7 +5,6 @@ from IR.IRFuzzer import generate_ir_program
 from lifter.IRToJSLifter import IRToJSLifter
 from multiprocess_linux import wrap_js_in_html
 
-CORPUS_ROOT = "/timer/IDXFuzzer/corpus"
 from pathlib import Path
 
 
@@ -71,6 +70,7 @@ setTimeout(() => {
     # with js_path.open("w", encoding="utf-8") as f:
     #     f.writelines(modified_lines)
 
+CORPUS_ROOT = "corpus"
 
 def genCase(number) -> str:
     IR = generate_ir_program()
@@ -78,19 +78,19 @@ def genCase(number) -> str:
     os.makedirs(rootDir, exist_ok=True)
 
     lines = IRToJSLifter.lift(IR)
-    FILE = "testCorpus/0/0.js"
+    FILE = f"{rootDir}/{number}.js"
     with open(FILE, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
 
     # lines = modify_js_in_place(FILE)
-    wrap_js_in_html(lines, "testCorpus/0/0.html")
+    # wrap_js_in_html(lines, "testCorpus/0/0.html")
 
 
 
 if __name__ == "__main__":
-    for i in range(1000):
-        genCase(0)
+    for i in range(10):
+        genCase(i)
 
 
 

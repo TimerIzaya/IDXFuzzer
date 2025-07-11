@@ -1,5 +1,6 @@
 import random
 
+import config
 from IR.IRNodes import Identifier, CallExpression, AssignmentExpression, MemberExpression, FunctionExpression, \
     VariableDeclaration, Literal, Variable
 from IR.context.IDBSchemaContext import IDBSchemaContext
@@ -22,7 +23,7 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
 
     layer_type = LayerType.EXECUTION
 
-    EXPECT_OPS = 100
+    EXPECT_OPS = config.TXN_OPT_CNT
 
     @staticmethod
     def build() -> Layer | None:

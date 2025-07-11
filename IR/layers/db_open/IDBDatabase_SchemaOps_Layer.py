@@ -1,3 +1,4 @@
+import config
 from IR.IRNodes import *
 from IR.layers.Layer import LayerType, Layer
 from IR.layers.LayerBuilder import LayerBuilder
@@ -14,7 +15,7 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
     layer_type = LayerType.EXECUTION
 
     # 预计有多少os api 实际因为有些os不合法 一定小于等于这个数
-    EXPECT_OPS = 10
+    EXPECT_OPS = config.SCHEMA_OPT_CNT
 
     # IDBRequest需要嵌套生成opt
     depth = 5

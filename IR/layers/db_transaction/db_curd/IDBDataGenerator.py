@@ -107,7 +107,7 @@ class IDBDataGenerator(BaseGenerator):
 
     @staticmethod
     def generateNumber(key=None):
-        return key if key is not None else random.randint(0, 100)
+        return key if key is not None else random.randint(0, 9999999999)
 
     @staticmethod
     def generateBoolean(key=None):
@@ -119,7 +119,7 @@ class IDBDataGenerator(BaseGenerator):
 
     @staticmethod
     def generateArray(key=None):
-        return [IDBDataGenerator._generatePrimitive() for _ in range(random.randint(1, 3))]
+        return [IDBDataGenerator._generatePrimitive() for _ in range(random.randint(1, 999))]
 
     @staticmethod
     def generateObject(key=None):

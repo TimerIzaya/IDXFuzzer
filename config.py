@@ -14,3 +14,6 @@ randomFuzzing = False
 
 EDGE_TOTAL_COUNT = 7618971
 
+TXN_OPT_CNT = 500
+
+SCHEMA_OPT_CNT = 500
