@@ -45,7 +45,7 @@ def wrap_js_in_html(lines, out_path: str) -> None:
             "<title>IndexedDB</title></head>\n<body><script>\n"
         )
         f.writelines(lines)
-        f.write("setTimeout(() => { window.close(); }, 600);\n</script></body></html>")
+        f.write("setTimeout(() => { window.close(); }, 300);\n</script></body></html>")
 
 
 def gen_case(case_id: str):
@@ -123,6 +123,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
             if os.path.isdir(os.path.join(CORPUS_ROOT, f))
         )
         coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
+
 
         print("\n========== IDX Fuzzer Stats ==========")
         print(f"{'Elapsed Time':<20}: {h:02d}h {m:02d}m {s:02d}s")

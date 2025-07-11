@@ -67,10 +67,17 @@ class BaseGenerator:
 
     @staticmethod
     def _generateObject(currentDepth=0):
-        if currentDepth >= BaseGenerator.defaultMaxDepth:
-            return BaseGenerator._generatePrimitive()
+        # 5% 概率生成巨大对象（字段特别多）
+        if random.random() < 0.05:
+            fieldCount = random.randint(100, 3000)
+        # 15% 概率生成大对象（字段较多）
+        elif random.random() < 0.15:
+            fieldCount = random.randint(20, 500)
+        else:
+            fieldCount = random.randint(1, BaseGenerator.defaultMaxFields)
+
         obj = {}
-        for i in range(random.randint(1, BaseGenerator.defaultMaxFields)):
+        for i in range(fieldCount):
             key = BaseGenerator._randomFieldName(i)
             obj[key] = BaseGenerator._generateValue(currentDepth + 1)
         return obj
