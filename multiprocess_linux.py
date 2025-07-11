@@ -56,8 +56,8 @@ def gen_case(case_id: str):
     ir = generate_ir_program()
     with open(f"{case_root}/{case_id}.json", "w") as f:
         json.dump(ir.to_dict(), f, indent=2)
-
     js_code = IRToJSLifter.lift(ir)
+
     html_path = f"{case_root}/{case_id}.html"
     wrap_js_in_html(js_code, html_path)
     return html_path, case_root

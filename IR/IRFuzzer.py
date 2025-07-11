@@ -28,11 +28,11 @@ def recur_layer(layer):
     if random.random() < 0.05:
         childrenForRecur.insert(random.randint(0, len(childrenForRecur)), IDBRootLayer.build())
 
-    if random.random() < 0.1:
+    if random.random() < 0.01:
         layer.ir_nodes.insert(random.randint(0, len(layer.ir_nodes)), dbClose())
-
-    for child in childrenForRecur:
-        recur_layer(child)
+    else:
+        for child in childrenForRecur:
+            recur_layer(child)
 
 
 def dbClose():
