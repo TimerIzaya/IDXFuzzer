@@ -19,6 +19,7 @@ from multiprocessing import Pool, cpu_count, Value
 
 import numpy as np
 
+import config
 from IR.IRFuzzer import generate_ir_program
 from config import EDGE_TOTAL_COUNT
 from coverage.RemoteExecutor import RemoteExecutor
@@ -50,7 +51,7 @@ def wrap_js_in_html(lines, out_path: str) -> None:
             "<title>IndexedDB</title></head>\n<body><script>\n"
         )
         f.writelines(lines)
-        f.write("setTimeout(() => { window.close(); }, 200);\n</script></body></html>")
+        f.write(f"setTimeout(() => {{ window.close(); }}, {config.TIMEOUT});\n</script></body></html>")
 
 
 def gen_case(case_id: str):
