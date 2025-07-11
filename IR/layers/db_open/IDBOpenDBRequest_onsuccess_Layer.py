@@ -1,3 +1,4 @@
+import config
 from IR.context.IRContext import IRContext, Variable
 from IR.IRNodes import (
     AssignmentExpression, FunctionExpression, Identifier,
@@ -38,8 +39,9 @@ class IDBOpenDBRequest_onsuccess_Layer(LayerBuilder):
         )
         body.append(assignDb)
 
-        txn_layer = IDBDatabase_Transaction_Layer.build()
-        children.append(txn_layer)
+        for _ in range(config.TXN_CNT):
+            txn_layer = IDBDatabase_Transaction_Layer.build()
+            children.append(txn_layer)
 
         version_layer = IDBDatabase_onversionchange_Layer.build()
         children.append(version_layer)
