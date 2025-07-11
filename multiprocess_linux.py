@@ -19,6 +19,7 @@ from multiprocessing import Pool, cpu_count, Value
 
 import numpy as np
 
+import config
 from IR.IRFuzzer import generate_ir_program
 from coverage.run_cov_linux import run_and_update_coverage_linux
 from lifter.IRToJSLifter import IRToJSLifter
@@ -121,7 +122,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
             1 for f in os.listdir(CORPUS_ROOT)
             if os.path.isdir(os.path.join(CORPUS_ROOT, f))
         )
-        coverage_pct = np.count_nonzero(bitmap.bitmap) / bitmap.size * 100
+        coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT
 
         print("\n========== IDX Fuzzer Stats ==========")
         print(f"{'Elapsed Time':<20}: {h:02d}h {m:02d}m {s:02d}s")
