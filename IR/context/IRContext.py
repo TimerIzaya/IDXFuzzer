@@ -93,3 +93,14 @@ class IRContext:
             return None
         else:
             return random.choice(candidates)
+
+    def getVariableByName(self, name: str) -> Optional[Variable]:
+        candidates = []
+        for layPool in self.layerStack:
+            for v in layPool.vars:
+                if v.name.raw == name:
+                    candidates.append(v)
+        if len(candidates) == 0:
+            return None
+        else:
+            return random.choice(candidates)

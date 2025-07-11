@@ -3,7 +3,6 @@ import random
 from IR.context.IRContext import Variable
 from IR.IRNodes import CallExpression, Identifier, Literal
 from IR.layers.Global import Global
-from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.layers.Layer import Layer, LayerType
 from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_transaction.IDBTransaction_oncomplete_Layer import IDBTransaction_oncomplete_Layer
@@ -28,11 +27,9 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
         txnOSS = Global.smctx.pickRandomTxnObjectStores()
         args.append(Identifier(str(txnOSS)))
 
-
         # 包装一层Identifier
         txnOSS = [Identifier(i) for i in txnOSS]
         Global.smctx.registerTxn(txnOSS)
-
 
         mode = random.choice(["readwrite", "readonly"])
         durability = "{durability:\"" + random.choice(["strict", "default", "relaxed"]) + "\"}"
@@ -57,7 +54,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
         Global.irctx.registerVariable(Variable(txnName, IDBType.IDBTransaction))
 
         children = list(filter(None, [
-            # IDBObjectStore_DataOps_Layer.build(),
+            IDBObjectStore_DataOps_Layer.build(),
             IDBTransaction_oncomplete_Layer.build(),
             IDBTransaction_onabort_Layer.build(),
             IDBTransaction_onerror_Layer.build(),
