@@ -89,7 +89,9 @@ def genCase(number) -> str:
 
 
 if __name__ == "__main__":
-    genCase(0)
+    for i in range(1000):
+        genCase(0)
+
 
 
 

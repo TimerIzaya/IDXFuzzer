@@ -1,7 +1,10 @@
 from IR.IRNodes import *
 from IR.layers.Global import Global
+from IR.layers.optFactory.AtomicTxnOpsDispatcher import TxnOptDispatcher
+from IR.layers.optFactory.CoreApis import CoreApis, EventBuilderMode
 from IR.layers.optFactory.SchemaOptDispatcher import SchemaOptDispatcher
 import random
+
 
 class EventFlowBuilder:
 
@@ -9,15 +12,15 @@ class EventFlowBuilder:
 
     ACTUAL_OPS_CNT = 0
 
-    DISPATCHER = None
+    MODE = None
 
     OS_INFO = None
 
     @staticmethod
-    def build(EXPECT_OPS: int, body: list, DISPATCHER):
+    def build(EXPECT_OPS: int, body: list, mode: int):
         EventFlowBuilder.EXPECT_OPS_CNT = EXPECT_OPS
         EventFlowBuilder.ACTUAL_OPS_CNT = 0
-        EventFlowBuilder.DISPATCHER = DISPATCHER
+        EventFlowBuilder.MODE = mode
 
         # 生成opt + 处理opt event
         # 这组操作跑随机跑N轮
@@ -28,10 +31,10 @@ class EventFlowBuilder:
             EventFlowBuilder.genOsApi(body, random.randint(minOptCnt, maxOptCnt))
 
             # 正常执行完一定会有一堆IDBRequest事件等着取结果，随机取结果
-            if random.random() > 0.5:
-                IDBRequestHandler = EventFlowBuilder.buildNestedOnsuccess(10)
-                if IDBRequestHandler is not None:
-                    body.append(IDBRequestHandler)
+            # if random.random() > 0.5:
+            #     IDBRequestHandler = EventFlowBuilder.buildNestedOnsuccess(10)
+            #     if IDBRequestHandler is not None:
+            #         body.append(IDBRequestHandler)
 
     '''
     a = x.y()
@@ -79,8 +82,12 @@ class EventFlowBuilder:
     def genOsApi(body: list, cnt: int):
         # 添加一条 schema op（可替换为更复杂逻辑）
         for _ in range(cnt):
-            d = EventFlowBuilder.DISPATCHER
-            op = EventFlowBuilder.DISPATCHER.chooseOp()
+            if EventFlowBuilder.MODE is EventBuilderMode.SCHEME:
+                CoreApis.MODE = EventFlowBuilder.MODE
+                op = SchemaOptDispatcher.chooseOp()
+            else:
+                CoreApis.MODE = EventFlowBuilder.MODE
+                op = TxnOptDispatcher.chooseOp()
             try:
                 op = op()
                 if isinstance(op, list):

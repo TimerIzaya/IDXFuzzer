@@ -1,7 +1,7 @@
 import random
 
 from IR.IRNodes import Identifier, CallExpression, AssignmentExpression, MemberExpression, FunctionExpression, \
-    VariableDeclaration, Literal
+    VariableDeclaration, Literal, Variable
 from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.layers.Global import Global
 from IR.layers.Layer import Layer, LayerType
@@ -9,12 +9,14 @@ from IR.layers.LayerBuilder import LayerBuilder
 from IR.layers.db_transaction.db_curd.PipeGraph import PipeGraph
 from IR.layers.optFactory.AtomicTxnOpsDispatcher import TxnOptDispatcher
 from IR.layers.optFactory.EventFlowBuilder import EventFlowBuilder
-from IR.layers.optFactory.CoreApis import  CoreApis
+from IR.layers.optFactory.CoreApis import CoreApis, EventBuilderMode
 from IR.type.IDBType import IDBType
 
 '''
 针对某一个事务
 '''
+
+
 class IDBObjectStore_DataOps_Layer(LayerBuilder):
     name = "IDBObjectStore_DataOps_Layer"
 
@@ -34,25 +36,19 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
 
         targetOSName = random.choice(osNames)
 
-        # 先找os变量以及它之前literal
-        IDBObjectStore_DataOps_Layer.TARGET_OS_VAR = Global.irctx.getVariableByName(targetOSName)
-        if IDBObjectStore_DataOps_Layer.TARGET_OS_VAR is None:
-            CoreApis.TARGET_OS_VAR = None
-            raise RuntimeError("No OS var available for deleteIndex")
-        else:
-            CoreApis.TARGET_OS_VAR = IDBObjectStore_DataOps_Layer.TARGET_OS_VAR
+        # 注意 到非schema层了 IRContext之前的os相关的全都不可以用了 想要变量 自己注册吧
+        # 临时OS变量
+        tmpOSVar = Variable(targetOSName, IDBType.IDBObjectStore, targetOSName)
+        Global.irctx.registerVariable(tmpOSVar)
+        CoreApis.TARGET_OS_VAR = tmpOSVar
 
         # const objectStore = transaction.objectStore("toDoList");
         # 开始取临时OS
-
-
         body.append(VariableDeclaration(Identifier(CoreApis.TARGET_OS_VAR.varLiteral)))
         body.append(CallExpression(txnVar, "objectStore", [Literal(targetOSName)]))
 
-        EventFlowBuilder.build(EXPECT_OPS=IDBObjectStore_DataOps_Layer.EXPECT_OPS, body=body, DISPATCHER=TxnOptDispatcher)
+        EventFlowBuilder.build(EXPECT_OPS=IDBObjectStore_DataOps_Layer.EXPECT_OPS, body=body,
+                               mode=EventBuilderMode.TXN)
 
-
+        IDBObjectStore_DataOps_Layer.TARGET_OS_VAR = None
         return Layer(IDBObjectStore_DataOps_Layer.name, body, layer_type=IDBObjectStore_DataOps_Layer.layer_type)
-
-
-

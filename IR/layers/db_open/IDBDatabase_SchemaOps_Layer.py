@@ -28,7 +28,8 @@ class IDBDatabase_SchemaOps_Layer(LayerBuilder):
         # todo 测试用  默认要加一个，不然后续可能一直难生成 后续删掉
         body.extend(CoreApis.createObjectStore())
 
-        EventFlowBuilder.build(EXPECT_OPS=IDBDatabase_SchemaOps_Layer.EXPECT_OPS, body=body, DISPATCHER=SchemaOptDispatcher)
+        EventFlowBuilder.build(EXPECT_OPS=IDBDatabase_SchemaOps_Layer.EXPECT_OPS, body=body,
+                               mode=EventBuilderMode.SCHEME)
 
         return Layer(
             IDBDatabase_SchemaOps_Layer.name,

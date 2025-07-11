@@ -8,10 +8,13 @@ from IR.layers.Global import Global
 from IR.layers.db_transaction.db_curd.IDBDataGenerator import IDBDataGenerator
 from IR.type.IDBType import IDBType
 
+class EventBuilderMode:
+    SCHEME = 0
+    TXN = 1
 
 class CoreApis:
 
-    TARGET_OS_VAR = None
+    MODE = None
 
     @staticmethod
     def createObjectStore():
@@ -130,16 +133,16 @@ class CoreApis:
 
     @staticmethod
     def getOSInfo():
-        # 适配事务场景 指定OS
-        if CoreApis.TARGET_OS_VAR is None:
-            # 先找os变量以及它的literal
+        if CoreApis.MODE is EventBuilderMode.SCHEME:
+            # 适配schema场景，随机找os
             osVar = Global.irctx.getVariableByType(IDBType.IDBObjectStore)
             if osVar is None or osVar.varLiteral is None:
                 raise RuntimeError("No OS var available for deleteIndex")
             osName = osVar.varLiteral
             if osName not in Global.smctx.currentDB.oss:
                 raise RuntimeError("No active object store context")
-        else:
+        if CoreApis.MODE is EventBuilderMode.TXN:
+            # 适配事务场景 指定OS
             osVar = CoreApis.TARGET_OS_VAR
             osName = osVar.varLiteral
 

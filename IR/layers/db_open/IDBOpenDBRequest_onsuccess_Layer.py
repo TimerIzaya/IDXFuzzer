@@ -20,6 +20,8 @@ class IDBOpenDBRequest_onsuccess_Layer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer:
+        Global.irctx.enterLayer(IDBOpenDBRequest_onsuccess_Layer)
+
         body = [
             CallExpression(Identifier("console"), "log", [Literal("db onsuccess triggered")])
         ]
@@ -50,7 +52,9 @@ class IDBOpenDBRequest_onsuccess_Layer(LayerBuilder):
             right=FunctionExpression([Identifier("event")], body)
         )
 
-        children = [i for i in children if i is not  None]
+        children = [i for i in children if i is not None]
+
+        Global.irctx.exitLayer()
         return Layer(
             name=IDBOpenDBRequest_onsuccess_Layer.name,
             ir_nodes=[handler],
