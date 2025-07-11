@@ -51,7 +51,8 @@ class IRContext:
         for layPool in self.layerStack:
             delTars = []
             for v in layPool.vars:
-                if v.varLiteral == varLiteral:
+                # todo 卸载还是写的不明确 要改
+                if v.varLiteral == varLiteral or v.name.raw == varLiteral:
                     delTars.append(v)
             for d in delTars:
                 layPool.vars.remove(d)

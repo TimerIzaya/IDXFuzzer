@@ -46,7 +46,10 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
         # const objectStore = transaction.objectStore("toDoList");
         # 开始取临时OS
         body.append(VariableDeclaration(Identifier(CoreApis.TARGET_OS_VAR.varLiteral)))
-        body.append(CallExpression(txnVar, "objectStore", [Literal(targetOSName)]))
+        body.append(AssignmentExpression(
+            tmpOSVar,
+            CallExpression(txnVar, "objectStore", [Literal(targetOSName)])
+        ))
 
         EventFlowBuilder.build(EXPECT_OPS=IDBObjectStore_DataOps_Layer.EXPECT_OPS, body=body,
                                mode=EventBuilderMode.TXN)

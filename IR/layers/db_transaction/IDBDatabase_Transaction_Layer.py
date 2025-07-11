@@ -61,6 +61,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
         ]))
 
         Global.smctx.unRegisterTxn()
+        Global.irctx.unregisterVariable(txnName)
         return Layer(
             IDBDatabase_Transaction_Layer.name,
             ir_nodes=[callTX],
