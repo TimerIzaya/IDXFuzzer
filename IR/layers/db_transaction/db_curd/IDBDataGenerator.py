@@ -217,6 +217,15 @@ class IDBDataGenerator(BaseGenerator):
                 ))
 
 
+    @staticmethod
+    def generateAny(key=None):
+        """
+        随机从 anyTypeDistribution 中选择一个类型，并生成对应数据
+        """
+        type_name = random.choice(IDBDataGenerator.anyTypeDistribution)
+        method = getattr(IDBDataGenerator, f"generate{type_name.capitalize()}", None)
+        return method(key) if method else f"<{type_name}>"
+
 if __name__ == "__main__":
     # print("JS object with keyPath 'space.user.id':")
     # js_code, key_val = IDBDataGenerator.generateObjectWithKeyPathAsJS("space.user.id")
@@ -228,4 +237,7 @@ if __name__ == "__main__":
     # print("JS Object Code:\n", js_code)
     # print("Key Value:", key_val)
 
-    IDBDataGenerator.generateKeyRange("Asd")
+    # IDBDataGenerator.generateKeyRange("Asd")
+
+    for _ in range(100):
+        print(IDBDataGenerator.generateAny())

@@ -1,6 +1,7 @@
 import copy
 import random
 
+import config
 from IR.IRNodes import CallExpression, Literal, VariableDeclaration, AssignmentExpression, TryCatchStatement
 from IR.IRParamValueGenerator import IRParamValueGenerator
 from IR.context.IRContext import Variable
@@ -152,37 +153,6 @@ class CoreApis:
 
         return osVar, osName
 
-    @staticmethod
-    def add():
-        # 随机找一个os，往里add数据
-        METHOD_NAME = "add"
-
-        osVar, osName = CoreApis.getOSInfo()
-
-        osKeyPath = Global.smctx.currentDB.oss[osName].keypath
-        args = []
-        if osKeyPath is None:
-            # keyless模式，不用管value是否符合keypath规范
-            value = IDBDataGenerator.generateObject()
-            args.append(Literal(value))
-            # arg1 create的时候没有指定keypath，那需要加key
-            key = IDBDataGenerator.generateString()
-            args.append(Literal(key))
-            Global.smctx.registerKey(osName, key)
-        else:
-            # 正常模式，需要生成符合keypath的数据
-            [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
-            args.append(Literal(value))
-            Global.smctx.registerKey(osName, key)
-
-        # 返回一个IDBRequest，然后设置success或者error事件
-        nodes = []
-        meName = Global.irctx.newMeName(METHOD_NAME)
-        recVar = Variable(meName, IDBType.IDBRequest)
-        Global.irctx.registerVariable(recVar)
-        nodes.append(VariableDeclaration(recVar.name))
-        nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
-        return nodes
 
     @staticmethod
     def clear(osVar=None, osName=None):
@@ -434,6 +404,50 @@ class CoreApis:
         nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=[Literal(indexName)])))
         return nodes
 
+    @staticmethod
+    def add():
+        # 随机找一个os，往里add数据
+        METHOD_NAME = "add"
+
+        osVar, osName = CoreApis.getOSInfo()
+
+        osKeyPath = Global.smctx.currentDB.oss[osName].keypath
+        args = []
+        if osKeyPath is None:
+            # keyless模式，不用管value是否符合keypath规范
+            value = IDBDataGenerator.generateObject()
+            args.append(Literal(value))
+            # arg1 create的时候没有指定keypath，那需要加key
+            key = IDBDataGenerator.generateString()
+            args.append(Literal(key))
+            Global.smctx.registerKey(osName, key)
+        else:
+            # put(item)，需要生成符合keypath的数据
+            if random.random() < 0.5:
+                [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
+                args.append(Literal(value))
+                Global.smctx.registerKey(osName, key)
+            else:
+                # put(item, key)， 随便生成，可以尝试blob等
+                if random.random() < config.WIRED_DATA:
+                    # 正常生成
+                    value = IDBDataGenerator.generateAny()
+                    key = IDBDataGenerator.generateAny()
+                    args.append(Literal(value))
+                    args.append(Literal(key))
+                    Global.smctx.registerKey(osName, key)
+                else:
+                    pass
+                    # 尝试wireddata
+
+        # 返回一个IDBRequest，然后设置success或者error事件
+        nodes = []
+        meName = Global.irctx.newMeName(METHOD_NAME)
+        recVar = Variable(meName, IDBType.IDBRequest)
+        Global.irctx.registerVariable(recVar)
+        nodes.append(VariableDeclaration(recVar.name))
+        nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
+        return nodes
 
     @staticmethod
     def put():
@@ -453,10 +467,23 @@ class CoreApis:
             args.append(Literal(key))
             Global.smctx.registerKey(osName, key)
         else:
-            # 正常模式，需要生成符合keypath的数据
-            [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
-            args.append(Literal(value))
-            Global.smctx.registerKey(osName, key)
+            # put(item)，需要生成符合keypath的数据
+            if random.random() < 0.5:
+                [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
+                args.append(Literal(value))
+                Global.smctx.registerKey(osName, key)
+            else:
+                # put(item, key)， 随便生成，可以尝试blob等
+                if random.random() < config.WIRED_DATA:
+                    # 正常生成
+                    value = IDBDataGenerator.generateAny()
+                    key = IDBDataGenerator.generateAny()
+                    args.append(Literal(value))
+                    args.append(Literal(key))
+                    Global.smctx.registerKey(osName, key)
+                else:
+                    pass
+                    # 尝试wireddata
 
         # 返回一个IDBRequest，然后设置success或者error事件
         nodes = []
