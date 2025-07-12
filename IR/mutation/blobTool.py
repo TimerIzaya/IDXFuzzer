@@ -21,7 +21,7 @@ class BlobTool:
             k=1
         )[0]
 
-        is_large = random.random() < 0.05
+        is_large = random.random() < 0.02
 
         if blob_type == "text":
             content = BlobTool._random_string(random.randint(10, 2000) if is_large else random.randint(5, 30))
