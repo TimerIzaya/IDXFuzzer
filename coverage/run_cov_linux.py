@@ -54,7 +54,7 @@ def run_and_update_coverage_linux(html_path: str,
                            env=env,
                            timeout=5)  # ← 加了 timeout
             end = time.time()
-            # print(f"Execution time: {end - start:.2f} seconds")
+            print(f"Execution time: {end - start:.2f} seconds")
         except subprocess.TimeoutExpired:
             # print(f"[!] Timeout: {html_path}")
             shutil.copy(html_path, timeout_dir)
