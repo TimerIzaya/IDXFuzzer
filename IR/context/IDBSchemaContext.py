@@ -171,6 +171,9 @@ class IDBSchemaContext:
     def unMarkCurrentDB(self):
         self.currentDB = None
 
+    def newDBName(self) -> str:
+        return self.generateUniqueName("db")
+
     def newObjectStoreName(self) -> str:
         return self.generateUniqueName("objectStore")
 
@@ -182,6 +185,10 @@ class IDBSchemaContext:
 
     def newTxnTmpOSName(self, txnName) -> str:
         return self.generateUniqueName("txnTmpOs")
+
+
+    def getDB(self) -> str:
+        return next(iter(self.ctx.keys()))
 
     def getObjectStores(self) -> List[str]:
         if self.currentDB is None:

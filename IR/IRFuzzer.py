@@ -63,7 +63,7 @@ def recur_layer(layer):
 '''
 def dbClose():
     return CallExpression(
-        callee_object=Identifier("db"),
+        callee_object=Identifier(Global.smctx.getDB()),
         callee_method="close",
         args=[]
     )

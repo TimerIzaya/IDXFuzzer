@@ -17,7 +17,8 @@ class IDBRootLayer(LayerBuilder):
         body = []
         Global.irctx.enterLayer(IDBRootLayer)
         # 全局声明 db 变量
-        dbLiteral = "db"
+
+        dbLiteral = Global.smctx.newDBName()
         # 这里还没赋值 不注册 只注册一个
         Global.irctx.registerVariable(Variable(dbLiteral, IDBType.IDBDatabase))
         dbDec = VariableDeclaration(name=Identifier(dbLiteral), kind="let")
