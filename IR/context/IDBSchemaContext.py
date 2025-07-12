@@ -174,6 +174,9 @@ class IDBSchemaContext:
     def newDBName(self) -> str:
         return self.generateUniqueName("db")
 
+    def newOpenRequestName(self) -> str:
+        return self.generateUniqueName("openRequest")
+
     def newObjectStoreName(self) -> str:
         return self.generateUniqueName("objectStore")
 

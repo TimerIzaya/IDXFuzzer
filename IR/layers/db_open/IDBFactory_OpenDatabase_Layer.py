@@ -35,17 +35,18 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
 
         args = [Literal(dbName), Literal(versionNumber)]
 
+        openRequestName = Global.smctx.newOpenRequestName()
         call = CallExpression(
             callee_object=Identifier(FATHER),
             callee_method="open",
             args=args,
-            result_name="openRequest"
+            result_name=openRequestName
         )
 
         # 注册 indexedDB 对象
         Global.irctx.registerVariable(Variable("FATHER", IDBType.IDBFactory))
 
-        Global.irctx.registerVariable(Variable("openRequest", IDBType.IDBOpenDBRequest))
+        Global.irctx.registerVariable(Variable(openRequestName, IDBType.IDBOpenDBRequest))
 
         return Layer(
             name=IDBFactory_OpenDatabase_Layer.name,
