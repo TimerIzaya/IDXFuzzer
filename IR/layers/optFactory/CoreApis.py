@@ -31,7 +31,7 @@ class CoreApis:
         autoIncrement = IRParamValueGenerator.generateCreateObjectStoreAutoIncrement()
         option = {}
         if random.random() > 0.5:
-            option["keypath"] = keyPath
+            option["keyPath"] = keyPath
         if random.random() > 0.5:
             option["autoIncrement"] = autoIncrement
         args.append(Literal(osName))
@@ -45,8 +45,8 @@ class CoreApis:
         recVar = Variable(recVarName, IDBType.IDBObjectStore)
         recVar.varLiteral = osName
         Global.smctx.registerObjectStore(osName)
-        if "keypath" in option:
-            Global.smctx.currentDB.oss[osName].keypath = option["keypath"]
+        if "keyPath" in option:
+            Global.smctx.currentDB.oss[osName].keypath = option["keyPath"]
         if "autoIncrement" in option:
             Global.smctx.currentDB.oss[osName].autoIncrement = option["autoIncrement"]
         Global.irctx.registerVariable(recVar)
@@ -428,17 +428,13 @@ class CoreApis:
                 args.append(Literal(value))
                 Global.smctx.registerKey(osName, key)
             else:
-                # put(item, key)， 随便生成，可以尝试blob等
-                if random.random() < config.WIRED_DATA:
-                    # 正常生成
-                    value = IDBDataGenerator.generateAny()
-                    key = IDBDataGenerator.generateAny()
-                    args.append(Literal(value))
-                    args.append(Literal(key))
-                    Global.smctx.registerKey(osName, key)
-                else:
-                    pass
-                    # 尝试wireddata
+                # put(item, key)
+                value = IDBDataGenerator.generateAny()
+                key = IDBDataGenerator.generateAny()
+                args.append(Literal(value))
+                args.append(Literal(key))
+                Global.smctx.registerKey(osName, key)
+
 
         # 返回一个IDBRequest，然后设置success或者error事件
         nodes = []
@@ -448,6 +444,8 @@ class CoreApis:
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
         return nodes
+
+
 
     @staticmethod
     def put():
@@ -473,17 +471,12 @@ class CoreApis:
                 args.append(Literal(value))
                 Global.smctx.registerKey(osName, key)
             else:
-                # put(item, key)， 随便生成，可以尝试blob等
-                if random.random() < config.WIRED_DATA:
-                    # 正常生成
-                    value = IDBDataGenerator.generateAny()
-                    key = IDBDataGenerator.generateAny()
-                    args.append(Literal(value))
-                    args.append(Literal(key))
-                    Global.smctx.registerKey(osName, key)
-                else:
-                    pass
-                    # 尝试wireddata
+                # put(item, key)
+                value = IDBDataGenerator.generateAny()
+                key = IDBDataGenerator.generateAny()
+                args.append(Literal(value))
+                args.append(Literal(key))
+                Global.smctx.registerKey(osName, key)
 
         # 返回一个IDBRequest，然后设置success或者error事件
         nodes = []
@@ -493,3 +486,6 @@ class CoreApis:
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
         return nodes
+
+
+

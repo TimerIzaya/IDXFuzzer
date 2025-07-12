@@ -58,14 +58,20 @@ class Variable(IRNode):
         self.varLiteral = varLiteral
 
 
+
+'''
+origin是直接内嵌的外部代码
+'''
 class Literal(IRNode):
-    def __init__(self, value: any):
+    def __init__(self, value: any, needOrigin: bool = False):
         self.value = value
+        self.needOrigin = needOrigin
 
     def to_dict(self):
         return {
             "type": "Literal",
-            "value": self.value
+            "value": self.value,
+            "needOrigin": self.needOrigin,
         }
 
 

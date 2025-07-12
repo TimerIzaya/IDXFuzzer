@@ -31,7 +31,8 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
         txnOSS = [Identifier(i) for i in txnOSS]
         Global.smctx.registerTxn(txnOSS)
 
-        mode = random.choice(["readwrite", "readonly"])
+        # mode = random.choice(["readwrite", "readonly"])
+        mode = random.choice(["readwrite"])
         durability = "{durability:\"" + random.choice(["strict", "default", "relaxed"]) + "\"}"
         args.append(Literal(str(mode)))
         args.append(Identifier(durability))
