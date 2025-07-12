@@ -44,6 +44,10 @@ class CoreApis:
         recVar = Variable(recVarName, IDBType.IDBObjectStore)
         recVar.varLiteral = osName
         Global.smctx.registerObjectStore(osName)
+        if "keypath" in option:
+            Global.smctx.currentDB.oss[osName].keypath = option["keypath"]
+        if "autoIncrement" in option:
+            Global.smctx.currentDB.oss[osName].autoIncrement = option["autoIncrement"]
         Global.irctx.registerVariable(recVar)
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(dbIdt, "createObjectStore", args=args)))
