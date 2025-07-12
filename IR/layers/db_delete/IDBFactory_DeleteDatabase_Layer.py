@@ -37,7 +37,7 @@ class IDBFactory_DeleteDatabase_Layer(LayerBuilder):
 
         return Layer(
             IDBFactory_DeleteDatabase_Layer.name,
-            ir_nodes=[call],
-            children=[blocked_layer, success_layer, error_layer],
+                ir_nodes=[call],
+            children=[],
             layer_type=IDBFactory_DeleteDatabase_Layer.layer_type
         )

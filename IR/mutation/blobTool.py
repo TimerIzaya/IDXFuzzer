@@ -21,10 +21,10 @@ class BlobTool:
             k=1
         )[0]
 
-        is_large = random.random() < 0.02
+        is_large = random.random() < 0.01
 
         if blob_type == "text":
-            content = BlobTool._random_string(random.randint(10, 2000) if is_large else random.randint(5, 30))
+            content = BlobTool._random_string(random.randint(10, 200) if is_large else random.randint(5, 30))
             js = f'new Blob(["{content}"], {{ type: "text/plain" }})'
 
         elif blob_type == "multiline":
@@ -32,11 +32,11 @@ class BlobTool:
             js = f'new Blob({json.dumps(lines)}, {{ type: "text/plain" }})'
 
         elif blob_type == "json":
-            entries = {f"key_{i}": random.randint(0, 1000) for i in range(200 if is_large else 5)}
+            entries = {f"key_{i}": random.randint(0, 100) for i in range(200 if is_large else 5)}
             js = f'new Blob([JSON.stringify({json.dumps(entries)})], {{ type: "application/json" }})'
 
         elif blob_type == "binary":
-            size = random.randint(100000, 5000000) if is_large else random.randint(4, 16)
+            size = random.randint(1, 5000) if is_large else random.randint(4, 16)
             byte_array = [hex(random.randint(0, 255)) for _ in range(min(20, size))]
             hex_str = ', '.join(byte_array)
             if is_large:
