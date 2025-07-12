@@ -55,4 +55,12 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
                                mode=EventBuilderMode.TXN)
 
         IDBObjectStore_DataOps_Layer.TARGET_OS_VAR = None
+
+        # 在正常操作中小概率插入abort和commit
+        abort = CallExpression(txnVar, "abort", [])
+        commit = CallExpression(txnVar, "commit", [])
+        if random.random() < config.BREAK_TXN:
+            body.insert(random.randrange(len(body)) + 1, commit)
+        if random.random() < config.BREAK_TXN:
+            body.insert(random.randrange(len(body)) + 1, abort)
         return Layer(IDBObjectStore_DataOps_Layer.name, body, layer_type=IDBObjectStore_DataOps_Layer.layer_type)

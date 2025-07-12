@@ -35,6 +35,9 @@ def recur_layer(layer):
             recur_layer(child)
 
 
+'''
+任意地方关闭连接，模拟升级降级
+'''
 def dbClose():
     return CallExpression(
         callee_object=Identifier("db"),
