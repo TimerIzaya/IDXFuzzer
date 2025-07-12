@@ -177,6 +177,9 @@ class IDBSchemaContext:
     def newOpenRequestName(self) -> str:
         return self.generateUniqueName("openRequest")
 
+    def newDeleteRequestName(self) -> str:
+        return self.generateUniqueName("deleteRequest")
+
     def newObjectStoreName(self) -> str:
         return self.generateUniqueName("objectStore")
 

@@ -19,13 +19,16 @@ class IDBFactory_DeleteDatabase_Layer(LayerBuilder):
         db_name = Global.smctx.pickRandomDBName()
         args = [Literal(db_name)]
 
+
+
+        deleteReqName = Global.smctx.newDeleteRequestName()
         call = CallExpression(
             callee_object=Identifier("indexedDB"),
             callee_method="deleteDatabase",
             args=args,
-            result_name="deleteRequest"
+            result_name=deleteReqName
         )
-        Global.irctx.registerVariable(Variable("deleteRequest", IDBType.IDBOpenDBRequest))
+        Global.irctx.registerVariable(Variable(deleteReqName, IDBType.IDBOpenDBRequest))
 
         # 构造子事件层
         blocked_layer = IDBDeleteDBRequest_onblocked_Layer.build()
