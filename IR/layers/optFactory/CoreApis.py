@@ -407,7 +407,8 @@ class CoreApis:
     @staticmethod
     def add():
         # 随机找一个os，往里add数据
-        METHOD_NAME = "add"
+        # 随机找一个os，往里add数据
+        METHOD_NAME = "put"
 
         osVar, osName = CoreApis.getOSInfo()
 
@@ -422,19 +423,9 @@ class CoreApis:
             args.append(Literal(key))
             Global.smctx.registerKey(osName, key)
         else:
-            # put(item)，需要生成符合keypath的数据
-            if random.random() < 0.5:
-                [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
-                args.append(Literal(value))
-                Global.smctx.registerKey(osName, key)
-            else:
-                # put(item, key)
-                value = IDBDataGenerator.generateAny()
-                key = IDBDataGenerator.generateAny()
-                args.append(Literal(value))
-                args.append(Literal(key))
-                Global.smctx.registerKey(osName, key)
-
+            [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
+            args.append(Literal(value))
+            Global.smctx.registerKey(osName, key)
 
         # 返回一个IDBRequest，然后设置success或者error事件
         nodes = []
@@ -444,7 +435,6 @@ class CoreApis:
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
         return nodes
-
 
 
     @staticmethod
@@ -465,18 +455,9 @@ class CoreApis:
             args.append(Literal(key))
             Global.smctx.registerKey(osName, key)
         else:
-            # put(item)，需要生成符合keypath的数据
-            if random.random() < 0.5:
-                [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
-                args.append(Literal(value))
-                Global.smctx.registerKey(osName, key)
-            else:
-                # put(item, key)
-                value = IDBDataGenerator.generateAny()
-                key = IDBDataGenerator.generateAny()
-                args.append(Literal(value))
-                args.append(Literal(key))
-                Global.smctx.registerKey(osName, key)
+            [value, key] = IDBDataGenerator.generateObjectWithKeyPath(osKeyPath)
+            args.append(Literal(value))
+            Global.smctx.registerKey(osName, key)
 
         # 返回一个IDBRequest，然后设置success或者error事件
         nodes = []
