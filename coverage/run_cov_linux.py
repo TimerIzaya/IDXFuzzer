@@ -2,7 +2,10 @@ import os, time, glob, subprocess, numpy as np, tempfile, shutil
 
 from config import EDGE_TOTAL_COUNT
 from coverage.bitmap import GlobalEdgeBitmap
-from multiprocess_linux import CRASH_ROOT, TIMEOUT_DIR
+
+CORPUS_ROOT = "result/corpus"
+CRASH_ROOT = "result/crashes"
+TIMEOUT_DIR = os.path.join(CRASH_ROOT, "timeout")
 
 
 def run_and_update_coverage_linux(html_path: str,
