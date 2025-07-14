@@ -2,7 +2,7 @@ import random
 
 import config
 from IR.IRNodes import Identifier, CallExpression, AssignmentExpression, MemberExpression, FunctionExpression, \
-    VariableDeclaration, Literal, Variable
+    VariableDeclaration, Literal, Variable, TryCatchStatement
 from IR.context.IDBSchemaContext import IDBSchemaContext
 from IR.layers.Global import Global
 from IR.layers.Layer import Layer, LayerType
@@ -35,32 +35,50 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
         oss = Global.smctx.pickRandomObjectStoresFromTxn()
         osNames = [o.raw for o in oss]
 
-        targetOSName = random.choice(osNames)
+        # 是否对当前临时os进行curd
+        for osName in osNames:
+            if random.random() < 0.5:
+                continue
 
-        # 注意 到非schema层了 IRContext之前的os相关的全都不可以用了 想要变量 自己注册吧
-        # 临时OS变量
-        tmpOSVar = Variable(targetOSName, IDBType.IDBObjectStore, targetOSName)
-        Global.irctx.registerVariable(tmpOSVar)
-        CoreApis.TARGET_OS_VAR = tmpOSVar
+            targetOSName = osName
+            # 注意 到非schema层了 IRContext之前的os相关的全都不可以用了 想要变量 自己注册吧
+            # 临时OS变量
+            tmpOSVar = Variable(targetOSName, IDBType.IDBObjectStore, targetOSName)
+            Global.irctx.registerVariable(tmpOSVar)
+            CoreApis.TARGET_OS_VAR = tmpOSVar
 
-        # const objectStore = transaction.objectStore("toDoList");
-        # 开始取临时OS
-        body.append(VariableDeclaration(Identifier(CoreApis.TARGET_OS_VAR.varLiteral)))
-        body.append(AssignmentExpression(
-            tmpOSVar,
-            CallExpression(txnVar, "objectStore", [Literal(targetOSName)])
-        ))
+            # const objectStore = transaction.objectStore("toDoList");
+            # 开始取临时OS
+            body.append(VariableDeclaration(Identifier(CoreApis.TARGET_OS_VAR.varLiteral)))
+            body.append(AssignmentExpression(
+                tmpOSVar,
+                CallExpression(txnVar, "objectStore", [Literal(targetOSName)])
+            ))
 
-        EventFlowBuilder.build(EXPECT_OPS=IDBObjectStore_DataOps_Layer.EXPECT_OPS, body=body,
-                               mode=EventBuilderMode.TXN)
+            EventFlowBuilder.build(EXPECT_OPS=IDBObjectStore_DataOps_Layer.EXPECT_OPS, body=body,
+                                   mode=EventBuilderMode.TXN)
 
-        IDBObjectStore_DataOps_Layer.TARGET_OS_VAR = None
+            IDBObjectStore_DataOps_Layer.TARGET_OS_VAR = None
 
-        # 在正常操作中小概率插入abort和commit
-        abort = CallExpression(txnVar, "abort", [])
-        commit = CallExpression(txnVar, "commit", [])
-        if random.random() < config.P_BREAK_TXN:
-            body.insert(random.randrange(len(body)) + 1, commit)
-        if random.random() < config.P_BREAK_TXN:
-            body.insert(random.randrange(len(body)) + 1, abort)
+            # 在正常操作中小概率插入abort和commit
+            abort = CallExpression(txnVar, "abort", [])
+            commit = CallExpression(txnVar, "commit", [])
+            # if random.random() < 1:
+            if random.random() < config.P_BREAK_TXN:
+                insert_pos = random.randrange(len(body)) + 1
+                if random.random() < 0.5:
+                    body.insert(insert_pos, commit)
+                else:
+                    body.insert(insert_pos, abort)
+                if insert_pos + 1 < body.__len__():
+                    useless = body[insert_pos + 1:]
+                    body[insert_pos + 1] = TryCatchStatement(useless, [])
+
+            # 其次扔掉当前临时os变量
+            Global.irctx.unregisterVariable(tmpOSVar)
+
+
+        # 首先扔掉事务变量
+        Global.irctx.unregisterVariable(txnVar.name)
         return Layer(IDBObjectStore_DataOps_Layer.name, body, layer_type=IDBObjectStore_DataOps_Layer.layer_type)
+

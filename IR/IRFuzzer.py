@@ -8,6 +8,7 @@ from IR.layers import IRLayerEnum
 from IR.layers.Global import Global
 from IR.layers.IDBRootLayer import IDBRootLayer
 from IR.mutation.blobTool import BlobTool
+from IR.type.IDBType import IDBType
 
 
 def generate_ir_program():
@@ -45,7 +46,10 @@ def recur_layer(layer):
 
     # 任意地方关闭数据库
     if random.random() < config.P_CLOSE_DB:
-        layer.ir_nodes.insert(random.randint(0, len(layer.ir_nodes)), dbClose())
+        try:
+            layer.ir_nodes.insert(random.randint(0, len(layer.ir_nodes)), dbClose())
+        except Exception as e:
+            pass
 
     # 捕捉put或者add方法，替换为wireddata
     for node in layer.ir_nodes:
@@ -63,7 +67,7 @@ def recur_layer(layer):
 '''
 def dbClose():
     return CallExpression(
-        callee_object=Identifier(Global.smctx.getDB()),
+        callee_object=Global.irctx.getRandomIdentifier(IDBType.IDBDatabase),
         callee_method="close",
         args=[]
     )

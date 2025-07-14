@@ -108,6 +108,10 @@ class IDBDataGenerator(BaseGenerator):
             ["object"] * 5 + ["string", "number", "boolean", "null", "array"]
     )
 
+    keyTypeDistribution = (
+            ["string", "number"]
+    )
+
     @staticmethod
     def generateString(key=None):
         return IDBDataGenerator._randomString()
@@ -146,7 +150,7 @@ class IDBDataGenerator(BaseGenerator):
     @staticmethod
     def generateObjectWithKeyPath(keyPath: str):
         parts = keyPath.split(".")
-        keyValue = IDBDataGenerator._generatePrimitive()
+        keyValue = IDBDataGenerator.generateAnyOfKey()
         obj = IDBDataGenerator._generateObjectWithKeyPathAndValue(parts, keyValue)
         return obj, keyValue
 
@@ -223,6 +227,15 @@ class IDBDataGenerator(BaseGenerator):
         随机从 anyTypeDistribution 中选择一个类型，并生成对应数据
         """
         type_name = random.choice(IDBDataGenerator.anyTypeDistribution)
+        method = getattr(IDBDataGenerator, f"generate{type_name.capitalize()}", None)
+        return method(key) if method else f"<{type_name}>"
+
+    @staticmethod
+    def generateAnyOfKey(key=None):
+        """
+        随机从 anyTypeDistribution 中选择一个类型，并生成对应数据
+        """
+        type_name = random.choice(IDBDataGenerator.keyTypeDistribution)
         method = getattr(IDBDataGenerator, f"generate{type_name.capitalize()}", None)
         return method(key) if method else f"<{type_name}>"
 

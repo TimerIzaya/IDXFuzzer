@@ -47,13 +47,16 @@ class IRContext:
         assert isinstance(var, Variable), "register_variable() must be called with a Variable instance"
         self.layerStack[-1].append(var)
 
-    def unregisterVariable(self, varLiteral: str):
+    def unregisterVariable(self, d: [str, Variable]):
         for layPool in self.layerStack:
             delTars = []
             for v in layPool.vars:
                 # todo 卸载还是写的不明确 要改
-                if v.varLiteral == varLiteral or v.name.raw == varLiteral:
+                if isinstance(d, Variable) and d.name == v.name and d.varLiteral == v.varLiteral and d.varType == v.varType:
                     delTars.append(v)
+                elif v.varLiteral == d or v.name.raw == d:
+                    delTars.append(v)
+
             for d in delTars:
                 layPool.vars.remove(d)
 

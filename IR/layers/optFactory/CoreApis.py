@@ -183,6 +183,11 @@ class CoreApis:
             # v = os.xxx()
             nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
         else:
+            CoreApis.useKeyOrKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
+
+    @staticmethod
+    def useKeyOrKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args):
+        if random.random() < 0.3:
             # k = KeyRange.xxx()
             # v = os.xxx(k)
             keyRangeAssign = IDBDataGenerator.generateKeyRange(os)
@@ -196,34 +201,17 @@ class CoreApis:
                     keyRangeAssign,
                     AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
                 ],
-                catchBody=[
-                    # stableKeyRangeAssign,
-                    # AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
-                ]
+                catchBody=[]
             )
             nodes.append(tryCatch)
-
-    @staticmethod
-    def useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args):
-        # k = KeyRange.xxx()
-        # v = os.xxx(k)
-        keyRangeAssign = IDBDataGenerator.generateKeyRange(os)
-        args.append(keyRangeAssign.left)
-        # used to catch
-        stableArgs = copy.deepcopy(args)
-        stableKeyRangeAssign = IDBDataGenerator.generateKeyRange(os, stable=True)
-        stableArgs[-1] = stableKeyRangeAssign.left
-        tryCatch = TryCatchStatement(
-            tryBody=[
-                keyRangeAssign,
-                AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
-            ],
-            catchBody=[
-                # stableKeyRangeAssign,
-                # AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
-            ]
-        )
-        nodes.append(tryCatch)
+        else:
+            # 直接调用
+            # k = KeyRange.xxx()
+            # v = os.xxx(k)
+            args.append(Literal(IDBDataGenerator.generateAnyOfKey()))
+            # used to catch
+            call = AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
+            nodes.append(call)
 
     @staticmethod
     def count():
@@ -256,7 +244,7 @@ class CoreApis:
         nodes = []
         args = []
         recVar = CoreApis.declareVarToWelcome(METHOD_NAME, nodes)
-        CoreApis.useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
+        CoreApis.useKeyOrKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
         return nodes
 
     @staticmethod
@@ -273,7 +261,7 @@ class CoreApis:
         nodes = []
         args = []
         recVar = CoreApis.declareVarToWelcome(METHOD_NAME, nodes)
-        CoreApis.useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
+        CoreApis.useKeyOrKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
         return nodes
 
     @staticmethod
@@ -291,35 +279,13 @@ class CoreApis:
         args = []
         recVar = CoreApis.declareVarToWelcome(METHOD_NAME, nodes)
 
-        if random.random() > 0.5:
-            # v = os.xxx()
-            if random.random() > 0.5:
-                rand_num = random.randint(0, 2 ** 32)
-                args.append(Literal(rand_num))
-            nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
-        else:
-            # k = KeyRange.xxx()
-            # v = os.xxx(k)
-            keyRangeAssign = IDBDataGenerator.generateKeyRange(os)
-            args.append(keyRangeAssign.left)
-            # used to catch
-            stableArgs = copy.deepcopy(args)
-            stableKeyRangeAssign = IDBDataGenerator.generateKeyRange(os, stable=True)
-            stableArgs[-1] = stableKeyRangeAssign.left
-            if random.random() > 0.5:
-                rand_num = random.randint(0, 2 ** 32)
-                args.append(Literal(rand_num))
-            tryCatch = TryCatchStatement(
-                tryBody=[
-                    keyRangeAssign,
-                    AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
-                ],
-                catchBody=[
-                    stableKeyRangeAssign,
-                    AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
-                ]
-            )
-            nodes.append(tryCatch)
+        CoreApis.useKeyRangeOrNot(nodes, recVar, osVar, os, METHOD_NAME, args)
+        # 还有第三个count参数
+        if (random.random() < 0.5
+                and nodes.__len__() == 2
+                and isinstance(nodes[1], AssignmentExpression)
+                and nodes[1].right.args.__len__() == 1):
+            nodes[1].right.args.append(Literal(random.randint(0, 2**32 - 1)))
         return nodes
 
     @staticmethod
@@ -337,35 +303,13 @@ class CoreApis:
         args = []
         recVar = CoreApis.declareVarToWelcome(METHOD_NAME, nodes)
 
-        if random.random() > 0.5:
-            # v = os.xxx()
-            if random.random() > 0.5:
-                rand_num = random.randint(0, 2 ** 32)
-                args.append(Literal(rand_num))
-            nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
-        else:
-            # k = KeyRange.xxx()
-            # v = os.xxx(k)
-            keyRangeAssign = IDBDataGenerator.generateKeyRange(os)
-            args.append(keyRangeAssign.left)
-            # used to catch
-            stableArgs = copy.deepcopy(args)
-            stableKeyRangeAssign = IDBDataGenerator.generateKeyRange(os, stable=True)
-            stableArgs[-1] = stableKeyRangeAssign.left
-            if random.random() > 0.5:
-                rand_num = random.randint(0, 2 ** 32)
-                args.append(Literal(rand_num))
-            tryCatch = TryCatchStatement(
-                tryBody=[
-                    keyRangeAssign,
-                    AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args))
-                ],
-                catchBody=[
-                    stableKeyRangeAssign,
-                    AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=stableArgs))
-                ]
-            )
-            nodes.append(tryCatch)
+        CoreApis.useKeyRangeOrNot(nodes, recVar, osVar, os, METHOD_NAME, args)
+        # 还有第三个count参数
+        if (random.random() < 0.5
+                and nodes.__len__() == 2
+                and isinstance(nodes[1], AssignmentExpression)
+                and nodes[1].right.args.__len__() == 1):
+            nodes[1].right.args.append(Literal(random.randint(0, 2**32 - 1)))
         return nodes
 
     @staticmethod
@@ -382,7 +326,7 @@ class CoreApis:
         nodes = []
         args = []
         recVar = CoreApis.declareVarToWelcome(METHOD_NAME, nodes)
-        CoreApis.useKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
+        CoreApis.useKeyOrKeyRange(nodes, recVar, osVar, os, METHOD_NAME, args)
         return nodes
 
     @staticmethod
@@ -407,8 +351,7 @@ class CoreApis:
     @staticmethod
     def add():
         # 随机找一个os，往里add数据
-        # 随机找一个os，往里add数据
-        METHOD_NAME = "put"
+        METHOD_NAME = "add"
 
         osVar, osName = CoreApis.getOSInfo()
 
@@ -435,7 +378,6 @@ class CoreApis:
         nodes.append(VariableDeclaration(recVar.name))
         nodes.append(AssignmentExpression(recVar, CallExpression(osVar, METHOD_NAME, args=args)))
         return nodes
-
 
     @staticmethod
     def put():

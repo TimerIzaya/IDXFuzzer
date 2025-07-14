@@ -18,6 +18,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
 
     @staticmethod
     def build() -> Layer | None:
+        Global.irctx.enterLayer(IDBDatabase_Transaction_Layer)
         if not Global.smctx.getObjectStores():
             # print("[TransactionLayer] skipped: no object store available")
             return None
@@ -62,6 +63,7 @@ class IDBDatabase_Transaction_Layer(LayerBuilder):
 
         Global.smctx.unRegisterTxn()
         Global.irctx.unregisterVariable(txnName)
+        Global.irctx.exitLayer()
         return Layer(
             IDBDatabase_Transaction_Layer.name,
             ir_nodes=[callTX],
