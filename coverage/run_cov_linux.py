@@ -2,6 +2,8 @@ import os, time, glob, subprocess, numpy as np, tempfile, shutil
 
 from config import EDGE_TOTAL_COUNT
 from coverage.bitmap import GlobalEdgeBitmap
+from multiprocess_linux import CRASH_ROOT, TIMEOUT_DIR
+
 
 def run_and_update_coverage_linux(html_path: str,
                             edge_bitmap: GlobalEdgeBitmap,
@@ -17,8 +19,8 @@ def run_and_update_coverage_linux(html_path: str,
         return int(time.time() * 1000)
 
     html_path = os.path.abspath(html_path)
-    crash_dir = "/timer/IDXFuzzer/crashes"
-    timeout_dir = os.path.join(crash_dir, "timeout")
+    crash_dir = CRASH_ROOT
+    timeout_dir = TIMEOUT_DIR
     os.makedirs(crash_dir, exist_ok=True)
     os.makedirs(timeout_dir, exist_ok=True)
 
@@ -54,7 +56,7 @@ def run_and_update_coverage_linux(html_path: str,
                            env=env,
                            timeout=5)  # ← 加了 timeout
             end = time.time()
-            print(f"Execution time: {end - start:.2f} seconds")
+            # print(f"Execution time: {end - start:.2f} seconds")
         except subprocess.TimeoutExpired:
             # print(f"[!] Timeout: {html_path}")
             shutil.copy(html_path, timeout_dir)
