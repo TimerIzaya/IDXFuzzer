@@ -1,5 +1,6 @@
 import os, time, glob, subprocess, numpy as np, tempfile, shutil
 
+import config
 from config import EDGE_TOTAL_COUNT
 from coverage.bitmap import GlobalEdgeBitmap
 
@@ -57,7 +58,7 @@ def run_and_update_coverage_linux(html_path: str,
                            stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL,
                            env=env,
-                           timeout=5)  # ← 加了 timeout
+                           timeout=config.PROCESS_TIMEOUT)  # ← 加了 timeout
             end = time.time()
             # print(f"Execution time: {end - start:.2f} seconds")
         except subprocess.TimeoutExpired:
