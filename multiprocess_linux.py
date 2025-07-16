@@ -110,23 +110,27 @@ def run_one_case(bitmap_name: str) -> bool:
     new_edges, _ = run_and_update_coverage_linux(html_path, bitmap)
     bitmap.close()
 
-    if new_edges == -1:  # -1 表示 timeout 或 crash
+    if new_edges == -1:  # 只当作 timeout 统计
         with _shared_timeout_cnt.get_lock():
             _shared_timeout_cnt.value += 1
+
+        # 把超时用例单独保存到 timeout 目录
+        dst_dir = f"{TIMEOUT_DIR}/{cid}"
+        shutil.move(case_root, dst_dir)
+
     elif new_edges > 0:  # 有新增边：移动到 corpus
         with _shared_total_edges.get_lock():
             _shared_total_edges.value += new_edges
         with _shared_last_interesting_exec.get_lock():
             _shared_last_interesting_exec.value = current_exec
 
-        # 移动目录到 corpus
         dst_dir = f"{CORPUS_ROOT}/{cid}"
         shutil.move(case_root, dst_dir)
-    else:
-        # 无增益，保持在 uselessCorpus，不再删除
-        pass
+
+    # new_edges == 0：保持在 uselessCorpus，不再删除
 
     return new_edges > 0
+
 
 
 # ---------- 统计线程 ----------
@@ -138,7 +142,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
                 start_ts: float) -> None:
     """每 60 秒打印一次运行统计信息并写入日志文件"""
     while True:
-        time.sleep(60)
+        time.sleep(5)
         elapsed = int(time.time() - start_ts)
         h, rem = divmod(elapsed, 3600)
         m, s = divmod(rem, 60)
