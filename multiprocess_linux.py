@@ -157,26 +157,27 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
         pending_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "pending"))
         new_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "new"))
         completed_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "completed"))
+        attachments_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "attachments"))
 
         log_msg = (
             "\n========== IDX Fuzzer Stats ==========\n"
             f"{'Elapsed Time':<25}: {h:02d}h {m:02d}m {s:02d}s\n"
             f"{'Total Executions':<25}: {total_exec_counter.value}\n"
-            f"{'Corpus Count':<25}: {corpus_cnt}\n"
             f"{'Total New Edges':<25}: {total_edge_counter.value}\n"
-            f"{'Timeout Cases':<25}: {timeout_counter.value}\n"
+            f"{'Corpus Count':<25}: {corpus_cnt}\n"
             f"{'Last Interesting Seed @':<25}: {last_interesting_counter.value}\n"
             f"{'Coverage':<25}: {coverage_pct:.4f}%\n"
+            f"{'Timeout Cases':<25}: {timeout_counter.value}\n"
             f"{'Crash (pending)':<25}: {pending_cnt}\n"
             f"{'Crash (new)':<25}: {new_cnt}\n"
             f"{'Crash (completed)':<25}: {completed_cnt}\n"
+            f"{'Crash (attachments)':<25}: {attachments_cnt}\n"
             "======================================\n"
         )
         print(log_msg, end="")
 
         with open(LOG_FILE, "a", encoding="utf-8") as logf:
             logf.write(log_msg)
-
 
 # ---------- 输出目录初始化 ----------
 def init_output_dirs() -> None:
