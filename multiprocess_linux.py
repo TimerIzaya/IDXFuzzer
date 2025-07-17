@@ -89,47 +89,40 @@ def init_worker(edge_counter: Value, timeout_counter: Value,
     _shared_last_interesting_exec = last_interesting_counter
 
 
-# ---------- Pool 工作函数 ----------
 def run_one_case(bitmap_name: str) -> bool:
-    """
-    生成并执行单个测试用例
-    - 返回 True 表示该用例产生了新边
-    """
     cid = make_uid()
 
-    # 增加总执行次数
+    # 增加总执行次数 & 更新距离上次有趣种子执行的计数
     with _shared_total_exec_cnt.get_lock():
         _shared_total_exec_cnt.value += 1
         current_exec = _shared_total_exec_cnt.value
+    with _shared_last_interesting_exec.get_lock():
+        _shared_last_interesting_exec.value += 1
 
     # 生成测试用例，初始放到 uselessCorpus
     html_path, case_root = gen_case(cid, USELESS_CORPUS_ROOT)
 
-    # 打开共享 bitmap（只读写位图，不负责统计）
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
     new_edges, _ = run_and_update_coverage_linux(html_path, bitmap)
     bitmap.close()
 
-    if new_edges == -1:  # 只当作 timeout 统计
+    if new_edges == -1:  # timeout
         with _shared_timeout_cnt.get_lock():
             _shared_timeout_cnt.value += 1
-
-        # 把超时用例单独保存到 timeout 目录
         dst_dir = f"{TIMEOUT_DIR}/{cid}"
         shutil.move(case_root, dst_dir)
 
-    elif new_edges > 0:  # 有新增边：移动到 corpus
+    elif new_edges > 0:  # interesting
         with _shared_total_edges.get_lock():
             _shared_total_edges.value += new_edges
         with _shared_last_interesting_exec.get_lock():
-            _shared_last_interesting_exec.value = current_exec
-
+            _shared_last_interesting_exec.value = 0  # ✅重置
         dst_dir = f"{CORPUS_ROOT}/{cid}"
         shutil.move(case_root, dst_dir)
 
-    # new_edges == 0：保持在 uselessCorpus，不再删除
-
+    # else: uselessCorpus 不动
     return new_edges > 0
+
 
 
 
