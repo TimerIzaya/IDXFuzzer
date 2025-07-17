@@ -75,18 +75,59 @@ _shared_total_exec_cnt = None     # type: Value
 _shared_last_interesting_exec = None  # type: Value
 
 
-def init_worker(edge_counter: Value, timeout_counter: Value,
-                exec_counter: Value, last_interesting_counter: Value) -> None:
-    """
-    Pool initializer：在每个子进程中把共享 Value 绑定到全局变量。
-    必须使用此方式，避免 Value 对象被 pickle 造成 RuntimeError。
-    """
-    global _shared_total_edges, _shared_timeout_cnt
-    global _shared_total_exec_cnt, _shared_last_interesting_exec
-    _shared_total_edges = edge_counter
-    _shared_timeout_cnt = timeout_counter
-    _shared_total_exec_cnt = exec_counter
-    _shared_last_interesting_exec = last_interesting_counter
+def count_files_in_dir(path: str) -> int:
+    """统计目录下所有文件数量（不包括子目录）"""
+    if not os.path.exists(path):
+        return 0
+    return sum(
+        1 for f in os.listdir(path)
+        if os.path.isfile(os.path.join(path, f))
+    )
+
+
+def stat_worker(bitmap: GlobalEdgeBitmap,
+                total_edge_counter: Value,
+                timeout_counter: Value,
+                total_exec_counter: Value,
+                last_interesting_counter: Value,
+                start_ts: float) -> None:
+    """每 60 秒打印一次运行统计信息并写入日志文件"""
+    while True:
+        time.sleep(5)
+        elapsed = int(time.time() - start_ts)
+        h, rem = divmod(elapsed, 3600)
+        m, s = divmod(rem, 60)
+
+        corpus_cnt = sum(
+            1 for f in os.listdir(CORPUS_ROOT)
+            if os.path.isdir(os.path.join(CORPUS_ROOT, f))
+        )
+        coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
+
+        # ✅ 新增 crash 文件统计
+        pending_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "pending"))
+        new_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "new"))
+        completed_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "completed"))
+
+        log_msg = (
+            "\n========== IDX Fuzzer Stats ==========\n"
+            f"{'Elapsed Time':<25}: {h:02d}h {m:02d}m {s:02d}s\n"
+            f"{'Total Executions':<25}: {total_exec_counter.value}\n"
+            f"{'Corpus Count':<25}: {corpus_cnt}\n"
+            f"{'Total New Edges':<25}: {total_edge_counter.value}\n"
+            f"{'Timeout Cases':<25}: {timeout_counter.value}\n"
+            f"{'Last Interesting Seed @':<25}: {last_interesting_counter.value}\n"
+            f"{'Coverage':<25}: {coverage_pct:.4f}%\n"
+            f"{'Crash (pending)':<25}: {pending_cnt}\n"
+            f"{'Crash (new)':<25}: {new_cnt}\n"
+            f"{'Crash (completed)':<25}: {completed_cnt}\n"
+            "======================================\n"
+        )
+        print(log_msg, end="")
+
+        with open(LOG_FILE, "a", encoding="utf-8") as logf:
+            logf.write(log_msg)
+
 
 
 def run_one_case(bitmap_name: str) -> bool:
@@ -122,46 +163,6 @@ def run_one_case(bitmap_name: str) -> bool:
 
     # else: uselessCorpus 不动
     return new_edges > 0
-
-
-
-
-# ---------- 统计线程 ----------
-def stat_worker(bitmap: GlobalEdgeBitmap,
-                total_edge_counter: Value,
-                timeout_counter: Value,
-                total_exec_counter: Value,
-                last_interesting_counter: Value,
-                start_ts: float) -> None:
-    """每 60 秒打印一次运行统计信息并写入日志文件"""
-    while True:
-        time.sleep(5)
-        elapsed = int(time.time() - start_ts)
-        h, rem = divmod(elapsed, 3600)
-        m, s = divmod(rem, 60)
-
-        corpus_cnt = sum(
-            1 for f in os.listdir(CORPUS_ROOT)
-            if os.path.isdir(os.path.join(CORPUS_ROOT, f))
-        )
-        coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
-
-        log_msg = (
-            "\n========== IDX Fuzzer Stats ==========\n"
-            f"{'Elapsed Time':<25}: {h:02d}h {m:02d}m {s:02d}s\n"
-            f"{'Total Executions':<25}: {total_exec_counter.value}\n"
-            f"{'Corpus Count':<25}: {corpus_cnt}\n"
-            f"{'Total New Edges':<25}: {total_edge_counter.value}\n"
-            f"{'Timeout Cases':<25}: {timeout_counter.value}\n"
-            f"{'Last Interesting Seed @':<25}: {last_interesting_counter.value}\n"
-            f"{'Coverage':<25}: {coverage_pct:.4f}%\n"
-            "======================================\n"
-        )
-        print(log_msg, end="")
-
-        with open(LOG_FILE, "a", encoding="utf-8") as logf:
-            logf.write(log_msg)
-
 
 # ---------- 输出目录初始化 ----------
 def init_output_dirs() -> None:
