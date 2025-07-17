@@ -41,7 +41,7 @@ def run_and_update_coverage_linux(html_path: str,
             "--use-mock-keychain", "--disable-hang-monitor",
             "--run-all-compositor-stages-before-draw",
             "--virtual-time-budget=20000", f"--user-data-dir={tmp_dir}",
-            "--crash-reporter-pid={crash_id}",
+            f"--crashpad-annotation=CaseID={crash_id}",
             "--enable-crash-reporter", "--crash-dumps-dir=result/crashes",
             f"file://{html_path}"
         ]
