@@ -18,7 +18,7 @@ from itertools import repeat
 from multiprocessing import Pool, cpu_count, Value
 from IR.IRFuzzer import generate_ir_program
 from lifter.IRToJSLifter import IRToJSLifter
-import os, time, glob, subprocess, numpy as np, tempfile, shutil
+import os, time, glob, subprocess, numpy as np, shutil
 import config
 from coverage.bitmap import GlobalEdgeBitmap
 
@@ -28,12 +28,22 @@ CRASH_ROOT = "result/crashes"
 TIMEOUT_DIR = os.path.join(CRASH_ROOT, "timeout")
 LOG_FILE = "result/fuzz_stats.log"
 
-
 # ---------- 工具函数 ----------
 def make_uid() -> str:
     """生成 8 位短 UID 作为用例目录 / 文件名前缀"""
     return uuid.uuid4().hex[:8]
 
+def update_counter(counter: Value, delta: int = 1, reset: bool = False, value: int = 0):
+    """
+    通用更新共享计数器的函数
+    - delta: 增加多少（默认+1）
+    - reset=True: 直接重置为 value
+    """
+    with counter.get_lock():
+        if reset:
+            counter.value = value
+        else:
+            counter.value += delta
 
 def wrap_js_in_html(lines, out_path: str) -> None:
     """将 JS 代码包裹为可执行的 HTML 页面"""
@@ -45,7 +55,6 @@ def wrap_js_in_html(lines, out_path: str) -> None:
         )
         f.writelines(lines)
         f.write(f"</script></body></html>")
-
 
 def gen_case(case_id: str):
     """生成一条测试用例：IR → JS → HTML，返回 (html_path, case_root)"""
@@ -61,13 +70,15 @@ def gen_case(case_id: str):
     wrap_js_in_html(js_code, html_path)
     return html_path, case_root
 
-
 # ---------- 全局共享计数器（Worker 进程可见） ----------
-_shared_total_edges = None  # type: Value
-_shared_timeout_cnt = None  # type: Value
-_shared_total_exec_cnt = None  # type: Value
-_shared_last_interesting_exec = None  # type: Value
-
+_shared_total_edges = None
+_shared_timeout_cnt = None
+_shared_total_exec_cnt = None
+_shared_last_interesting_exec = None
+_shared_pending_cnt = None
+_shared_new_cnt = None
+_shared_completed_cnt = None
+_shared_attachments_cnt = None
 
 def init_worker(edge_counter: Value, timeout_counter: Value,
                 exec_counter: Value, last_interesting_counter: Value) -> None:
@@ -76,11 +87,11 @@ def init_worker(edge_counter: Value, timeout_counter: Value,
     必须使用此方式，避免 Value 对象被 pickle 造成 RuntimeError。
     """
     global _shared_total_edges, _shared_timeout_cnt, _shared_total_exec_cnt, _shared_last_interesting_exec
+    global _shared_pending_cnt, _shared_new_cnt, _shared_completed_cnt, _shared_attachments_cnt
     _shared_total_edges = edge_counter
     _shared_timeout_cnt = timeout_counter
     _shared_total_exec_cnt = exec_counter
     _shared_last_interesting_exec = last_interesting_counter
-
 
 def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     def now_ms() -> int:
@@ -89,7 +100,6 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     html_path = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path)
     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
-    # todo 每个html目录单独分配一个chrome模拟环境 后期是否可以优化？
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
     cmd = [
         "/timer/chromium/src/out/IndexedDBSanCov/content_shell",
@@ -102,14 +112,13 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         "--run-all-compositor-stages-before-draw",
         "--virtual-time-budget=20000", f"--user-data-dir={tmp_dir}",
         "--enable-crash-reporter",
-        f"--crash-dumps-dir={out_dir}",  #直接把crash放在html目录下
+        f"--crash-dumps-dir={out_dir}",
         f"file://{html_path}"
     ]
 
     env = os.environ.copy()
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
-    t1 = now_ms()
     try:
         subprocess.run(cmd,
                        stdout=subprocess.DEVNULL,
@@ -118,112 +127,88 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
                        timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired:
         shutil.copy(html_path, TIMEOUT_DIR)
-        # 把ir也copy过去
         json_path = html_path.replace(".html", ".json")
         if os.path.exists(json_path):
             shutil.copy(json_path, TIMEOUT_DIR)
         return -1, 0.0
     except subprocess.CalledProcessError:
-        # 不再当作 crash，只忽略
         pass
-
-    t2 = now_ms()
 
     bin_files = glob.glob(bin_glob)
     if not bin_files:
         raise Exception("覆盖率文件缺失")
-        # return 0, EDGE_TOTAL_COUNT
 
     total_new_edges = 0
-    # 把临时bitmap拿去和总的比较
     for cov_file in bin_files:
         total_new_edges += edge_bitmap.update_from_file(cov_file)
-        # 用完就删，别浪费空间
         os.remove(cov_file)
 
-    # 再查看是否触发了crash
     pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
     new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
     completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
     attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
+
+    if pending_cnt > 0:
+        update_counter(_shared_pending_cnt)
+    if new_cnt > 0:
+        update_counter(_shared_new_cnt)
+    if completed_cnt > 0:
+        update_counter(_shared_completed_cnt)
+    if attachments_cnt > 0:
+        update_counter(_shared_attachments_cnt)
+
     crashStatus = pending_cnt + new_cnt + completed_cnt + attachments_cnt
-
     return total_new_edges, crashStatus
-
 
 def run_one_case(bitmap_name: str) -> bool:
     cid = make_uid()
+    update_counter(_shared_total_exec_cnt)
+    update_counter(_shared_last_interesting_exec)
 
-    # 增加总执行次数 & 更新距离上次有趣种子执行的计数
-    with _shared_total_exec_cnt.get_lock():
-        _shared_total_exec_cnt.value += 1
-
-    with _shared_last_interesting_exec.get_lock():
-        _shared_last_interesting_exec.value += 1
-
-    # 生成测试用例，初始放到 uselessCorpus
     html_path, case_root = gen_case(cid)
-
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
     new_edges, crashStatus = run(html_path, bitmap)
     bitmap.close()
 
     out_dir = os.path.dirname(html_path)
-    # 如果有crash 整个挪走到crash
     if crashStatus > 0:
         shutil.move(out_dir, CRASH_ROOT)
     else:
         if new_edges == -1:  # timeout
-            with _shared_timeout_cnt.get_lock():
-                _shared_timeout_cnt.value += 1
+            update_counter(_shared_timeout_cnt)
             dst_dir = f"{TIMEOUT_DIR}/{cid}"
             shutil.move(case_root, dst_dir)
         elif new_edges > 0:  # interesting
-            with _shared_total_edges.get_lock():
-                _shared_total_edges.value += new_edges
-            with _shared_last_interesting_exec.get_lock():
-                _shared_last_interesting_exec.value = 0  # ✅重置
+            update_counter(_shared_total_edges, delta=new_edges)
+            update_counter(_shared_last_interesting_exec, reset=True, value=0)
             dst_dir = f"{CORPUS_ROOT}/{cid}"
             shutil.move(case_root, dst_dir)
         elif new_edges == 0:  # useless
             shutil.rmtree(out_dir)
 
-
 def count_files_in_dir(path: str) -> int:
-    """统计目录下所有文件数量（不包括子目录）"""
     if not os.path.exists(path):
         return 0
-    return sum(
-        1 for f in os.listdir(path)
-        if os.path.isfile(os.path.join(path, f))
-    )
-
+    return sum(1 for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)))
 
 def stat_worker(bitmap: GlobalEdgeBitmap,
                 total_edge_counter: Value,
                 timeout_counter: Value,
                 total_exec_counter: Value,
                 last_interesting_counter: Value,
+                pending_cnt_counter: Value,
+                new_cnt_counter: Value,
+                completed_cnt_counter: Value,
+                attachment_cnt_counter: Value,
                 start_ts: float) -> None:
-    """每 60 秒打印一次运行统计信息并写入日志文件"""
     while True:
         time.sleep(5)
         elapsed = int(time.time() - start_ts)
         h, rem = divmod(elapsed, 3600)
         m, s = divmod(rem, 60)
-
-        corpus_cnt = sum(
-            1 for f in os.listdir(CORPUS_ROOT)
-            if os.path.isdir(os.path.join(CORPUS_ROOT, f))
-        )
+        corpus_cnt = sum(1 for f in os.listdir(CORPUS_ROOT)
+                         if os.path.isdir(os.path.join(CORPUS_ROOT, f)))
         coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
-
-        # ✅ 新增 crash 文件统计
-        pending_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "pending"))
-        new_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "new"))
-        completed_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "completed"))
-        attachments_cnt = count_files_in_dir(os.path.join(CRASH_ROOT, "attachments"))
-
         log_msg = (
             "\n========== IDX Fuzzer Stats ==========\n"
             f"{'Elapsed Time':<25}: {h:02d}h {m:02d}m {s:02d}s\n"
@@ -233,17 +218,15 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
             f"{'Last Interesting Seed @':<25}: {last_interesting_counter.value}\n"
             f"{'Coverage':<25}: {coverage_pct:.4f}%\n"
             f"{'Timeout Cases':<25}: {timeout_counter.value}\n"
-            f"{'Crash (pending)':<25}: {pending_cnt}\n"
-            f"{'Crash (new)':<25}: {new_cnt}\n"
-            f"{'Crash (completed)':<25}: {completed_cnt}\n"
-            f"{'Crash (attachments)':<25}: {attachments_cnt}\n"
+            f"{'Crash (pending)':<25}: {pending_cnt_counter.value}\n"
+            f"{'Crash (new)':<25}: {new_cnt_counter.value}\n"
+            f"{'Crash (completed)':<25}: {completed_cnt_counter.value}\n"
+            f"{'Crash (attachments)':<25}: {attachment_cnt_counter.value}\n"
             "======================================\n"
         )
         print(log_msg, end="")
-
         with open(LOG_FILE, "a", encoding="utf-8") as logf:
             logf.write(log_msg)
-
 
 def init_output_dirs() -> None:
     for path in [CORPUS_ROOT, TIMEOUT_DIR, CRASH_ROOT]:
@@ -252,10 +235,8 @@ def init_output_dirs() -> None:
         os.makedirs(path, exist_ok=True)
     print("[*] Initialized output directories.")
 
-
 if __name__ == "__main__":
     init_output_dirs()
-
     PROCESS_COUNT = cpu_count()
 
     bitmap = GlobalEdgeBitmap(create=True)
@@ -265,20 +246,24 @@ if __name__ == "__main__":
     timeout_counter = Value('i', 0)
     total_exec_counter = Value('i', 0)
     last_interesting_counter = Value('i', 0)
-    start_time = time.time()
+    pending_cnt_counter = Value('i', 0)
+    new_cnt_counter = Value('i', 0)
+    completed_cnt_counter = Value('i', 0)
+    attachment_cnt_counter = Value('i', 0)
 
+    start_time = time.time()
     threading.Thread(
         target=stat_worker,
-        args=(bitmap, total_edge_counter, timeout_counter,
-              total_exec_counter, last_interesting_counter, start_time),
+        args=(bitmap, total_edge_counter, timeout_counter, total_exec_counter,
+              last_interesting_counter, pending_cnt_counter, new_cnt_counter,
+              completed_cnt_counter, attachment_cnt_counter, start_time),
         daemon=True
     ).start()
 
     pool = Pool(
         PROCESS_COUNT,
         initializer=init_worker,
-        initargs=(total_edge_counter, timeout_counter,
-                  total_exec_counter, last_interesting_counter)
+        initargs=(total_edge_counter, timeout_counter, total_exec_counter, last_interesting_counter)
     )
 
     try:
