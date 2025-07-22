@@ -146,11 +146,13 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
                        env=env,
                        timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired:
+        # 先看超时是否触发bug
+        crashCnt = checkCrashCnt()
         shutil.move(html_path, TIMEOUT_DIR)
         json_path = html_path.replace(".html", ".json")
         if os.path.exists(json_path):
             shutil.move(json_path, TIMEOUT_DIR)
-        return -1, checkCrashCnt()
+        return -1, crashCnt
     except subprocess.CalledProcessError:
         pass
 
