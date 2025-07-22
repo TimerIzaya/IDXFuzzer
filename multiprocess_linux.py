@@ -28,6 +28,7 @@ CRASH_ROOT = "result/crashes"
 TIMEOUT_DIR = os.path.join(CRASH_ROOT, "timeout")
 LOG_FILE = "result/fuzz_stats.log"
 
+
 # ---------- 工具函数 ----------
 def make_uid() -> str:
     """生成 8 位短 UID 作为用例目录 / 文件名前缀"""
@@ -251,6 +252,8 @@ def init_output_dirs() -> None:
     for path in [CORPUS_ROOT, TIMEOUT_DIR, CRASH_ROOT]:
         if os.path.exists(path):
             shutil.rmtree(path)
+
+        print(f"create path: {path}")
         os.makedirs(path, exist_ok=True)
     print("[*] Initialized output directories.")
 
