@@ -163,6 +163,7 @@ def run_one_case(bitmap_name: str) -> bool:
 
     # 生成测试用例，初始放到 uselessCorpus
     html_path, case_root = gen_case(cid)
+    print(f"html path : {html_path}")
 
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
     new_edges, crashStatus = run(html_path, bitmap)
