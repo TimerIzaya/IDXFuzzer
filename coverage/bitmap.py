@@ -13,17 +13,6 @@ class GlobalEdgeBitmap:
             self.shm = shm.SharedMemory(name=name)
         self.bitmap = np.ndarray((self.size,), dtype=np.uint8, buffer=self.shm.buf)
 
-    # def update_from_file(self, path: str) -> int:
-    #     with open(path, "rb") as f:
-    #         raw = f.read()
-    #         if len(raw) > self.size:
-    #             raise ValueError(f"bin too large: {len(raw)} > {self.size}")
-    #         data = np.frombuffer(raw, dtype=np.uint8)
-    #     before = np.count_nonzero(self.bitmap)
-    #     np.maximum(self.bitmap[:len(data)], data, out=self.bitmap[:len(data)])
-    #     return np.count_nonzero(self.bitmap) - before
-
-
     # 高位截取，只要idb的边数量
     def update_from_file(self, path: str) -> int:
         with open(path, "rb") as f:

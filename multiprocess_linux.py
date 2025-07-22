@@ -88,10 +88,8 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         return int(time.time() * 1000)
 
     html_path = os.path.abspath(html_path)
-
     out_dir = os.path.dirname(html_path)
     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
-
     # todo 每个html目录单独分配一个chrome模拟环境 后期是否可以优化？
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
     cmd = [
@@ -141,9 +139,17 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     # 把临时bitmap拿去和总的比较
     for cov_file in bin_files:
         total_new_edges += edge_bitmap.update_from_file(cov_file)
+        # 用完就删，别浪费空间
+        shutil.rmtree(cov_file)
 
-    coverage = np.count_nonzero(edge_bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
-    return total_new_edges, coverage
+    # 再查看是否触发了crash
+    pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
+    new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
+    completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
+    attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
+    crashStatus = pending_cnt + new_cnt + completed_cnt + attachments_cnt
+
+    return total_new_edges, crashStatus
 
 
 def run_one_case(bitmap_name: str) -> bool:
@@ -160,25 +166,28 @@ def run_one_case(bitmap_name: str) -> bool:
     html_path, case_root = gen_case(cid, USELESS_CORPUS_ROOT)
 
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    new_edges, _ = run(html_path, bitmap)
+    new_edges, crashStatus = run(html_path, bitmap)
     bitmap.close()
 
-    if new_edges == -1:  # timeout
-        with _shared_timeout_cnt.get_lock():
-            _shared_timeout_cnt.value += 1
-        dst_dir = f"{TIMEOUT_DIR}/{cid}"
-        shutil.move(case_root, dst_dir)
-
-    elif new_edges > 0:  # interesting
-        with _shared_total_edges.get_lock():
-            _shared_total_edges.value += new_edges
-        with _shared_last_interesting_exec.get_lock():
-            _shared_last_interesting_exec.value = 0  # ✅重置
-        dst_dir = f"{CORPUS_ROOT}/{cid}"
-        shutil.move(case_root, dst_dir)
-
-    # else: uselessCorpus 不动
-    return new_edges > 0
+    out_dir = os.path.dirname(html_path)
+    # 如果有crash 整个挪走到crash
+    if crashStatus > 0:
+        shutil.move(out_dir, CRASH_ROOT)
+    else:
+        if new_edges == -1:  # timeout
+            with _shared_timeout_cnt.get_lock():
+                _shared_timeout_cnt.value += 1
+            dst_dir = f"{TIMEOUT_DIR}/{cid}"
+            shutil.move(case_root, dst_dir)
+        elif new_edges > 0:  # interesting
+            with _shared_total_edges.get_lock():
+                _shared_total_edges.value += new_edges
+            with _shared_last_interesting_exec.get_lock():
+                _shared_last_interesting_exec.value = 0  # ✅重置
+            dst_dir = f"{CORPUS_ROOT}/{cid}"
+            shutil.move(case_root, dst_dir)
+        elif new_edges == 0:  # useless
+            shutil.rmtree(out_dir)
 
 
 def count_files_in_dir(path: str) -> int:
