@@ -129,7 +129,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         shutil.move(html_path, TIMEOUT_DIR)
         json_path = html_path.replace(".html", ".json")
         if os.path.exists(json_path):
-            shutil.copy(json_path, TIMEOUT_DIR)
+            shutil.move(json_path, TIMEOUT_DIR)
         return -1, 0.0
     except subprocess.CalledProcessError:
         pass
