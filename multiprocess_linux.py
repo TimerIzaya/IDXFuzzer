@@ -24,7 +24,6 @@ from coverage.bitmap import GlobalEdgeBitmap
 
 # ---------- 常量路径 ----------
 CORPUS_ROOT = "result/corpus"
-USELESS_CORPUS_ROOT = "result/uselessCorpus"
 CRASH_ROOT = "result/crashes"
 TIMEOUT_DIR = os.path.join(CRASH_ROOT, "timeout")
 LOG_FILE = "result/fuzz_stats.log"
@@ -48,9 +47,9 @@ def wrap_js_in_html(lines, out_path: str) -> None:
         f.write(f"</script></body></html>")
 
 
-def gen_case(case_id: str, root_dir: str):
+def gen_case(case_id: str):
     """生成一条测试用例：IR → JS → HTML，返回 (html_path, case_root)"""
-    case_root = f"{root_dir}/{case_id}"
+    case_root = f"{CORPUS_ROOT}/{case_id}"
     os.makedirs(case_root, exist_ok=True)
 
     ir = generate_ir_program()
@@ -163,7 +162,7 @@ def run_one_case(bitmap_name: str) -> bool:
         _shared_last_interesting_exec.value += 1
 
     # 生成测试用例，初始放到 uselessCorpus
-    html_path, case_root = gen_case(cid, USELESS_CORPUS_ROOT)
+    html_path, case_root = gen_case(cid)
 
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
     new_edges, crashStatus = run(html_path, bitmap)
@@ -247,7 +246,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
 
 
 def init_output_dirs() -> None:
-    for path in [CORPUS_ROOT, USELESS_CORPUS_ROOT, TIMEOUT_DIR, CRASH_ROOT]:
+    for path in [CORPUS_ROOT, TIMEOUT_DIR, CRASH_ROOT]:
         if os.path.exists(path):
             shutil.rmtree(path)
         os.makedirs(path, exist_ok=True)
