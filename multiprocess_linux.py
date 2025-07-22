@@ -139,7 +139,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     for cov_file in bin_files:
         total_new_edges += edge_bitmap.update_from_file(cov_file)
         # 用完就删，别浪费空间
-        shutil.rmtree(cov_file)
+        os.remove(cov_file)
 
     # 再查看是否触发了crash
     pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
@@ -163,7 +163,6 @@ def run_one_case(bitmap_name: str) -> bool:
 
     # 生成测试用例，初始放到 uselessCorpus
     html_path, case_root = gen_case(cid)
-    print(f"html path : {html_path} ")
 
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
     new_edges, crashStatus = run(html_path, bitmap)
