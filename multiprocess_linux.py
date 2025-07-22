@@ -203,18 +203,31 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
                 completed_cnt_counter: Value,
                 attachment_cnt_counter: Value,
                 start_ts: float) -> None:
+    last_exec = 0  # 上次统计时的总执行次数
+    last_time = start_ts
     while True:
-        time.sleep(5)
-        elapsed = int(time.time() - start_ts)
+        time.sleep(60)  # ✅ 每60秒统计一次
+        now = time.time()
+        elapsed = int(now - start_ts)
         h, rem = divmod(elapsed, 3600)
         m, s = divmod(rem, 60)
+
+        # ✅ 吞吐量 = （当前执行总数 - 上次执行总数） / （时间差分钟）
+        exec_diff = total_exec_counter.value - last_exec
+        throughput = exec_diff / max((now - last_time) / 60.0, 1e-6)
+
+        last_exec = total_exec_counter.value
+        last_time = now
+
         corpus_cnt = sum(1 for f in os.listdir(CORPUS_ROOT)
                          if os.path.isdir(os.path.join(CORPUS_ROOT, f)))
         coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
+
         log_msg = (
             "\n========== IDX Fuzzer Stats ==========\n"
             f"{'Elapsed Time':<25}: {h:02d}h {m:02d}m {s:02d}s\n"
             f"{'Total Executions':<25}: {total_exec_counter.value}\n"
+            f"{'Throughput (seeds/min)':<25}: {throughput:.2f}\n"
             f"{'Total New Edges':<25}: {total_edge_counter.value}\n"
             f"{'Corpus Count':<25}: {corpus_cnt}\n"
             f"{'Last Interesting Seed @':<25}: {last_interesting_counter.value}\n"
