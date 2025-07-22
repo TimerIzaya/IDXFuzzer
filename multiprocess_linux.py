@@ -82,7 +82,9 @@ _shared_completed_cnt = None
 _shared_attachments_cnt = None
 
 def init_worker(edge_counter: Value, timeout_counter: Value,
-                exec_counter: Value, last_interesting_counter: Value) -> None:
+                exec_counter: Value, last_interesting_counter: Value,
+                pending_counter: Value, new_counter: Value,
+                completed_counter: Value, attachment_counter: Value) -> None:
     """
     Pool initializer：在每个子进程中把共享 Value 绑定到全局变量。
     必须使用此方式，避免 Value 对象被 pickle 造成 RuntimeError。
@@ -93,23 +95,28 @@ def init_worker(edge_counter: Value, timeout_counter: Value,
     _shared_timeout_cnt = timeout_counter
     _shared_total_exec_cnt = exec_counter
     _shared_last_interesting_exec = last_interesting_counter
+    _shared_pending_cnt = pending_counter
+    _shared_new_cnt = new_counter
+    _shared_completed_cnt = completed_counter
+    _shared_attachments_cnt = attachment_counter
 
 def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
 
     def checkCrashCnt():
+        time.sleep(5)
         pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
         new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
         completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
         attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
 
         if pending_cnt > 0:
-            update_counter(_shared_pending_cnt)
+            update_counter(_shared_pending_cnt, pending_cnt)
         if new_cnt > 0:
-            update_counter(_shared_new_cnt)
+            update_counter(_shared_new_cnt, pending_cnt)
         if completed_cnt > 0:
-            update_counter(_shared_completed_cnt)
+            update_counter(_shared_completed_cnt, pending_cnt)
         if attachments_cnt > 0:
-            update_counter(_shared_attachments_cnt)
+            update_counter(_shared_attachments_cnt, pending_cnt)
 
         crashStatus = pending_cnt + new_cnt + completed_cnt + attachments_cnt
         return crashStatus
@@ -146,6 +153,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
                        env=env,
                        timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired:
+        update_counter(timeout_counter)
         # 先看超时是否触发bug
         crashCnt = checkCrashCnt()
         shutil.move(html_path, TIMEOUT_DIR)
@@ -291,7 +299,8 @@ if __name__ == "__main__":
     pool = Pool(
         PROCESS_COUNT,
         initializer=init_worker,
-        initargs=(total_edge_counter, timeout_counter, total_exec_counter, last_interesting_counter)
+        initargs=(total_edge_counter, timeout_counter, total_exec_counter, last_interesting_counter,
+                  pending_cnt_counter, new_cnt_counter,completed_cnt_counter, attachment_cnt_counter)
     )
 
     try:
