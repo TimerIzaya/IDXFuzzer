@@ -249,7 +249,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
             logf.write(log_msg)
 
 def init_output_dirs() -> None:
-    for path in [CORPUS_ROOT, TIMEOUT_DIR, CRASH_ROOT]:
+    for path in [CORPUS_ROOT, CRASH_ROOT, TIMEOUT_DIR]:
         if os.path.exists(path):
             shutil.rmtree(path)
 
