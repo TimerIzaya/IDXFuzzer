@@ -134,6 +134,11 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     except subprocess.CalledProcessError:
         pass
 
+
+    # 先把chromium tmp环境给删了
+    shutil.rmtree(tmp_dir)
+
+    # 找bin
     bin_files = glob.glob(bin_glob)
     if not bin_files:
         raise Exception("覆盖率文件缺失")
