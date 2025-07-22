@@ -256,45 +256,46 @@ def init_output_dirs() -> None:
 
 if __name__ == "__main__":
     init_output_dirs()
-    PROCESS_COUNT = cpu_count()
 
-    bitmap = GlobalEdgeBitmap(create=True)
-    bitmap_name = bitmap.name()
-
-    total_edge_counter = Value('i', 0)
-    timeout_counter = Value('i', 0)
-    total_exec_counter = Value('i', 0)
-    last_interesting_counter = Value('i', 0)
-    pending_cnt_counter = Value('i', 0)
-    new_cnt_counter = Value('i', 0)
-    completed_cnt_counter = Value('i', 0)
-    attachment_cnt_counter = Value('i', 0)
-
-    start_time = time.time()
-    threading.Thread(
-        target=stat_worker,
-        args=(bitmap, total_edge_counter, timeout_counter, total_exec_counter,
-              last_interesting_counter, pending_cnt_counter, new_cnt_counter,
-              completed_cnt_counter, attachment_cnt_counter, start_time),
-        daemon=True
-    ).start()
-
-    pool = Pool(
-        PROCESS_COUNT,
-        initializer=init_worker,
-        initargs=(total_edge_counter, timeout_counter, total_exec_counter, last_interesting_counter)
-    )
-
-    try:
-        while True:
-            args = repeat(bitmap_name, PROCESS_COUNT * 2)
-            for _ in pool.imap_unordered(run_one_case, args, chunksize=1):
-                break
-    except KeyboardInterrupt:
-        print("Interrupted by user.")
-    finally:
-        pool.terminate()
-        pool.join()
-        bitmap.close()
-        bitmap.unlink()
-        print("[*] IDX Fuzzer exited gracefully.")
+    # PROCESS_COUNT = cpu_count()
+    #
+    # bitmap = GlobalEdgeBitmap(create=True)
+    # bitmap_name = bitmap.name()
+    #
+    # total_edge_counter = Value('i', 0)
+    # timeout_counter = Value('i', 0)
+    # total_exec_counter = Value('i', 0)
+    # last_interesting_counter = Value('i', 0)
+    # pending_cnt_counter = Value('i', 0)
+    # new_cnt_counter = Value('i', 0)
+    # completed_cnt_counter = Value('i', 0)
+    # attachment_cnt_counter = Value('i', 0)
+    #
+    # start_time = time.time()
+    # threading.Thread(
+    #     target=stat_worker,
+    #     args=(bitmap, total_edge_counter, timeout_counter, total_exec_counter,
+    #           last_interesting_counter, pending_cnt_counter, new_cnt_counter,
+    #           completed_cnt_counter, attachment_cnt_counter, start_time),
+    #     daemon=True
+    # ).start()
+    #
+    # pool = Pool(
+    #     PROCESS_COUNT,
+    #     initializer=init_worker,
+    #     initargs=(total_edge_counter, timeout_counter, total_exec_counter, last_interesting_counter)
+    # )
+    #
+    # try:
+    #     while True:
+    #         args = repeat(bitmap_name, PROCESS_COUNT * 2)
+    #         for _ in pool.imap_unordered(run_one_case, args, chunksize=1):
+    #             break
+    # except KeyboardInterrupt:
+    #     print("Interrupted by user.")
+    # finally:
+    #     pool.terminate()
+    #     pool.join()
+    #     bitmap.close()
+    #     bitmap.unlink()
+    #     print("[*] IDX Fuzzer exited gracefully.")
