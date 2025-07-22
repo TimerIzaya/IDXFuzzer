@@ -95,6 +95,25 @@ def init_worker(edge_counter: Value, timeout_counter: Value,
     _shared_last_interesting_exec = last_interesting_counter
 
 def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
+
+    def checkCrashCnt():
+        pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
+        new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
+        completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
+        attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
+
+        if pending_cnt > 0:
+            update_counter(_shared_pending_cnt)
+        if new_cnt > 0:
+            update_counter(_shared_new_cnt)
+        if completed_cnt > 0:
+            update_counter(_shared_completed_cnt)
+        if attachments_cnt > 0:
+            update_counter(_shared_attachments_cnt)
+
+        crashStatus = pending_cnt + new_cnt + completed_cnt + attachments_cnt
+        return crashStatus
+
     def now_ms() -> int:
         return int(time.time() * 1000)
 
@@ -131,7 +150,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         json_path = html_path.replace(".html", ".json")
         if os.path.exists(json_path):
             shutil.move(json_path, TIMEOUT_DIR)
-        return -1, 0.0
+        return -1, checkCrashCnt()
     except subprocess.CalledProcessError:
         pass
 
@@ -149,23 +168,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         total_new_edges += edge_bitmap.update_from_file(cov_file)
         os.remove(cov_file)
 
-    time.sleep(5)  # 停顿 500 毫秒
-    pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
-    new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
-    completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
-    attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
-
-    if pending_cnt > 0:
-        update_counter(_shared_pending_cnt)
-    if new_cnt > 0:
-        update_counter(_shared_new_cnt)
-    if completed_cnt > 0:
-        update_counter(_shared_completed_cnt)
-    if attachments_cnt > 0:
-        update_counter(_shared_attachments_cnt)
-
-    crashStatus = pending_cnt + new_cnt + completed_cnt + attachments_cnt
-    return total_new_edges, crashStatus
+    return total_new_edges, checkCrashCnt()
 
 def run_one_case(bitmap_name: str) -> bool:
     cid = make_uid()
