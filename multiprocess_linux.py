@@ -143,7 +143,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         total_new_edges += edge_bitmap.update_from_file(cov_file)
         os.remove(cov_file)
 
-    time.sleep(2)  # 停顿 500 毫秒
+    # time.sleep(2)  # 停顿 500 毫秒
     pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
     new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
     completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
@@ -185,7 +185,8 @@ def run_one_case(bitmap_name: str) -> bool:
             dst_dir = f"{CORPUS_ROOT}/{cid}"
             shutil.move(case_root, dst_dir)
         elif new_edges == 0:  # useless
-            shutil.rmtree(out_dir)
+            pass
+            # shutil.rmtree(out_dir)
 
 def count_files_in_dir(path: str) -> int:
     if not os.path.exists(path):
