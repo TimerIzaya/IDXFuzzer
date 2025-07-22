@@ -13,18 +13,13 @@ multiprocess_main.py
 import os
 import json
 import uuid
-import shutil
-import time
 import threading
 from itertools import repeat
 from multiprocessing import Pool, cpu_count, Value
-
-import numpy as np
-
-import config
 from IR.IRFuzzer import generate_ir_program
-from coverage.run_cov_linux import run_and_update_coverage_linux
 from lifter.IRToJSLifter import IRToJSLifter
+import os, time, glob, subprocess, numpy as np, tempfile, shutil
+import config
 from coverage.bitmap import GlobalEdgeBitmap
 
 # ---------- 常量路径 ----------
@@ -69,9 +64,9 @@ def gen_case(case_id: str, root_dir: str):
 
 
 # ---------- 全局共享计数器（Worker 进程可见） ----------
-_shared_total_edges = None        # type: Value
-_shared_timeout_cnt = None        # type: Value
-_shared_total_exec_cnt = None     # type: Value
+_shared_total_edges = None  # type: Value
+_shared_timeout_cnt = None  # type: Value
+_shared_total_exec_cnt = None  # type: Value
 _shared_last_interesting_exec = None  # type: Value
 
 
@@ -81,12 +76,74 @@ def init_worker(edge_counter: Value, timeout_counter: Value,
     Pool initializer：在每个子进程中把共享 Value 绑定到全局变量。
     必须使用此方式，避免 Value 对象被 pickle 造成 RuntimeError。
     """
-    global _shared_total_edges, _shared_timeout_cnt
-    global _shared_total_exec_cnt, _shared_last_interesting_exec
+    global _shared_total_edges, _shared_timeout_cnt, _shared_total_exec_cnt, _shared_last_interesting_exec
     _shared_total_edges = edge_counter
     _shared_timeout_cnt = timeout_counter
     _shared_total_exec_cnt = exec_counter
     _shared_last_interesting_exec = last_interesting_counter
+
+
+def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
+    def now_ms() -> int:
+        return int(time.time() * 1000)
+
+    html_path = os.path.abspath(html_path)
+
+    out_dir = os.path.dirname(html_path)
+    bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
+
+    # todo 每个html目录单独分配一个chrome模拟环境 后期是否可以优化？
+    tmp_dir = os.path.join(out_dir, "chrome-tmp")
+    cmd = [
+        "/timer/chromium/src/out/IndexedDBSanCov/content_shell",
+        "--no-sandbox", "--headless=new", "--ozone-platform=headless",
+        "--disable-gpu", "--disable-plugins", "--disable-extensions",
+        "--disable-breakpad", "--disable-default-apps", "--disable-sync",
+        "--disable-background-networking", "--disable-popup-blocking",
+        "--no-default-browser-check", "--password-store=basic",
+        "--use-mock-keychain", "--disable-hang-monitor",
+        "--run-all-compositor-stages-before-draw",
+        "--virtual-time-budget=20000", f"--user-data-dir={tmp_dir}",
+        "--enable-crash-reporter",
+        f"--crash-dumps-dir={out_dir}",  #直接把crash放在html目录下
+        f"file://{html_path}"
+    ]
+
+    env = os.environ.copy()
+    env["SANCOV_OUTPUT_DIR"] = out_dir
+
+    t1 = now_ms()
+    try:
+        subprocess.run(cmd,
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       env=env,
+                       timeout=config.PROCESS_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        shutil.copy(html_path, TIMEOUT_DIR)
+        # 把ir也copy过去
+        json_path = html_path.replace(".html", ".json")
+        if os.path.exists(json_path):
+            shutil.copy(json_path, TIMEOUT_DIR)
+        return -1, 0.0
+    except subprocess.CalledProcessError:
+        # 不再当作 crash，只忽略
+        pass
+
+    t2 = now_ms()
+
+    bin_files = glob.glob(bin_glob)
+    if not bin_files:
+        raise Exception("覆盖率文件缺失")
+        # return 0, EDGE_TOTAL_COUNT
+
+    total_new_edges = 0
+    # 把临时bitmap拿去和总的比较
+    for cov_file in bin_files:
+        total_new_edges += edge_bitmap.update_from_file(cov_file)
+
+    coverage = np.count_nonzero(edge_bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
+    return total_new_edges, coverage
 
 
 def run_one_case(bitmap_name: str) -> bool:
@@ -95,7 +152,7 @@ def run_one_case(bitmap_name: str) -> bool:
     # 增加总执行次数 & 更新距离上次有趣种子执行的计数
     with _shared_total_exec_cnt.get_lock():
         _shared_total_exec_cnt.value += 1
-        current_exec = _shared_total_exec_cnt.value
+
     with _shared_last_interesting_exec.get_lock():
         _shared_last_interesting_exec.value += 1
 
@@ -103,7 +160,7 @@ def run_one_case(bitmap_name: str) -> bool:
     html_path, case_root = gen_case(cid, USELESS_CORPUS_ROOT)
 
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    new_edges, _ = run_and_update_coverage_linux(html_path, bitmap)
+    new_edges, _ = run(html_path, bitmap)
     bitmap.close()
 
     if new_edges == -1:  # timeout
@@ -179,17 +236,15 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
         with open(LOG_FILE, "a", encoding="utf-8") as logf:
             logf.write(log_msg)
 
-# ---------- 输出目录初始化 ----------
+
 def init_output_dirs() -> None:
-    """清空 / 创建 corpus、uselessCorpus、crashes/timeout 目录"""
-    for path in [CORPUS_ROOT, USELESS_CORPUS_ROOT, TIMEOUT_DIR]:
+    for path in [CORPUS_ROOT, USELESS_CORPUS_ROOT, TIMEOUT_DIR, CRASH_ROOT]:
         if os.path.exists(path):
             shutil.rmtree(path)
         os.makedirs(path, exist_ok=True)
     print("[*] Initialized output directories.")
 
 
-# ---------- 主入口 ----------
 if __name__ == "__main__":
     init_output_dirs()
 
