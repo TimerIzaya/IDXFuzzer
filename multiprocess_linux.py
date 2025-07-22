@@ -211,7 +211,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
     last_exec = 0  # 上次统计时的总执行次数
     last_time = start_ts
     while True:
-        time.sleep(60)  # ✅ 每60秒统计一次
+        time.sleep(5)  # ✅ 每60秒统计一次
         now = time.time()
         elapsed = int(now - start_ts)
         h, rem = divmod(elapsed, 3600)
