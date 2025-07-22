@@ -143,7 +143,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         total_new_edges += edge_bitmap.update_from_file(cov_file)
         os.remove(cov_file)
 
-    time.sleep(0.5)  # 停顿 500 毫秒
+    time.sleep(2)  # 停顿 500 毫秒
     pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
     new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
     completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
