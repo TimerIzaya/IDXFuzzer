@@ -182,8 +182,7 @@ def run_one_case(bitmap_name: str) -> bool:
     else:
         if new_edges == -1:  # timeout
             update_counter(_shared_timeout_cnt)
-            dst_dir = f"{TIMEOUT_DIR}/{cid}"
-            shutil.move(case_root, dst_dir)
+            shutil.move(case_root, TIMEOUT_DIR)
         elif new_edges > 0:  # interesting
             update_counter(_shared_total_edges, delta=new_edges)
             update_counter(_shared_last_interesting_exec, reset=True, value=0)
