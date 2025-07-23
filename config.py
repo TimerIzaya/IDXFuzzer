@@ -22,7 +22,7 @@ TXN_CNT = 10
 
 TIMEOUT = 500  # ms
 
-PROCESS_TIMEOUT = 1  # s
+PROCESS_TIMEOUT = 3  # s
 
 P_BREAK_TXN = 0.01
 
