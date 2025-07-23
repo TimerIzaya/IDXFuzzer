@@ -152,7 +152,8 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
                        env=env,
                        timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired:
-        return -1, checkCrashCnt()
+        pass
+        # return -1, checkCrashCnt()
     except subprocess.CalledProcessError:
         pass
 
