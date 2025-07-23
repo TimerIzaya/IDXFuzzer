@@ -59,17 +59,17 @@ def wrap_js_in_html(lines, out_path: str) -> None:
 
 def gen_case(case_id: str):
     """生成一条测试用例：IR → JS → HTML，返回 (html_path, case_root)"""
-    case_root = f"{CORPUS_ROOT}/{case_id}"
-    os.makedirs(case_root, exist_ok=True)
+    out_dir = f"{CORPUS_ROOT}/{case_id}"
+    os.makedirs(out_dir, exist_ok=True)
 
     ir = generate_ir_program()
-    with open(f"{case_root}/{case_id}.json", "w") as f:
+    with open(f"{out_dir}/{case_id}.json", "w") as f:
         json.dump(ir.to_dict(), f, indent=2)
     js_code = IRToJSLifter.lift(ir)
 
-    html_path = f"{case_root}/{case_id}.html"
+    html_path = f"{out_dir}/{case_id}.html"
     wrap_js_in_html(js_code, html_path)
-    return html_path, case_root
+    return html_path, out_dir
 
 # ---------- 全局共享计数器（Worker 进程可见） ----------
 _shared_total_edges = None
@@ -176,7 +176,7 @@ def run_one_case(bitmap_name: str) -> bool:
     update_counter(_shared_total_exec_cnt)
     update_counter(_shared_last_interesting_exec)
 
-    html_path, case_root = gen_case(cid)
+    html_path, out_dir = gen_case(cid)
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
     new_edges, crashStatus = run(html_path, bitmap)
     bitmap.close()
@@ -187,12 +187,12 @@ def run_one_case(bitmap_name: str) -> bool:
     else:
         if new_edges == -1:  # timeout
             update_counter(timeout_counter)
-            shutil.move(case_root, TIMEOUT_DIR)
+            shutil.move(out_dir, TIMEOUT_DIR)
         elif new_edges > 0:  # interesting
             update_counter(_shared_total_edges, delta=new_edges)
             update_counter(_shared_last_interesting_exec, reset=True, value=0)
             dst_dir = f"{CORPUS_ROOT}/{cid}"
-            shutil.move(case_root, dst_dir)
+            shutil.move(out_dir, dst_dir)
         elif new_edges == 0:  # useless
             shutil.rmtree(out_dir)
 
