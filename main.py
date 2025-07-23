@@ -109,13 +109,13 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
 
         if pending_cnt > 0:
-            update_counter(_shared_pending_cnt, pending_cnt)
+            update_counter(pending_cnt_counter)
         if new_cnt > 0:
-            update_counter(_shared_new_cnt, pending_cnt)
+            update_counter(new_cnt_counter)
         if completed_cnt > 0:
-            update_counter(_shared_completed_cnt, pending_cnt)
+            update_counter(completed_cnt_counter)
         if attachments_cnt > 0:
-            update_counter(_shared_attachments_cnt, pending_cnt)
+            update_counter(attachment_cnt_counter)
 
         crashStatus = pending_cnt + new_cnt + completed_cnt + attachments_cnt
         return crashStatus
