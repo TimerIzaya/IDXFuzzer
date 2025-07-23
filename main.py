@@ -152,13 +152,9 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
                        env=env,
                        timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired:
-        update_counter(timeout_counter)
-        # 先看超时是否触发crash
-        crashCnt = checkCrashCnt()
-        return -1, crashCnt
+        return -1, checkCrashCnt()
     except subprocess.CalledProcessError:
         pass
-
 
     # 先把chromium tmp环境给删了
     shutil.rmtree(tmp_dir)
@@ -190,7 +186,7 @@ def run_one_case(bitmap_name: str) -> bool:
         shutil.move(out_dir, CRASH_ROOT)
     else:
         if new_edges == -1:  # timeout
-            update_counter(_shared_timeout_cnt)
+            update_counter(timeout_counter)
             shutil.move(case_root, TIMEOUT_DIR)
         elif new_edges > 0:  # interesting
             update_counter(_shared_total_edges, delta=new_edges)
