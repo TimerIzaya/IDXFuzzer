@@ -103,7 +103,6 @@ def init_worker(edge_counter: Value, timeout_counter: Value,
 def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
 
     def checkCrashCnt():
-        time.sleep(5)
         pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
         new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
         completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
