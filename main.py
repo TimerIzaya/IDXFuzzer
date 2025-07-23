@@ -12,6 +12,7 @@ multiprocess_main.py
 """
 import os
 import json
+import signal
 import uuid
 import threading
 from itertools import repeat
@@ -146,13 +147,33 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     try:
-        subprocess.run(cmd,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       env=env,
-                       timeout=config.PROCESS_TIMEOUT)
+        # 启动进程（异步）
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            env=env
+        )
+
+        # 等待指定超时时间
+        proc.wait(timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired:
-        pass
+        # 先发送 SIGTERM，给 sancov/Crashpad 写覆盖率的机会
+        try:
+            proc.terminate()
+            time.sleep(2)  # 等待2秒让其执行退出清理逻辑
+
+            if proc.poll() is None:  # 如果还活着
+                proc.send_signal(signal.SIGABRT)  # 模拟崩溃信号，Crashpad可捕获
+                time.sleep(2)
+
+            if proc.poll() is None:  # 如果依旧没退出，强制杀掉
+                proc.kill()
+
+        except Exception as e:
+            print(f"[!] Error terminating process: {e}")
+
+        # timeout逻辑后续处理（你可恢复return逻辑）
         # return -1, checkCrashCnt()
     except subprocess.CalledProcessError:
         pass
