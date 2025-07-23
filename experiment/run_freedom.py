@@ -13,7 +13,7 @@ import numpy as np
 
 import config
 from coverage.bitmap import GlobalEdgeBitmap
-from coverage.run_cov_linux import run_and_update_coverage_linux
+from coverage.run_cov_testCorpus import run_and_update_coverage_testCorpus
 
 # ====== 路径 ======
 INPUT_HTML_DIR = "/mnt/VMShare/output"          # <<< 你的 HTML 文件所在目录
@@ -46,7 +46,7 @@ def init_worker(edge_counter: Value, timeout_counter: Value,
 def run_one_case(html_path: str, bitmap_name: str) -> bool:
     """在子进程中执行单个 html，返回是否产生新边"""
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    new_edges, _ = run_and_update_coverage_linux(html_path, bitmap)
+    new_edges, _ = run_and_update_coverage_testCorpus(html_path, bitmap)
     bitmap.close()
 
     # 更新计数
@@ -67,12 +67,12 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
                 processed_counter: Value, start_ts: float,
                 total_cases: int) -> None:
     while True:
-        time.sleep(60)
+        time.sleep(5)
         elapsed = int(time.time() - start_ts)
         h, rem  = divmod(elapsed, 3600)
         m, s    = divmod(rem, 60)
 
-        coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT
+        coverage_pct = np.count_nonzero(bitmap.bitmap) / config.EDGE_TOTAL_COUNT * 100
         done = processed_counter.value
         print("\n========== IDX Fuzzer Stats ==========")
         print(f"{'Elapsed Time':<18}: {h:02d}h {m:02d}m {s:02d}s")
