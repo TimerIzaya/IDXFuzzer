@@ -147,18 +147,14 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     try:
-        # 启动进程（异步）
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            env=env
-        )
-
-        # 等待指定超时时间
-        proc.wait(timeout=config.PROCESS_TIMEOUT)
+        subprocess.run(cmd,
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       env=env,
+                       timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired:
-        return -1, 0
+        # 超时一定没有覆盖率，可能会触发超时crash
+        return -1, checkCrashCnt()
     except subprocess.CalledProcessError:
         pass
 
