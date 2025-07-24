@@ -153,9 +153,8 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
                        env=env,
                        timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired as e:
-        print(f"timeout eee: {e}")
-        # 超时一定没有覆盖率，可能会触发超时crash
-        return -1, checkCrashCnt()
+        # 超时一定没有覆盖率，可能会触发超时crash，这个crash不用管
+        return -1, 0
     except subprocess.CalledProcessError:
         # 真正的非超时的非0
         # 等待2 spending是否写入 不管是否写入 保留该case
