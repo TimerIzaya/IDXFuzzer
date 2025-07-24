@@ -147,28 +147,21 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     try:
-        # 用 Popen 代替 run，以便自定义超时后的处理
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            env=env
-        )
-
-        proc.wait(timeout=config.PROCESS_TIMEOUT)
-    except subprocess.TimeoutExpired:
-        # 超时后，先尝试优雅退出，给 sancov/Crashpad 写文件的机会
-        proc.terminate()  # 发 SIGTERM
-        try:
-            proc.wait(timeout=1)  # 等待最多1秒（你可改成2）
-        except subprocess.TimeoutExpired:
-            proc.kill()  # 如果还没退出，强制 SIGKILL
-        # 这里超时case可能没有覆盖率，直接返回-1
+        subprocess.run(cmd,
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       env=env,
+                       timeout=config.PROCESS_TIMEOUT)
+    except subprocess.TimeoutExpired as e:
+        print(f"timeout eee: {e}")
+        # 超时一定没有覆盖率，可能会触发超时crash
         return -1, checkCrashCnt()
-
     except subprocess.CalledProcessError:
+        # 真正的非超时的非0
+
         pass
 
+    # 正常执行完走统计覆盖率流程
     # 先把chromium tmp环境给删了
     shutil.rmtree(tmp_dir)
 
