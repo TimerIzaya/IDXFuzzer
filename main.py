@@ -124,6 +124,11 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     def now_ms() -> int:
         return int(time.time() * 1000)
 
+    def normalize_returncode(returncode: int) -> int:
+        if returncode < 0:  # 被信号终止
+            return 128 + abs(returncode)
+        return returncode
+
     html_path = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path)
     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
@@ -151,7 +156,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
                               stdout=subprocess.DEVNULL,
                               stderr=subprocess.DEVNULL) as process:
             try:
-                process.wait(timeout=timeout)
+                process.wait(timeout=config.PROCESS_TIMEOUT)
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait()
