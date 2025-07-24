@@ -141,7 +141,6 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         "--enable-crash-reporter",
         f"--crash-dumps-dir={out_dir}",
         f"file://{html_path}",
-        "-v=1"
     ]
 
     env = os.environ.copy()

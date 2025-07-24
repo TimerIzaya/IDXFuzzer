@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+let db;
+
+let request = indexedDB.open("dcheck-db", 1);
+request.onupgradeneeded = (event) => {
+    db = event.target.result;
+    if (!db.objectStoreNames.contains("store")) {
+        let store = db.createObjectStore("store", { keyPath: "id" });
+        store.createIndex("idx", "value");
+    }
+    console.log("db onupgraded triggered");
+};
+
+request.onsuccess = (event) => {
+    db = event.target.result;
+    insertAndTrigger();
+};
+
+function insertAndTrigger() {
+    let tx = db.transaction("store", "readwrite");
+    let store = tx.objectStore("store");
+    store.put({ id: 1, value: { nested: "test" } });
+
+    tx.oncomplete = () => {
+        // 故意在事务完成后再打开新事务访问 Cursor，但在事务生命周期之外访问旧的 cursor.value
+        let tx2 = db.transaction("store", "readonly");
+        let cursorReq = tx2.objectStore("store").openCursor();
+
+        cursorReq.onsuccess = (e) => {
+            let cursor = e.target.result;
+            if (cursor) {
+                console.log("Cursor key:", cursor.key);
+
+                // ⚠ 故意延迟访问，使事务可能已关闭
+                setTimeout(() => {
+                    console.log("Forcing access to cursor.value after txn closed");
+                    console.log(cursor.value);  // <-- 触发 V8::HasOwnProperty 反序列化
+                }, 100);
+            }
+        };
+    };
+}
+</script>
+</body>
+</html>

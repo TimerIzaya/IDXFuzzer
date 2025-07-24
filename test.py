@@ -5,5 +5,5 @@ if __name__ == '__main__':
     bitmap = GlobalEdgeBitmap(create=True)
     bitmap_name = bitmap.name()
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    new_edges, crashStatus = run("test/test.html", bitmap)
+    new_edges, crashStatus = run("test/test2.html", bitmap)
     print(new_edges, crashStatus)
