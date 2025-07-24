@@ -153,6 +153,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
                        env=env,
                        timeout=config.PROCESS_TIMEOUT)
     except subprocess.TimeoutExpired as e:
+        print(f"e: {e}")
         # 超时一定没有覆盖率，可能会触发超时crash，这个crash不用管
         return -1, 0
     except subprocess.CalledProcessError:
