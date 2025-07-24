@@ -140,7 +140,8 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         "--virtual-time-budget=20000", f"--user-data-dir={tmp_dir}",
         "--enable-crash-reporter",
         f"--crash-dumps-dir={out_dir}",
-        f"file://{html_path}"
+        f"file://{html_path}",
+        "-v=1"
     ]
 
     env = os.environ.copy()
