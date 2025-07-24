@@ -124,11 +124,6 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     def now_ms() -> int:
         return int(time.time() * 1000)
 
-    def normalize_returncode(returncode: int) -> int:
-        if returncode < 0:  # 被信号终止
-            return 128 + abs(returncode)
-        return returncode
-
     html_path = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path)
     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
@@ -152,28 +147,20 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     try:
-        with subprocess.Popen(cmd,
-                              stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL) as process:
-            try:
-                process.wait(timeout=config.PROCESS_TIMEOUT)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait()
-                rc = normalize_returncode(process.returncode)
-                print(f"[Timeout] Killed process, returncode={rc}")
-                return -1, rc
-
-            rc = normalize_returncode(process.returncode)
-            if rc != 0:
-                print(f"[NonZero] returncode={rc}")
-                return 0, rc
-            else:
-                print("[OK] Finished normally")
-                return 0, 0
-    except subprocess.SubprocessError as e:
-        print(f"[SubprocessError] {e}")
-        return 0, -999
+        subprocess.run(cmd,
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       env=env,
+                       timeout=config.PROCESS_TIMEOUT)
+    except subprocess.TimeoutExpired as e:
+        print(f"timeout eee: {e}")
+        # 超时一定没有覆盖率，可能会触发超时crash
+        return -1, checkCrashCnt()
+    except subprocess.CalledProcessError:
+        # 真正的非超时的非0
+        # 等待2 spending是否写入 不管是否写入 保留该case
+        time.sleep(2)
+        return -2, checkCrashCnt()
 
     # 正常执行完走统计覆盖率流程
     # 先把chromium tmp环境给删了
@@ -202,7 +189,8 @@ def run_one_case(bitmap_name: str) -> bool:
     bitmap.close()
 
     out_dir = os.path.dirname(html_path)
-    if crashStatus > 0:
+    if crashStatus > 0 or new_edges == -2:
+        # 没找到pending的异常退出 和 有pending的crash都要保存
         shutil.move(out_dir, CRASH_ROOT)
     else:
         if new_edges == -1:  # timeout
