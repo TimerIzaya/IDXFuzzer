@@ -147,29 +147,28 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     try:
-        # 用 Popen 手动控制
         with subprocess.Popen(cmd,
                               stdout=subprocess.DEVNULL,
                               stderr=subprocess.DEVNULL) as process:
             try:
-                process.wait(timeout=config.PROCESS_TIMEOUT)
+                process.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
-                # 超时后强制杀死
                 process.kill()
                 process.wait()
-                print(f"[Timeout] Killed process, returncode={process.returncode}")
-                return -1, process.returncode  # 超时场景下依然返回 returncode(通常137)
+                rc = normalize_returncode(process.returncode)
+                print(f"[Timeout] Killed process, returncode={rc}")
+                return -1, rc
 
-            # 正常执行完，检查返回码
-            if process.returncode != 0:
-                print(f"[NonZero] returncode={process.returncode}")
-                return 0, process.returncode
+            rc = normalize_returncode(process.returncode)
+            if rc != 0:
+                print(f"[NonZero] returncode={rc}")
+                return 0, rc
             else:
                 print("[OK] Finished normally")
                 return 0, 0
     except subprocess.SubprocessError as e:
         print(f"[SubprocessError] {e}")
-        return 0, -999  # 未知错误
+        return 0, -999
 
     # 正常执行完走统计覆盖率流程
     # 先把chromium tmp环境给删了
