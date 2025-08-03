@@ -21,6 +21,12 @@ content/browser/indexed_db/BUILD.gn \
 components/services/storage/BUILD.gn
 ```
 
+```
+git restore components/services/storage/BUILD.gn
+git restore content/browser/indexed_db/BUILD.gn
+git restore third_party/blink/renderer/modules/indexeddb/BUILD.gn
+```
+
 
 
 ```
@@ -54,28 +60,17 @@ rm -rf /timer/index/test/tmp_cov/* && rm -rf /timer/index/test/chrome-tmp && SAN
 
 ## third_party/blink/renderer/modules/indexeddb/
 
-configs += [ "//build/config/sanitizers:default_sanitizer_coverage" ]
-sources += [ "//third_party/chromium_instrumentation/runtime.cc" ]
 
-defines = [ "MODULE_NAME=\"\\\"blink_indexeddb\\\"\"" ]
 
 ## content/browser/indexed_db/
 
-configs += [ "//build/config/sanitizers:default_sanitizer_coverage" ]
 
-sources += [ "//third_party/chromium_instrumentation/runtime.cc" ]
-
-defines = [ "MODULE_NAME=\"\\\"backend_indexeddb\\\"\"" ]
 
 ## components/services/storage
 
-configs += [ "//build/config/sanitizers:default_sanitizer_coverage" ]
 
-sources += [ "//third_party/chromium_instrumentation/runtime.cc" ]
 
-defines = [ "MODULE_NAME=\"\\\"leveldb_storage\\\"\"" ]
-
-## third_party/chromium_instrumentation/runtime.cc
+## third_party/chromium_instrumentation/<u>runtime.cc</u>
 
 ```c
 #include <atomic>
