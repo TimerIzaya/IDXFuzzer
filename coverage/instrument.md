@@ -1,4 +1,4 @@
-## tool
+# note
 
 ```
 gn gen out/IndexedDBSanCov
@@ -58,139 +58,114 @@ rm -rf /timer/index/test/tmp_cov/* && rm -rf /timer/index/test/chrome-tmp && SAN
 
 
 
-## third_party/blink/renderer/modules/indexeddb/
+
+
+# 目标插桩模块
+
+| 模块                                          | 代码行数 | sanitizer边数 |
+| --------------------------------------------- | -------- | ------------- |
+| third_party/blink/renderer/modules/indexeddb/ | 17597    | 16960         |
+| content/browser/indexed_db/                   |          |               |
+| components/services/storage                   |          |               |
 
 
 
-## content/browser/indexed_db/
 
 
+# 单模块总边数统计
 
-## components/services/storage
+## runtime.cc
 
-
-
-## third_party/chromium_instrumentation/<u>runtime.cc</u>
+cat third_party/chromium_instrumentation/runtime.cc
 
 ```c
-#include <atomic>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#include <cstdlib>
-#include <map>
-#include <mutex>
-#include <string>
+#include <stdint.h>
+#include <stdio.h>
 
-// 最大边数量
-static constexpr size_t kMaxEdgeID = 1 << 24;
-static std::atomic<uint32_t> edge_id_counter(1);
-static uint8_t* bitmap = nullptr;
-static bool bitmap_initialized = false;
-
-// 模块边统计信息
-static std::mutex module_mutex;
-static std::map<std::string, size_t> module_edge_count;
-
-// 当前模块名称（编译时定义）
-#ifndef MODULE_NAME
-#define MODULE_NAME "unknown_module"
-#endif
-
-static void initialize_bitmap() {
-    if (bitmap_initialized) return;
-
-    const char* output_dir = getenv("SANCOV_OUTPUT_DIR");
-    if (!output_dir) output_dir = "/tmp";
-
-    char filename[256];
-    snprintf(filename, sizeof(filename), "%s/sancov_bitmap.raw", output_dir);
-
-    int fd = open(filename, O_RDWR | O_CREAT, 0644);
-    if (fd < 0) {
-        perror("[SanCov] Failed to open bitmap file");
-        return;
-    }
-
-    if (ftruncate(fd, kMaxEdgeID) != 0) {
-        perror("[SanCov] Failed to resize bitmap file");
-        close(fd);
-        return;
-    }
-
-    void* map = mmap(nullptr, kMaxEdgeID, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (map == MAP_FAILED) {
-        perror("[SanCov] Failed to mmap bitmap");
-        close(fd);
-        return;
-    }
-
-    bitmap = static_cast<uint8_t*>(map);
-    bitmap_initialized = true;
-
-    printf("[SanCov] ✔ Bitmap initialized, max edges: %zu\n", kMaxEdgeID);
-    close(fd);
+// 1. 避免链接器丢弃这个对象文件的强制链接函数
+extern "C" void __force_link_runtime() {
+    // 空实现，只是为了被显式引用
 }
 
-extern "C" __attribute__((visibility("default")))
-void __sanitizer_cov_trace_pc_guard_init(uint32_t* start, uint32_t* stop) {
-    if (start == stop || *start) return;
-
-    initialize_bitmap();
-
-    size_t count = 0;
-    for (uint32_t* x = start; x < stop; x++) {
-        *x = edge_id_counter.fetch_add(1, std::memory_order_relaxed);
-        count++;
-    }
-
-    std::lock_guard<std::mutex> lock(module_mutex);
-    module_edge_count[MODULE_NAME] += count;
+// 2. 必要的 trace hook（SanitizerCoverage 要求存在这个函数）
+extern "C" void __sanitizer_cov_trace_pc_guard(uint32_t* guard) {
+    (void)guard;
 }
 
-extern "C" __attribute__((visibility("default")))
-void __sanitizer_cov_trace_pc_guard(uint32_t* guard) {
-    if (!bitmap || !*guard) return;
-    uint32_t id = *guard;
-    uint32_t byte_index = id / 8;
-    uint8_t bit_mask = 1 << (id % 8);
-    bitmap[byte_index] |= bit_mask;
-}
+// 3. 编译器插入的覆盖率 guard 范围（用于统计边数）
+extern uint32_t __start___sancov_guards;
+extern uint32_t __stop___sancov_guards;
 
+// 4. constructor 函数，用于运行时验证是否成功链接
 __attribute__((constructor))
-static void register_exit() {
-    atexit([]() {
-        fprintf(stderr, "[SanCov] ===== Edge Count by Module =====\n");
-        for (const auto& [module, count] : module_edge_count) {
-            fprintf(stderr, "[SanCov] [%s] %zu edges\n", module.c_str(), count);
-        }
-        fprintf(stderr, "[SanCov] =================================\n");
-    });
+static void PrintEdgeCount() {
+    size_t edge_count = &__stop___sancov_guards - &__start___sancov_guards;
+    fprintf(stderr, "[SanCov] ✔ Total instrumented edges: %zu\n", edge_count);
 }
+```
 
+third_party/chromium_instrumentation/BUILD.gn
 
+```c
+source_set("sancov_runtime") {
+  sources = [ "runtime.cc" ]
+  deps = []
+}
 ```
 
 
 
+## 任意模块主动链接
 
-
-## args.gn
+third_party/blink/renderer/modules/indexeddb/idb_database.cc
 
 ```
-root@timer:/timer/chromium/src# cat out/IndexedDBSanCov/args.gn
+extern "C" void __force_link_runtime();
+__attribute__((used)) static void (*runtime_link_ptr)() = &__force_link_runtime;
+```
+
+
+
+## 被插桩模块适配
+
+third_party/blink/renderer/modules/indexeddb/BUILD.gn
+
+顶部配置
+
+```
+
+config("indexeddb_sancov_flags") {
+  cflags_cc = [
+    "-fsanitize-coverage=trace-pc-guard",
+    "-Wno-global-constructors",
+    "-Wno-error=global-constructors"
+  ]
+}
+```
+
+引用配置
+
+```
+ configs += [ ":indexeddb_sancov_flags" ]
+```
+
+引入runtime.cc
+
+```
+"//third_party/chromium_instrumentation/runtime.cc"
+```
+
+
+
+## 编译对象args
+
+```
+
 is_debug = false
-is_component_build = false
-symbol_level = 1
-use_thin_lto = false
-dcheck_always_on = true
-enable_rust = true
-use_sanitizer_coverage = true
-sanitizer_coverage_flags = "trace-pc-guard"
-treat_warnings_as_errors = false
-root@timer:/timer/chromium/src#
+is_dcheck_enabled = true
+symbol_level = 2
+# use_sanitizer_coverage = true  # ❌ Not needed for local instrumentation
+is_asan = true  # Required for linking sanitizer runtime
+blink_unified_build = false  # Disable unified build to allow per-file instrumentation
 ```
 
