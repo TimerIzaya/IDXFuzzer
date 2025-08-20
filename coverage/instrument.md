@@ -65,8 +65,8 @@ rm -rf /timer/index/test/tmp_cov/* && rm -rf /timer/index/test/chrome-tmp && SAN
 | 模块                                          | 代码行数 | sanitizer边数 |
 | --------------------------------------------- | -------- | ------------- |
 | third_party/blink/renderer/modules/indexeddb/ | 17597    | 16960         |
-| content/browser/indexed_db/                   |          |               |
-| components/services/storage                   |          |               |
+| content/browser/indexed_db/                   | 42528    | 20410         |
+| components/services/storage57837              | 57837    | 18810         |
 
 
 
@@ -79,28 +79,81 @@ rm -rf /timer/index/test/tmp_cov/* && rm -rf /timer/index/test/chrome-tmp && SAN
 cat third_party/chromium_instrumentation/runtime.cc
 
 ```c
+#ifndef currentModule
+#define currentModule "unknown"
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-// 1. 避免链接器丢弃这个对象文件的强制链接函数
-extern "C" void __force_link_runtime() {
-    // 空实现，只是为了被显式引用
-}
+// === 全局状态 ===
+static uint8_t* __sancov_bitmap = nullptr;
+static size_t __sancov_bitmap_size = 0;
 
-// 2. 必要的 trace hook（SanitizerCoverage 要求存在这个函数）
-extern "C" void __sanitizer_cov_trace_pc_guard(uint32_t* guard) {
-    (void)guard;
-}
-
-// 3. 编译器插入的覆盖率 guard 范围（用于统计边数）
+// === linker 提供的符号 ===
 extern uint32_t __start___sancov_guards;
 extern uint32_t __stop___sancov_guards;
 
-// 4. constructor 函数，用于运行时验证是否成功链接
+// === 强制链接函数 ===
+extern "C" void __force_link_runtime() {}
+
+// === 插桩回调函数，每次触发边时调用 ===
+extern "C" void __sanitizer_cov_trace_pc_guard(uint32_t* guard) {
+    if (!*guard || !__sancov_bitmap) return;
+    if (*guard >= __sancov_bitmap_size) return;
+    __sancov_bitmap[*guard] = 1;
+}
+
+// === 初始化函数，程序启动时运行 ===
 __attribute__((constructor))
-static void PrintEdgeCount() {
-    size_t edge_count = &__stop___sancov_guards - &__start___sancov_guards;
-    fprintf(stderr, "[SanCov] ✔ Total instrumented edges: %zu\n", edge_count);
+static void __sancov_init() {
+    size_t num_guards = &__stop___sancov_guards - &__start___sancov_guards;
+    __sancov_bitmap_size = num_guards;
+
+    __sancov_bitmap = (uint8_t*)calloc(__sancov_bitmap_size, sizeof(uint8_t));
+    if (!__sancov_bitmap) {
+        fprintf(stderr, "[SanCov] ✘ Failed to allocate bitmap\n");
+        return;
+    }
+
+    for (size_t i = 0; i < num_guards; i++) {
+        (&__start___sancov_guards)[i] = (uint32_t)i;
+    }
+    fprintf(stderr, "[SanCov] ✔ [%s] Initialized, %zu edges\n", currentModule, num_guards);
+}
+
+// === 析构函数，程序退出时导出 bitmap ===
+__attribute__((destructor))
+static void __sancov_dump() {
+    if (!__sancov_bitmap) return;
+
+    const char* output_dir = getenv("SANCOV_OUTPUT_DIR");
+    if (!output_dir) {
+        fprintf(stderr, "[SanCov] ✘ SANCOV_OUTPUT_DIR not set\n");
+        return;
+    }
+
+    char path[4096];
+    snprintf(path, sizeof(path), "%s/sancov_bitmap_%s.bin", output_dir, currentModule);
+
+    FILE* fp = fopen(path, "wb");
+    if (!fp) {
+        fprintf(stderr, "[SanCov] ✘ Failed to open bitmap output: %s\n", path);
+        return;
+    }
+
+    // 写入 header: magic + size
+    uint32_t magic = 0xC0FFEE01;
+    fwrite(&magic, sizeof(magic), 1, fp);
+    fwrite(&__sancov_bitmap_size, sizeof(__sancov_bitmap_size), 1, fp);
+
+    // 写入 bitmap 数据
+    fwrite(__sancov_bitmap, 1, __sancov_bitmap_size, fp);
+    fclose(fp);
+
+    fprintf(stderr, "[SanCov] ✔ [%s] Bitmap saved to %s\n", currentModule, path);
 }
 ```
 
@@ -132,14 +185,14 @@ third_party/blink/renderer/modules/indexeddb/BUILD.gn
 
 顶部配置
 
-```
-
+```shell
 config("indexeddb_sancov_flags") {
   cflags_cc = [
     "-fsanitize-coverage=trace-pc-guard",
     "-Wno-global-constructors",
-    "-Wno-error=global-constructors"
-  ]
+    "-Wno-error=global-constructors",
+    "-DcurrentModule=\"blink_indexeddb\""
+]
 }
 ```
 
