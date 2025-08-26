@@ -141,7 +141,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         "--enable-crash-reporter",
         f"--crash-dumps-dir={out_dir}",
         "--enable-logging=stderr",  # ✅ 保证日志输出
-        "--v=1",                    # ✅ 提高日志等级
+        # "--v=1",                    # ✅ 提高日志等级
         f"file://{html_path}",
     ]
 
@@ -149,13 +149,16 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     try:
-        subprocess.run(cmd,
+        result = subprocess.run(cmd,
                        stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
+                       stderr=subprocess.PIPE,
                        env=env,
                        timeout=config.PROCESS_TIMEOUT)
+        # print(result.stderr)
+        
     except subprocess.TimeoutExpired as e:
-        print(f"e: {e}")
+        print(f"e: {e.stderr}")
+        # print(result.stderr)
         # 超时一定没有覆盖率，可能会触发超时crash，这个crash不用管
         return -1, 0
     except subprocess.CalledProcessError:
@@ -273,8 +276,6 @@ def init_output_dirs() -> None:
 if __name__ == "__main__":
     init_output_dirs()
 
-    PROCESS_COUNT = cpu_count()
-
     bitmap = GlobalEdgeBitmap(create=True)
     bitmap_name = bitmap.name()
 
@@ -297,7 +298,7 @@ if __name__ == "__main__":
     ).start()
 
     pool = Pool(
-        PROCESS_COUNT,
+        config.PROCESS_COUNT,
         initializer=init_worker,
         initargs=(total_edge_counter, timeout_counter, total_exec_counter, last_interesting_counter,
                   pending_cnt_counter, new_cnt_counter,completed_cnt_counter, attachment_cnt_counter)
@@ -305,7 +306,7 @@ if __name__ == "__main__":
 
     try:
         while True:
-            args = repeat(bitmap_name, PROCESS_COUNT * 2)
+            args = repeat(bitmap_name, config.PROCESS_COUNT * 2)
             for _ in pool.imap_unordered(run_one_case, args, chunksize=1):
                 break
     except KeyboardInterrupt:
