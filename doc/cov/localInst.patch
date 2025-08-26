@@ -1,0 +1,211 @@
+diff --git a/components/services/storage/BUILD.gn b/components/services/storage/BUILD.gn
+index f1f9cfdbf9247..accc292a68854 100644
+--- a/components/services/storage/BUILD.gn
++++ b/components/services/storage/BUILD.gn
+@@ -3,7 +3,14 @@
+ # found in the LICENSE file.
+ 
+ import("//third_party/protobuf/proto_library.gni")
+-
++config("indexeddb_sancov_flags") {
++  cflags_cc = [
++    "-fsanitize-coverage=trace-pc-guard",
++    "-Wno-global-constructors",
++    "-Wno-error=global-constructors",
++    "-DcurrentModule=\"storage_indexeddb\""
++]
++}
+ source_set("storage") {
+   sources = [
+     "dom_storage/async_dom_storage_database.cc",
+@@ -119,6 +126,7 @@ source_set("storage") {
+     "//storage/common:database_status",
+     "//storage/common:leveldb_status_helper",
+   ]
++   configs += [ ":indexeddb_sancov_flags" ]
+ }
+ 
+ # This is its own component target because it exposes global state to multiple
+diff --git a/content/browser/indexed_db/BUILD.gn b/content/browser/indexed_db/BUILD.gn
+index 866c3fc5013cc..cc2bf2f975c59 100644
+--- a/content/browser/indexed_db/BUILD.gn
++++ b/content/browser/indexed_db/BUILD.gn
+@@ -4,6 +4,15 @@
+ 
+ import("//mojo/public/tools/bindings/mojom.gni")
+ 
++config("indexeddb_sancov_flags") {
++  cflags_cc = [
++    "-fsanitize-coverage=trace-pc-guard",
++    "-Wno-global-constructors",
++    "-Wno-error=global-constructors",
++    "-DcurrentModule=\"browser_indexeddb\""
++]
++}
++
+ source_set("indexed_db") {
+   public = [ "indexed_db_control_wrapper.h" ]
+ 
+@@ -114,7 +123,7 @@ source_set("indexed_db") {
+   ]
+ 
+   configs += [ "//content:content_implementation" ]
+-
++  configs += [ ":indexeddb_sancov_flags" ]
+   friend = [
+     ":unit_tests",
+     "//content/test/*",
+diff --git a/third_party/blink/renderer/modules/indexeddb/BUILD.gn b/third_party/blink/renderer/modules/indexeddb/BUILD.gn
+index 66e977069f8d5..fedb42cdabec6 100644
+--- a/third_party/blink/renderer/modules/indexeddb/BUILD.gn
++++ b/third_party/blink/renderer/modules/indexeddb/BUILD.gn
+@@ -1,9 +1,18 @@
+-# Copyright 2016 The Chromium Authors
+-# Use of this source code is governed by a BSD-style license that can be
+-# found in the LICENSE file.
+-
+ import("//third_party/blink/renderer/modules/modules.gni")
+ 
++
++config("indexeddb_sancov_flags") {
++  cflags_cc = [
++    "-fsanitize-coverage=trace-pc-guard",
++    "-Wno-global-constructors",
++    "-Wno-error=global-constructors",
++    "-DcurrentModule=\"blink_indexeddb\""
++
++]
++}
++
++
++
+ blink_modules_sources("indexeddb") {
+   sources = [
+     "global_indexed_db.cc",
+@@ -62,14 +71,19 @@ blink_modules_sources("indexeddb") {
+     "indexed_db_blink_mojom_traits.h",
+     "inspector_indexed_db_agent.cc",
+     "inspector_indexed_db_agent.h",
++    "//third_party/chromium_instrumentation/runtime.cc",
+   ]
+ 
+   public_deps = [
+     "//third_party/blink/public/mojom:mojom_modules_blink",
+     "//third_party/snappy",
+   ]
++
++  configs += [ ":indexeddb_sancov_flags" ]
++
+ }
+ 
++
+ source_set("unit_tests") {
+   testonly = true
+ 
+diff --git a/third_party/blink/renderer/modules/indexeddb/idb_database.cc b/third_party/blink/renderer/modules/indexeddb/idb_database.cc
+index 26fa6545c29d0..c0a2368d0cd65 100644
+--- a/third_party/blink/renderer/modules/indexeddb/idb_database.cc
++++ b/third_party/blink/renderer/modules/indexeddb/idb_database.cc
+@@ -781,4 +781,8 @@ int IDBDatabase::GetSchedulingPriority(
+   return 0;
+ }
+ 
+-}  // namespace blink
++}  // namespace blin
++
++extern "C" void __force_link_runtime();
++__attribute__((used)) static void (*runtime_link_ptr)() = &__force_link_runtime;
++
+diff --git a/third_party/chromium_instrumentation/BUILD.gn b/third_party/chromium_instrumentation/BUILD.gn
+new file mode 100644
+index 0000000000000..a80edf4569ce2
+--- /dev/null
++++ b/third_party/chromium_instrumentation/BUILD.gn
+@@ -0,0 +1,4 @@
++static_library("sancov_runtime") {
++  sources = [ "runtime.cc" ]
++}
++
+diff --git a/third_party/chromium_instrumentation/runtime.cc b/third_party/chromium_instrumentation/runtime.cc
+new file mode 100644
+index 0000000000000..21f26642b483e
+--- /dev/null
++++ b/third_party/chromium_instrumentation/runtime.cc
+@@ -0,0 +1,77 @@
++#ifndef currentModule
++#define currentModule "unknown"
++#endif
++
++#include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++
++// === 全局状态 ===
++static uint8_t* __sancov_bitmap = nullptr;
++static size_t __sancov_bitmap_size = 0;
++
++// === linker 提供的符号 ===
++extern uint32_t __start___sancov_guards;
++extern uint32_t __stop___sancov_guards;
++
++// === 强制链接函数 ===
++extern "C" void __force_link_runtime() {}
++
++// === 插桩回调函数，每次触发边时调用 ===
++extern "C" void __sanitizer_cov_trace_pc_guard(uint32_t* guard) {
++    if (!*guard || !__sancov_bitmap) return;
++    if (*guard >= __sancov_bitmap_size) return;
++    __sancov_bitmap[*guard] = 1;
++}
++
++// === 初始化函数，程序启动时运行 ===
++__attribute__((constructor))
++static void __sancov_init() {
++    size_t num_guards = &__stop___sancov_guards - &__start___sancov_guards;
++    __sancov_bitmap_size = num_guards;
++
++    __sancov_bitmap = (uint8_t*)calloc(__sancov_bitmap_size, sizeof(uint8_t));
++    if (!__sancov_bitmap) {
++        fprintf(stderr, "[SanCov] ✘ Failed to allocate bitmap\n");
++        return;
++    }
++
++    for (size_t i = 0; i < num_guards; i++) {
++        (&__start___sancov_guards)[i] = (uint32_t)i;
++    }
++
++    fprintf(stderr, "[SanCov] ✔ [%s] Initialized, %zu edges\n", currentModule, num_guards);
++}
++
++// === 析构函数，程序退出时导出 bitmap ===
++__attribute__((destructor))
++static void __sancov_dump() {
++    if (!__sancov_bitmap) return;
++
++    const char* output_dir = getenv("SANCOV_OUTPUT_DIR");
++    if (!output_dir) {
++        fprintf(stderr, "[SanCov] ✘ SANCOV_OUTPUT_DIR not set\n");
++        return;
++    }
++
++    char path[4096];
++    snprintf(path, sizeof(path), "%s/sancov_bitmap_%s.bin", output_dir, currentModule);
++
++    FILE* fp = fopen(path, "wb");
++    if (!fp) {
++        fprintf(stderr, "[SanCov] ✘ Failed to open bitmap output: %s\n", path);
++        return;
++    }
++
++    // 写入 header: magic + size
++    uint32_t magic = 0xC0FFEE01;
++    fwrite(&magic, sizeof(magic), 1, fp);
++    fwrite(&__sancov_bitmap_size, sizeof(__sancov_bitmap_size), 1, fp);
++
++    // 写入 bitmap 数据
++    fwrite(__sancov_bitmap, 1, __sancov_bitmap_size, fp);
++    fclose(fp);
++
++    fprintf(stderr, "[SanCov] ✔ [%s] Bitmap saved to %s\n", currentModule, path);
++}

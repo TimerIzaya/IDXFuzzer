@@ -1,14 +1,15 @@
 from coverage.bitmap import GlobalEdgeBitmap
-from main import run
+from main import run, make_uid, gen_case
 from pathlib import Path
 
 
-def getCases():
-    base_dir = Path("/timer/index/result/crashes/timeout")
-    html_files = [str(p) for p in base_dir.glob("*/**/*.html")]
-    return html_files
 
-if __name__ == '__main__':
+def testRun():
+    def getCases():
+        base_dir = Path("/timer/index/result/crashes/timeout")
+        html_files = [str(p) for p in base_dir.glob("*/**/*.html")]
+        return html_files
+
     bitmap = GlobalEdgeBitmap(create=True)
     bitmap_name = bitmap.name()
 
@@ -26,3 +27,15 @@ if __name__ == '__main__':
     #     print("      ")
     #     print("      ")
 
+
+def testGen():
+    cid = make_uid()
+    html_path, out_dir = gen_case(cid)
+    print(html_path)
+    print(out_dir)
+
+
+
+if __name__ == '__main__':
+    testGen()
+    # testRun()
