@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+setTimeout(() => { window.close(); }, 500);
+let db_81;
+const openRequest_81 = window.indexedDB.open('str_8096', 1809267752713778)
+openRequest_81.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db_81 = event.target.result;
+    var objectStore_0 = db_81.createObjectStore('objectStore_456');
+    var put_0 = objectStore_0.put('{"f0_s":false,"f1_f":[75,true,true,92]}', '"kTbLaTrBwRtXpL"');
+    var add_0 = objectStore_0.add('{"f0_r":"TszGpCncMpeLhKQlknFBtTwSr"}', '"bifxN"');
+    var put_1 = objectStore_0.put('{"f0_s":"UkDNXogKiOTVosHTofcsB","f1_p":null,"f2_o":484154399,"f3_s":[null,true,29,68],"f4_e":null,"f5_d":false}', '"QbvxzWnEgiVEeWyheWyCKcyXdEmc"');
+    var count_0;
+    try{
+        KeyRange_0 = IDBKeyRange.bound('"QbvxzWnEgiVEeWyheWyCKcyXdEmc"', '"QbvxzWnEgiVEeWyheWyCKcyXdEmc"', true, true);
+        count_0 = objectStore_0.count(KeyRange_0);
+    }
+    catch (e){
+    }
+
+    var index_319 = objectStore_0.createIndex('index_319', 'test', {unique: false});
+    var getAllKeys_0 = objectStore_0.getAllKeys();
+    var get_0 = objectStore_0.get('"BOkRUFrxBgT"');
+    db_81.deleteObjectStore('objectStore_456')
+};
+openRequest_81.onsuccess = (event) => {
+    console.log('db onsuccess triggered')
+    db_81 = openRequest_81.result;
+    db_81.onversionchange = (event) => {
+        console.log('The version of this database has changed, release this connection');
+        db_81.close()
+    };
+    db_81.onclose = (event) => {
+        console.log('The database connection is unexpectedly closed');
+    };
+};
+openRequest_81.onerror = (event) => {
+    console.log('open db onerror triggered')
+    var errorResult;
+    errorResult = event.target.error;
+    console.log(errorResult.message)
+    console.log(errorResult.name)
+};
+openRequest_81.onblocked = (event) => {
+    console.log('open db blocked triggered')
+};
+const deleteRequest_81 = indexedDB.deleteDatabase('str_1511')</script></body></html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+setTimeout(() => { window.close(); }, 500);
+let db_0;
+const openRequest_0 = window.indexedDB.open('str_2653', 5486397571742847)
+openRequest_0.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db_0 = event.target.result;
+    var objectStore_0 = db_0.createObjectStore('objectStore_0', {autoIncrement: false});
+    var objectStore_1 = db_0.createObjectStore('objectStore_1', {autoIncrement: true});
+    var clear_0 = objectStore_0.clear();
+    var index_0 = objectStore_0.createIndex('index_0', 'test', {unique: true});
+    var add_0 = objectStore_1.add('{"f0_f":"Niiek","f1_m":false,"f2_i":true,"f3_i":978208194,"f4_p":{"f0_c":false,"f1_j":null,"f2_z":null,"f3_y":[null],"f4_k":null},"f5_k":[true,"MjYiIUXzAoTilWcTauDJn"]}', '"Sgrmy"');
+    var objectStore_2 = db_0.createObjectStore('objectStore_2');
+    var index_1 = objectStore_2.createIndex('index_1', 'test', {unique: false, multiEntry: false});
+    var add_1 = objectStore_0.add('{"f0_a":null,"f1_h":false,"f2_n":null}', '"LOPHpTMvKxtKFfjzCYEDBCXWOSfAePjk"');
+    db_0.deleteObjectStore('objectStore_0')
+    var get_0 = objectStore_1.get('5553443209');
+    var put_0 = objectStore_1.put('{"f0_t":8026098759,"f1_i":7888506552,"f2_l":null,"f3_o":2831325100}', '"TrnxUlroTrBLKkuLFfgdnF"');
+    var add_2 = objectStore_2.add('{"f0_n":false,"f1_x":[false,true,35,"dlcOgZXEJAyYhpZIRLETB",null],"f2_i":"vvaCXEZguFGiwdFGjsjDMudaJoGkiL","f3_q":null,"f4_w":[22,false,null,false,false,null,"LNZDAegZkmYWCCNrjaltpR"],"f5_g":"CzUrGTaaXrpZjGeVDbUdWbvQllPkdw","f6_h":null,"f7_f":true,"f8_k":"fINMQFjCzGaEiouSWOTqKeGpYaDW","f9_z":false,"f10_s":"zUQaiRQNauKgjo","f11_k":9235390123,"f12_j":false,"f13_o":"BNGgRkSQ","f14_u":6484140435,"f15_x":null,"f16_f":8830048140,"f17_j":["bBAlULXFuCuPZYHgJAKJdQEL",null,39,true,true],"f18_r":[null,false,null,true,50,26],"f19_s":[true,"XHDecSuBFsEXQZFkxscnn","XYRKTQfSlEXK","ZPBDC",84,false,null,null],"f20_f":5436800838,"f21_s":false,"f22_h":false,"f23_e":3610635570,"f24_z":false,"f25_n":true,"f26_u":["WoGIKd","mzlCnOhekxlPkCSRzjZxQ"],"f27_x":7278615910,"f28_p":258865346,"f29_e":"IeGkGWvSaFiCNvryLs","f30_y":null,"f31_r":"RFcLkndALzzCmhL","f32_w":false,"f33_b":"nqUjaIMMxT","f34_a":[null],"f35_j":true,"f36_i":null}', '"XUQxNOyJqywrzuPx"');
+    var clear_1 = objectStore_2.clear();
+    var clear_2 = objectStore_1.clear();
+    var count_0 = objectStore_1.count();
+    objectStore_2.deleteIndex('index_1')
+    var get_1 = objectStore_2.get('6199174890');
+    var clear_3 = objectStore_2.clear();
+    var clear_4 = objectStore_2.clear();
+    db_0.deleteObjectStore('objectStore_1')
+    var get_2 = objectStore_2.get('6067728812');
+    var index_2 = objectStore_2.createIndex('index_2', 'test');
+    var clear_5 = objectStore_2.clear();
+    var getAll_0 = objectStore_2.getAll();
+    var index_3 = objectStore_2.createIndex('index_3', 'test', {multiEntry: true});
+    var clear_6 = objectStore_2.clear();
+    var count_1 = objectStore_2.count('4471497108');
+    db_0.deleteObjectStore('objectStore_2')
+};
+openRequest_0.onsuccess = (event) => {
+    console.log('db onsuccess triggered')
+    db_0 = openRequest_0.result;
+    db_0.onversionchange = (event) => {
+        console.log('The version of this database has changed, release this connection');
+        db_0.close()
+    };
+    db_0.onclose = (event) => {
+        console.log('The database connection is unexpectedly closed');
+    };
+};
+openRequest_0.onerror = (event) => {
+    console.log('open db onerror triggered')
+    var errorResult;
+    errorResult = event.target.error;
+    console.log(errorResult.message)
+    console.log(errorResult.name)
+};
+openRequest_0.onblocked = (event) => {
+    console.log('open db blocked triggered')
+};
+const deleteRequest_0 = indexedDB.deleteDatabase('str_2653')</script></body></html>
