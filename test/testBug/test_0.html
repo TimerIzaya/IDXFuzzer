@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<script>
+let db;
+const req = indexedDB.open('str_5756', Date.now());
+req.onupgradeneeded = e => {
+  db = e.target.result;
+
+  const os0 = db.createObjectStore('os0', { autoIncrement: true });
+  os0.getAll(); // 随便放着，不影响
+
+  const os1 = db.createObjectStore('os1');
+
+  // 慢队首：多分片 Blob → 会创建 QueueItem 并 StartLoading()
+  const parts = [];
+  for (let i = 0; i < 64; i++) parts.push(new Uint8Array(2 * 1024 * 1024)); // 64×2MB=128MB
+  os1.add(new Blob(parts, { type: 'application/octet-stream' }), 'FIRST');
+
+  // 可选：再排几条，增加队列复杂度
+  for (let i = 0; i < 16; i++) {
+    os1.add(new Blob([new Uint8Array(2 * 1024 * 1024)]), 'k' + i);
+  }
+
+  // 立刻同步抛错 → 事务 abort（这时 has_qi=1 && is_ready=0）
+  db.createObjectStore('os2', { keyPath: '""' });
+};
+</script>

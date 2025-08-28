@@ -157,7 +157,7 @@ def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
         # print(result.stderr)
         
     except subprocess.TimeoutExpired as e:
-        print(f"e: {e.stderr}")
+        # print(f"e: {e.stderr}")
         # print(result.stderr)
         # 超时一定没有覆盖率，可能会触发超时crash，这个crash不用管
         return -1, 0
@@ -306,7 +306,7 @@ if __name__ == "__main__":
 
     try:
         while True:
-            args = repeat(bitmap_name, config.PROCESS_COUNT * 2)
+            args = repeat(bitmap_name, config.PROCESS_COUNT)
             for _ in pool.imap_unordered(run_one_case, args, chunksize=1):
                 break
     except KeyboardInterrupt:
