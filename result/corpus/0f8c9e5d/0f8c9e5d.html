@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+setTimeout(() => { window.close(); }, 500);
+let db_103;
+const openRequest_103 = window.indexedDB.open('str_3127', 4564891531092113)
+openRequest_103.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db_103 = event.target.result;
+    var objectStore_0 = db_103.createObjectStore('objectStore_547');
+    var clear_0 = objectStore_0.clear();
+    var add_0 = objectStore_0.add('{"f0_z":true,"f1_p":"URkpORDCfMEEvEfeFdqR","f2_p":null}', '"CdgLZRhKpxpaIRmaEwRzyF"');
+    var get_0;
+    try{
+        KeyRange_0 = IDBKeyRange.only('"CdgLZRhKpxpaIRmaEwRzyF"');
+        get_0 = objectStore_0.get(KeyRange_0);
+    }
+    catch (e){
+    }
+
+    var add_1 = objectStore_0.add('{"f0_f":"soZWak","f1_d":false,"f2_h":null,"f3_m":"KBnIakJeakbqcOmW"}', '"wOgXQCSXPfbmsAoEsvvqqUcWvkcwIP"');
+    var count_0;
+    try{
+        KeyRange_2 = IDBKeyRange.lowerBound('"wOgXQCSXPfbmsAoEsvvqqUcWvkcwIP"', false);
+        count_0 = objectStore_0.count(KeyRange_2);
+    }
+    catch (e){
+    }
+
+    var add_2 = objectStore_0.add('{"f0_a":null,"f1_x":false}', '"eCZYhuesmgBhSqerFcqxkSbMhudrxrla"');
+    var add_3 = objectStore_0.add('{"f0_x":2627655118,"f1_g":"OLlAiqOXvVmXy","f2_p":9868420729,"f3_o":6261136618,"f4_f":false}', '"mOuKXrXoQIizFgwGuSnMHFUmuSfLXKpa"');
+    var index_435 = objectStore_0.createIndex('index_435', 'test', {multiEntry: false});
+    var count_1 = objectStore_0.count();
+    var put_0 = objectStore_0.put('{"f0_e":"RExrJ","f1_l":7807010714,"f2_n":"XhLVwcCwqK","f3_d":null}', '"vvxkkuW"');
+    var count_2 = objectStore_0.count();
+    var get_1 = objectStore_0.get('1232783927');
+    var put_1 = objectStore_0.put('{"f0_d":true,"f1_n":true,"f2_j":387652826,"f3_x":null,"f4_v":[true,null,10,true,false,false,"xzmlgVhILiAIrxgXdGKRUkGk"],"f5_n":[null,null,"wNUxcBcdTCBGvajDVukyhocgI","tMKNQhsvsIDaEGKxNkAB","YVkUTWeqBwabDkxNwNhdmnairASeAV","oWVoWAVtOvBfYWkhP"]}', '"reWbzLvE"');
+    var clear_1 = objectStore_0.clear();
+    var count_3;
+    try{
+        KeyRange_4 = IDBKeyRange.only('"eCZYhuesmgBhSqerFcqxkSbMhudrxrla"');
+        count_3 = objectStore_0.count(KeyRange_4);
+    }
+    catch (e){
+    }
+
+    var add_4 = objectStore_0.add('{"f0_t":7631331690}', '"ytidBKDo"');
+    var add_5 = objectStore_0.add('{"f0_x":true,"f1_r":[null,false,30],"f2_y":8115892529,"f3_y":true,"f4_a":7497311553}', '"oGhbdRKfxQOdOMtjsugv"');
+    var index_436 = objectStore_0.createIndex('index_436', 'test');
+    var getAll_0 = objectStore_0.getAll('60650799', 2344058824);
+    var get_2 = objectStore_0.get('"IoDCevARIsuHFvkFVrGUbtmicbOWCjN"');
+    var count_4;
+    try{
+        KeyRange_6 = IDBKeyRange.upperBound('"reWbzLvE"', true);
+        count_4 = objectStore_0.count(KeyRange_6);
+    }
+    catch (e){
+    }
+
+    var get_3 = objectStore_0.get('862146360');
+    var index_437 = objectStore_0.createIndex('index_437', 'test', {multiEntry: false});
+    var index_438 = objectStore_0.createIndex('index_438', 'test', {unique: false, multiEntry: true});
+    var index_439 = objectStore_0.createIndex('index_439', 'test', {multiEntry: false});
+    var count_5 = objectStore_0.count('8014362087');
+    var clear_2 = objectStore_0.clear();
+    var count_6 = objectStore_0.count();
+    var clear_3 = objectStore_0.clear();
+    db_103.deleteObjectStore('objectStore_547')
+};
+openRequest_103.onsuccess = (event) => {
+    console.log('db onsuccess triggered')
+    db_103 = openRequest_103.result;
+    db_103.onversionchange = (event) => {
+        console.log('The version of this database has changed, release this connection');
+        db_103.close()
+    };
+    db_103.onclose = (event) => {
+        console.log('The database connection is unexpectedly closed');
+    };
+};
+openRequest_103.onerror = (event) => {
+    console.log('open db onerror triggered')
+    var errorResult;
+    errorResult = event.target.error;
+    console.log(errorResult.message)
+    console.log(errorResult.name)
+};
+openRequest_103.onblocked = (event) => {
+    console.log('open db blocked triggered')
+};
+const deleteRequest_103 = indexedDB.deleteDatabase('str_1567')</script></body></html>
