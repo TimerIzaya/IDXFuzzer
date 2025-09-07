@@ -1,0 +1,483 @@
+{
+  "name": "IDBSchema",
+  "interfaces": {
+    "IDBFactory": {
+      "staticMethods": [],
+      "instanceMethods": [
+        {
+          "name": "open",
+          "params": [
+            { "name": "name", "type": "DOMString", "optional": false },
+            { "name": "version", "type": "unsigned long long", "optional": true }
+          ],
+          "returns": "IDBOpenDBRequest"
+        },
+        {
+          "name": "deleteDatabase",
+          "params": [
+            { "name": "name", "type": "DOMString", "optional": false }
+          ],
+          "returns": "IDBOpenDBRequest"
+        },
+        {
+          "name": "cmp",
+          "params": [
+            { "name": "first", "type": "Key", "optional": false },
+            { "name": "second", "type": "Key", "optional": false }
+          ],
+          "returns": "number"
+        },
+        {
+          "name": "databases",
+          "params": [],
+          "returns": {
+            "kind": "Generic",
+            "base": "Promise",
+            "args": [
+              { "kind": "Array", "element": "IDBDatabaseInfo" }
+            ]
+          }
+        }
+      ],
+      "properties": [],
+      "events": []
+    },
+
+    "IDBDatabase": {
+      "staticMethods": [],
+      "instanceMethods": [
+        { "name": "close", "params": [], "returns": "undefined" },
+        {
+          "name": "createObjectStore",
+          "params": [
+            { "name": "name", "type": "DOMString", "optional": false },
+            { "name": "options", "type": "IDBObjectStoreParameters", "optional": true }
+          ],
+          "returns": "IDBObjectStore"
+        },
+        {
+          "name": "deleteObjectStore",
+          "params": [
+            { "name": "name", "type": "DOMString", "optional": false }
+          ],
+          "returns": "undefined"
+        },
+        {
+          "name": "transaction",
+          "params": [
+            {
+              "name": "storeNames",
+              "type": {
+                "kind": "Union",
+                "types": [
+                  "DOMString",
+                  { "kind": "Array", "element": "DOMString" }
+                ]
+              },
+              "optional": false
+            },
+            { "name": "mode", "type": "IDBTransactionMode", "optional": true },
+            { "name": "options", "type": "IDBTransactionOptions", "optional": true }
+          ],
+          "returns": "IDBTransaction"
+        }
+      ],
+      "properties": [
+        { "name": "name", "type": "DOMString", "readonly": true, "nullable": false },
+        { "name": "version", "type": "unsigned long long", "readonly": true, "nullable": false },
+        { "name": "objectStoreNames", "type": "DOMStringList", "readonly": true, "nullable": false }
+      ],
+      "events": [
+        { "name": "close", "eventType": "Event" },
+        { "name": "versionchange", "eventType": "IDBVersionChangeEvent" }
+      ]
+    },
+
+    "IDBTransaction": {
+      "staticMethods": [],
+      "instanceMethods": [
+        { "name": "abort", "params": [], "returns": "undefined" },
+        {
+          "name": "objectStore",
+          "params": [
+            { "name": "name", "type": "DOMString", "optional": false }
+          ],
+          "returns": "IDBObjectStore"
+        },
+        { "name": "commit", "params": [], "returns": "undefined" }
+      ],
+      "properties": [
+        { "name": "db", "type": "IDBDatabase", "readonly": true, "nullable": false },
+        { "name": "durability", "type": "IDBTransactionDurability", "readonly": true, "nullable": false },
+        {
+          "name": "error",
+          "type": { "kind": "Union", "types": ["DOMException", "null"] },
+          "readonly": true,
+          "nullable": true
+        },
+        { "name": "mode", "type": "IDBTransactionMode", "readonly": true, "nullable": false },
+        { "name": "objectStoreNames", "type": "DOMStringList", "readonly": true, "nullable": false }
+      ],
+      "events": [
+        { "name": "abort", "eventType": "Event" },
+        { "name": "complete", "eventType": "Event" },
+        { "name": "error", "eventType": "Event" }
+      ]
+    },
+
+    "IDBObjectStore": {
+      "staticMethods": [],
+      "instanceMethods": [
+        {
+          "name": "add",
+          "params": [
+            { "name": "value", "type": "any", "optional": false },
+            { "name": "key", "type": "Key", "optional": true }
+          ],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["Key"] }
+        },
+        {
+          "name": "put",
+          "params": [
+            { "name": "value", "type": "any", "optional": false },
+            { "name": "key", "type": "Key", "optional": true }
+          ],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["Key"] }
+        },
+        {
+          "name": "get",
+          "params": [{ "name": "query", "type": "KeyOrRange", "optional": false }],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["any"] }
+        },
+        {
+          "name": "getKey",
+          "params": [{ "name": "query", "type": "KeyOrRange", "optional": false }],
+          "returns": {
+            "kind": "Generic",
+            "base": "IDBRequest",
+            "args": [{ "kind": "Union", "types": ["Key", "undefined"] }]
+          }
+        },
+        {
+          "name": "getAll",
+          "params": [
+            { "name": "query", "type": "KeyOrRange", "optional": true },
+            { "name": "count", "type": "unsigned long", "optional": true }
+          ],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": [{ "kind": "Array", "element": "any" }] }
+        },
+        {
+          "name": "getAllKeys",
+          "params": [
+            { "name": "query", "type": "KeyOrRange", "optional": true },
+            { "name": "count", "type": "unsigned long", "optional": true }
+          ],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": [{ "kind": "Array", "element": "Key" }] }
+        },
+        {
+          "name": "delete",
+          "params": [{ "name": "query", "type": "KeyOrRange", "optional": false }],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["undefined"] }
+        },
+        { "name": "clear", "params": [], "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["undefined"] } },
+        {
+          "name": "count",
+          "params": [{ "name": "query", "type": "KeyOrRange", "optional": true }],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["unsigned long long"] }
+        },
+        {
+          "name": "openCursor",
+          "params": [
+            { "name": "query", "type": "KeyOrRange", "optional": true },
+            { "name": "direction", "type": "CursorDirection", "optional": true }
+          ],
+          "returns": {
+            "kind": "Generic",
+            "base": "IDBRequest",
+            "args": [{ "kind": "Union", "types": ["IDBCursorWithValue", "null"] }]
+          }
+        },
+        {
+          "name": "openKeyCursor",
+          "params": [
+            { "name": "query", "type": "KeyOrRange", "optional": true },
+            { "name": "direction", "type": "CursorDirection", "optional": true }
+          ],
+          "returns": {
+            "kind": "Generic",
+            "base": "IDBRequest",
+            "args": [{ "kind": "Union", "types": ["IDBCursor", "null"] }]
+          }
+        },
+        {
+          "name": "createIndex",
+          "params": [
+            { "name": "name", "type": "DOMString", "optional": false },
+            { "name": "keyPath", "type": "KeyPath", "optional": false },
+            { "name": "options", "type": "IDBIndexParameters", "optional": true }
+          ],
+          "returns": "IDBIndex"
+        },
+        {
+          "name": "index",
+          "params": [{ "name": "name", "type": "DOMString", "optional": false }],
+          "returns": "IDBIndex"
+        },
+        {
+          "name": "deleteIndex",
+          "params": [{ "name": "name", "type": "DOMString", "optional": false }],
+          "returns": "undefined"
+        }
+      ],
+      "properties": [
+        { "name": "name", "type": "DOMString", "readonly": false, "nullable": false },
+        {
+          "name": "keyPath",
+          "type": { "kind": "Union", "types": ["KeyPath", "null"] },
+          "readonly": true,
+          "nullable": true
+        },
+        { "name": "indexNames", "type": "DOMStringList", "readonly": true, "nullable": false },
+        { "name": "transaction", "type": "IDBTransaction", "readonly": true, "nullable": false },
+        { "name": "autoIncrement", "type": "boolean", "readonly": true, "nullable": false }
+      ],
+      "events": []
+    },
+
+    "IDBIndex": {
+      "staticMethods": [],
+      "instanceMethods": [
+        {
+          "name": "count",
+          "params": [{ "name": "query", "type": "KeyOrRange", "optional": true }],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["unsigned long long"] }
+        },
+        {
+          "name": "get",
+          "params": [{ "name": "query", "type": "KeyOrRange", "optional": false }],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["any"] }
+        },
+        {
+          "name": "getKey",
+          "params": [{ "name": "query", "type": "KeyOrRange", "optional": false }],
+          "returns": {
+            "kind": "Generic",
+            "base": "IDBRequest",
+            "args": [{ "kind": "Union", "types": ["Key", "undefined"] }]
+          }
+        },
+        {
+          "name": "getAll",
+          "params": [
+            { "name": "query", "type": "KeyOrRange", "optional": true },
+            { "name": "count", "type": "unsigned long", "optional": true }
+          ],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": [{ "kind": "Array", "element": "any" }] }
+        },
+        {
+          "name": "getAllKeys",
+          "params": [
+            { "name": "query", "type": "KeyOrRange", "optional": true },
+            { "name": "count", "type": "unsigned long", "optional": true }
+          ],
+          "returns": { "kind": "Generic", "base": "IDBRequest", "args": [{ "kind": "Array", "element": "Key" }] }
+        },
+        {
+          "name": "openCursor",
+          "params": [
+            { "name": "query", "type": "KeyOrRange", "optional": true },
+            { "name": "direction", "type": "CursorDirection", "optional": true }
+          ],
+          "returns": {
+            "kind": "Generic",
+            "base": "IDBRequest",
+            "args": [{ "kind": "Union", "types": ["IDBCursorWithValue", "null"] }]
+          }
+        },
+        {
+          "name": "openKeyCursor",
+          "params": [
+            { "name": "query", "type": "KeyOrRange", "optional": true },
+            { "name": "direction", "type": "CursorDirection", "optional": true }
+          ],
+          "returns": {
+            "kind": "Generic",
+            "base": "IDBRequest",
+            "args": [{ "kind": "Union", "types": ["IDBCursor", "null"] }]
+          }
+        }
+      ],
+      "properties": [
+        { "name": "name", "type": "DOMString", "readonly": true, "nullable": false },
+        { "name": "objectStore", "type": "IDBObjectStore", "readonly": true, "nullable": false },
+        {
+          "name": "keyPath",
+          "type": { "kind": "Union", "types": ["KeyPath", "null"] },
+          "readonly": true,
+          "nullable": true
+        },
+        { "name": "multiEntry", "type": "boolean", "readonly": true, "nullable": false },
+        { "name": "unique", "type": "boolean", "readonly": true, "nullable": false }
+      ],
+      "events": []
+    },
+
+    "IDBCursor": {
+      "staticMethods": [],
+      "instanceMethods": [
+        {
+          "name": "advance",
+          "params": [{ "name": "count", "type": "unsigned long", "optional": false }],
+          "returns": "undefined"
+        },
+        {
+          "name": "continue",
+          "params": [{ "name": "key", "type": "Key", "optional": true }],
+          "returns": "undefined"
+        },
+        {
+          "name": "continuePrimaryKey",
+          "params": [
+            { "name": "key", "type": "Key", "optional": false },
+            { "name": "primaryKey", "type": "Key", "optional": false }
+          ],
+          "returns": "undefined"
+        },
+        { "name": "delete", "params": [], "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["undefined"] } },
+        { "name": "update", "params": [{ "name": "value", "type": "any", "optional": false }], "returns": { "kind": "Generic", "base": "IDBRequest", "args": ["Key"] } }
+      ],
+      "properties": [
+        { "name": "direction", "type": "CursorDirection", "readonly": true, "nullable": false },
+        { "name": "key", "type": "Key", "readonly": true, "nullable": false },
+        { "name": "primaryKey", "type": "Key", "readonly": true, "nullable": false },
+        {
+          "name": "source",
+          "type": { "kind": "Union", "types": ["IDBObjectStore", "IDBIndex"] },
+          "readonly": true,
+          "nullable": false
+        }
+      ],
+      "events": []
+    },
+
+    "IDBCursorWithValue": {
+      "staticMethods": [],
+      "instanceMethods": [],
+      "properties": [
+        { "name": "value", "type": "any", "readonly": true, "nullable": false }
+      ],
+      "events": []
+    },
+
+    "IDBRequest": {
+      "staticMethods": [],
+      "instanceMethods": [],
+      "properties": [
+        {
+          "name": "error",
+          "type": { "kind": "Union", "types": ["DOMException", "null"] },
+          "readonly": true,
+          "nullable": true
+        },
+        { "name": "result", "type": "any", "readonly": true, "nullable": false },
+        {
+          "name": "source",
+          "type": { "kind": "Union", "types": ["IDBObjectStore", "IDBIndex", "IDBCursor", "null"] },
+          "readonly": true,
+          "nullable": true
+        },
+        { "name": "readyState", "type": "IDBRequestReadyState", "readonly": true, "nullable": false },
+        {
+          "name": "transaction",
+          "type": { "kind": "Union", "types": ["IDBTransaction", "null"] },
+          "readonly": true,
+          "nullable": true
+        }
+      ],
+      "events": [
+        { "name": "success", "eventType": "Event" },
+        { "name": "error", "eventType": "Event" }
+      ]
+    },
+
+    "IDBOpenDBRequest": {
+      "staticMethods": [],
+      "instanceMethods": [],
+      "properties": [],
+      "events": [
+        { "name": "blocked", "eventType": "Event" },
+        { "name": "upgradeneeded", "eventType": "IDBVersionChangeEvent" }
+      ]
+    },
+
+    "IDBKeyRange": {
+      "staticMethods": [
+        {
+          "name": "bound",
+          "params": [
+            { "name": "lower", "type": "Key", "optional": false },
+            { "name": "upper", "type": "Key", "optional": false },
+            { "name": "lowerOpen", "type": "boolean", "optional": true },
+            { "name": "upperOpen", "type": "boolean", "optional": true }
+          ],
+          "returns": "IDBKeyRange"
+        },
+        {
+          "name": "lowerBound",
+          "params": [
+            { "name": "lower", "type": "Key", "optional": false },
+            { "name": "open", "type": "boolean", "optional": true }
+          ],
+          "returns": "IDBKeyRange"
+        },
+        {
+          "name": "upperBound",
+          "params": [
+            { "name": "upper", "type": "Key", "optional": false },
+            { "name": "open", "type": "boolean", "optional": true }
+          ],
+          "returns": "IDBKeyRange"
+        },
+        {
+          "name": "only",
+          "params": [{ "name": "value", "type": "Key", "optional": false }],
+          "returns": "IDBKeyRange"
+        }
+      ],
+      "instanceMethods": [
+        {
+          "name": "includes",
+          "params": [{ "name": "key", "type": "Key", "optional": false }],
+          "returns": "boolean"
+        }
+      ],
+      "properties": [
+        { "name": "lower", "type": { "kind": "Union", "types": ["Key", "undefined"] }, "readonly": true, "nullable": false },
+        { "name": "upper", "type": { "kind": "Union", "types": ["Key", "undefined"] }, "readonly": true, "nullable": false },
+        { "name": "lowerOpen", "type": "boolean", "readonly": true, "nullable": false },
+        { "name": "upperOpen", "type": "boolean", "readonly": true, "nullable": false }
+      ],
+      "events": []
+    },
+
+    "IDBVersionChangeEvent": {
+      "staticMethods": [],
+      "instanceMethods": [],
+      "properties": [
+        { "name": "oldVersion", "type": "unsigned long long", "readonly": true, "nullable": false },
+        { "name": "newVersion", "type": { "kind": "Union", "types": ["unsigned long long", "null"] }, "readonly": true, "nullable": true }
+      ],
+      "events": []
+    },
+
+    "IDBDatabaseInfo": {
+      "staticMethods": [],
+      "instanceMethods": [],
+      "properties": [
+        { "name": "name", "type": { "kind": "Union", "types": ["DOMString", "null"] }, "readonly": true, "nullable": true },
+        { "name": "version", "type": { "kind": "Union", "types": ["unsigned long long", "null"] }, "readonly": true, "nullable": true }
+      ],
+      "events": []
+    }
+  }
+}

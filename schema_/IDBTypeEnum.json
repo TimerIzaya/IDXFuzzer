@@ -1,0 +1,92 @@
+{
+  "basic_types": [
+    "DOMString",
+    "boolean",
+    "number",
+    "unsigned long",
+    "unsigned long long",
+    "undefined",
+    "null",
+    "any",
+    "Date",
+    "ArrayBuffer",
+    "DOMException",
+    "Event",
+    "DOMStringList",
+    "Promise"
+  ],
+  "aliases": [
+    {
+      "name": "CursorDirection",
+      "target": { "kind": "Enum", "values": ["next", "nextunique", "prev", "prevunique"] }
+    },
+    {
+      "name": "IDBTransactionMode",
+      "target": { "kind": "Enum", "values": ["readonly", "readwrite", "versionchange"] }
+    },
+    {
+      "name": "IDBRequestReadyState",
+      "target": { "kind": "Enum", "values": ["pending", "done"] }
+    },
+    {
+      "name": "IDBTransactionDurability",
+      "target": { "kind": "Enum", "values": ["default", "relaxed", "strict"] }
+    },
+    {
+      "name": "IDBTransactionOptions",
+      "target": {
+        "kind": "Dict",
+        "fields": [
+          { "name": "durability", "type": "IDBTransactionDurability", "optional": true, "nullable": false }
+        ]
+      }
+    },
+    {
+      "name": "IDBObjectStoreParameters",
+      "target": {
+        "kind": "Dict",
+        "fields": [
+          { "name": "keyPath", "type": "KeyPath", "optional": true, "nullable": false },
+          { "name": "autoIncrement", "type": "boolean", "optional": true, "nullable": false }
+        ]
+      }
+    },
+    {
+      "name": "IDBIndexParameters",
+      "target": {
+        "kind": "Dict",
+        "fields": [
+          { "name": "unique", "type": "boolean", "optional": true, "nullable": false },
+          { "name": "multiEntry", "type": "boolean", "optional": true, "nullable": false }
+        ]
+      }
+    },
+    {
+      "name": "KeyPath",
+      "target": {
+        "kind": "Union",
+        "types": ["DOMString", { "kind": "Array", "element": "DOMString" }]
+      }
+    },
+    {
+      "name": "Key",
+      "target": {
+        "kind": "Union",
+        "types": [
+          "number",
+          "DOMString",
+          "Date",
+          "ArrayBuffer",
+          { "kind": "Array", "element": "Key" }
+        ]
+      }
+    },
+    {
+      "name": "KeyOrRange",
+      "target": {
+        "kind": "Union",
+        "types": ["Key", "IDBKeyRange"]
+      }
+    }
+  ]
+}
