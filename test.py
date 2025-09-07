@@ -39,5 +39,20 @@ def testGen():
 
 
 if __name__ == '__main__':
-    path = testGen()
-    testRun(path)
+    # path = testGen()
+    # testRun(path)
+
+    class A:
+        def __init__(self, items=[]):  # ⚠️ 这里的 [] 只会在函数定义时创建一次
+            self.items = items
+
+
+    a1 = A()
+    a2 = A()
+    a3 = A()
+    a1.items.append(1)
+    a1.items.append(2)
+    a1.items.append(3)
+    print(a1.items)  # [1]  → 两个实例共享同一个 list
+    print(a2.items)  # [1]  → 两个实例共享同一个 list
+    print(a3.items)  # [1]  → 两个实例共享同一个 list
