@@ -10,15 +10,24 @@ class OperationKind(str, Enum):
     PROPERTY = "property"
 
 
+# ---- Base ----
 @dataclass
 class OperationBase:
-    kind: OperationKind            # method | event | property
+    """原子 Operation 基类：公共元数据统一放这里。"""
     interfaceName: str
-    name: str                      # method: "open"; event: "onupgradeneeded"; property: "version"
+    name: str
 
-    @property
-    def fullName(self) -> str:
-        return f"{self.interfaceName}.{self.name}"
+    # 运行期设置
+    kind: OperationKind = field(init=False)
+    fullName: str = field(init=False)                  # 形如: "Interface.member"
+    extras: Dict[str, Any] = field(default_factory=dict)
+
+    # 依赖 / 可达（填充时使用；元素为 Operation 实例）
+    depOps: List["OperationBase"] = field(default_factory=list)
+    incOps: List["OperationBase"] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        self.fullName = f"{self.interfaceName}.{self.name}"
 
 
 @dataclass
