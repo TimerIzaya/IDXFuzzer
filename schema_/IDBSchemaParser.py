@@ -301,7 +301,7 @@ def _test(parser: IDBSchemaParser):
 def main():
     # Direct run without CLI args; expect files in current working directory
     schema_path = Path("origin/IDBSchema.json")
-    types_path = Path("origin/IDBTypeEnum.json")
+    types_path = Path("origin/IDBType.json")
     parser = IDBSchemaParser(schema_path, types_path)
     _test(parser)
     print("\nAll tests passed.")
