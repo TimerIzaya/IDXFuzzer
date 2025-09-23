@@ -7,12 +7,12 @@ import re
 from pathlib import Path
 
 SCHEMA_PATH = Path("../origin/IDBSchema.json")   # ← 就是你上传的这份
-OUTPUT_PY   = Path("../IDBPropertyEnum.py")
+OUTPUT_PY   = Path("../enum/IDBPropertyEnum.py")
 
 HEADER = """# -*- coding: utf-8 -*-
 # IDBPropertyEnum.py
 # 由 IDBPropertyExtracter.py 生成：属性已初始化，可直接 import 使用
-from define.IDBProperty import IDBProperty
+from schema_.define.IDBProperty import IDBProperty
 
 """
 

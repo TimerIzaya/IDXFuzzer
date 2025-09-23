@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # IDBEventEnum.py
 # 由 IDBEventExtracter.py 生成：事件已初始化，可直接 import 使用
-from define.IDBEvent import IDBEvent
+from schema_.define.IDBEvent import IDBEvent
 
 
 # ============ 事件 ============

@@ -7,12 +7,12 @@ import re
 from pathlib import Path
 
 SCHEMA_PATH = Path("../origin/IDBSchema.json")   # ← 你的 schema 文件
-OUTPUT_PY   = Path("../IDBEventEnum.py")
+OUTPUT_PY   = Path("../enum/IDBEventEnum.py")
 
 HEADER = """# -*- coding: utf-8 -*-
 # IDBEventEnum.py
 # 由 IDBEventExtracter.py 生成：事件已初始化，可直接 import 使用
-from define.IDBEvent import IDBEvent
+from schema_.define.IDBEvent import IDBEvent
 
 
 """

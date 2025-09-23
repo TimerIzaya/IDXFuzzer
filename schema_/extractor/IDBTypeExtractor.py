@@ -8,7 +8,7 @@ import re
 
 # 固定 JSON 文件路径（你项目里的类型定义 JSON）
 PREFERRED_SCHEMA_PATH = Path("../origin/IDBType.json")   # ← 改成你的实际路径
-OUTPUT_PY = Path("../IDBTypeEnum.py")
+OUTPUT_PY = Path("../enum/IDBTypeEnum.py")
 
 def load_schema(path: Path):
     if not path.is_file():

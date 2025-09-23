@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # IDBPropertyEnum.py
 # 由 IDBPropertyExtracter.py 生成：属性已初始化，可直接 import 使用
-from define.IDBProperty import IDBProperty
+from schema_.define.IDBProperty import IDBProperty
 
 # ============ 属性 ============
 IDBDatabase_Name = IDBProperty("IDBDatabase", "name", "DOMString", True, False)

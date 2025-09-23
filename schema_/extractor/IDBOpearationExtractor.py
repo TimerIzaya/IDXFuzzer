@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 
 # ====== 用户需要修改的常量 ======
 SCHEMA_PATH = Path("../origin/IDBSchema.json")          # schema.json 路径
-OUTPUT_PY   = Path("../IDBOperationEnum.py")            # 输出文件固定叫 IDBOperationEnum.py
+OUTPUT_PY   = Path("../enum/IDBOperationEnum.py")            # 输出文件固定叫 IDBOperationEnum.py
 IMPORT_LINE = "from schema_.IDBOpeartion import MethodOperation, PropertyOperation, EventOperation, Param"
 
 INDENT = " " * 4
