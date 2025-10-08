@@ -36,7 +36,7 @@ class IRToJSLifter:
             i += 1
 
         for child in layer.children:
-            if child.name not in IRToJSLifter._visited_layers:
+            if child.id not in IRToJSLifter._visited_layers:
                 lines.extend(IRToJSLifter.convertLayer(child, indent_level))
 
         return lines
@@ -97,7 +97,7 @@ class IRToJSLifter:
                     and IRToJSLifter._current_layer.layer_type == LayerType.REGISTER
             ):
                 for child in IRToJSLifter._current_layer.children:
-                    IRToJSLifter._visited_layers.add(child.name)
+                    IRToJSLifter._visited_layers.add(child.id)
                     body_lines.extend(
                         IRToJSLifter.convertLayer(child, indent_level + 1)
                     )

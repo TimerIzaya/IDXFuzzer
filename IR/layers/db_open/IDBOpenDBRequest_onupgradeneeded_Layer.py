@@ -28,7 +28,7 @@ class IDBOpenDBRequest_onupgradeneeded_Layer(LayerBuilder):
         # 去更新之前的IDBDatabase变量 它还没有设置literal 此时db变量才正式诞生
         dbVar.varLiteral = dbName
         assignDB = AssignmentExpression(
-            left=dbVar.name,
+            left=dbVar.id,
             right=MemberExpression(
                 objectExpr=MemberExpression(Identifier("event"), "target"),
                 property_name="result"

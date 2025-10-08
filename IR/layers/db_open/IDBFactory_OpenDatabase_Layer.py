@@ -23,7 +23,7 @@ class IDBFactory_OpenDatabase_Layer(LayerBuilder):
         parser = IDBSchemaParser()
         method = parser.getInterface("IDBFactory").getStaticMethod("open")
 
-        # 单独生成 name/version 参数，便于注册数据库
+        # 单独生成 id/version 参数，便于注册数据库
         open_params = method.getParams().raw()
         dbName = IRParamValueGenerator.generateValueByParamInfo(open_params[0])  # string
 

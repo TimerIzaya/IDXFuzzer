@@ -80,7 +80,7 @@ class EventFlowBuilder:
 
     @staticmethod
     def genOsApi(body: list, cnt: int):
-        # 添加一条 schema op（可替换为更复杂逻辑）
+        # 添加一条 schema id（可替换为更复杂逻辑）
         for _ in range(cnt):
             if EventFlowBuilder.MODE is EventBuilderMode.SCHEME:
                 CoreApis.MODE = EventFlowBuilder.MODE

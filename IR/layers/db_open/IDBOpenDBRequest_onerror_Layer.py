@@ -20,7 +20,7 @@ class IDBOpenDBRequest_onerror_Layer(LayerBuilder):
                                  MemberExpression(Identifier("event.target"), "error")
                                  ),
             CallExpression(Identifier("console"), "log", [MemberExpression(retNode, "message")]),
-            CallExpression(Identifier("console"), "log", [MemberExpression(retNode, "name")]),
+            CallExpression(Identifier("console"), "log", [MemberExpression(retNode, "id")]),
         ]
 
         open_request_id = Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest)

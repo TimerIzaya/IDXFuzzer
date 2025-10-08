@@ -15,11 +15,11 @@ class IDBTypeTool:
 
     @staticmethod
     def extractIDBTypeFromMethodReturns(m: MethodInfo) -> IDBType:
-        if isinstance(m.returns, list):
+        if isinstance(m.ret_type, list):
             # 可能有多个返回类型的场景
-            return random.choice(m.returns).typename
+            return random.choice(m.ret_type).typename
 
-        return m.returns.typename
+        return m.ret_type.typename
 
     @staticmethod
     def isReturnEmpty(m: MethodInfo):

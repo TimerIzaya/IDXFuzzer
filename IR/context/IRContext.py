@@ -85,7 +85,7 @@ class IRContext:
         if len(candidates) == 0:
             return None
         else:
-            return random.choice(candidates).name
+            return random.choice(candidates).id
 
     def getVariableByType(self, type_: IDBType) -> Optional[Variable]:
         candidates = []

@@ -21,7 +21,7 @@ class Layer:
 
     def to_dict(self) -> dict:
         result = {
-            "name": self.name,
+            "id": self.name,
             "layer_type": self.layer_type.value,
         }
 
@@ -38,7 +38,7 @@ class Layer:
     @staticmethod
     def from_dict(d: dict) -> 'Layer':
         return Layer(
-            name=d["name"],
+            name=d["id"],
             layer_type=LayerType(d.get("layer_type", LayerType.EXECUTION.value)),
             ir_nodes=[
                 IRNodeFactory.from_dict(n) for n in d.get("ir_nodes", [])

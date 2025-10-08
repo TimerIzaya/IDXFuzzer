@@ -1,0 +1,86 @@
+from enum import Enum
+
+
+class OperationEnum(str,  Enum):
+    OPEN = "open"
+    DELETE_DATABASE = "deleteDatabase"
+    DATABASES = "databases"
+    TRANSACTION = "transaction"
+    CLOSE = "close"
+    CREATE_OBJECT_STORE = "createObjectStore"
+    DELETE_OBJECT_STORE = "deleteObjectStore"
+    ADD = "add"
+    PUT = "put"
+    GET = "get"
+    GET_ALL = "getAll"
+    GET_KEY = "getKey"
+    GET_ALL_KEYS = "getAllKeys"
+    DELETE = "delete"
+    CLEAR = "clear"
+    COUNT = "count"
+    OPEN_CURSOR = "openCursor"
+    OPEN_KEY_CURSOR = "openKeyCursor"
+    INDEX = "index"
+    OBJECT_STORE = "objectStore"
+    CREATE_INDEX = "createIndex"
+    DELETE_INDEX = "deleteIndex"
+    CURSOR_CONTINUE = "cursor.continue"
+    CURSOR_ADVANCE = "cursor.advance"
+    CURSOR_CONTINUE_PRIMARY_KEY = "cursor.continuePrimaryKey"
+    CURSOR_UPDATE = "cursor.update"
+    CURSOR_DELETE = "cursor.delete"
+
+class RequestEnum(str, Enum):
+    IDB_REQUEST = "IDBRequest"
+    IDB_OPEN_DB_REQUEST = "IDBOpenDBRequest"
+
+class EventEnum(str, Enum):
+    SUCCESS = "success"
+    ERROR = "error"
+    UPGRADE_NEEDED = "upgradeneeded"
+    BLOCKED = "blocked"
+    COMPLETE = "complete"
+    ABORT = "abort"
+    VERSION_CHANGE = "versionchange"
+    CLOSE = "close"
+
+class TransactionModeEnum(str, Enum):
+    READONLY = "readonly"
+    READWRITE = "readwrite"
+
+class CursorDirectionEnum(str, Enum):
+    NEXT = "next"
+    NEXT_UNIQUE = "nextunique"
+    PREV = "prev"
+    PREV_UNIQUE = "prevunique"
+
+class InterfaceEnum(str, Enum):
+    IDB_FACTORY = "IDBFactory"
+    IDB_REQUEST = "IDBRequest"
+    IDB_OPEN_DB_REQUEST = "IDBOpenDBRequest"
+    IDB_DATABASE = "IDBDatabase"
+    IDB_TRANSACTION = "IDBTransaction"
+    IDB_OBJECT_STORE = "IDBObjectStore"
+    IDB_INDEX = "IDBIndex"
+    IDB_KEY_RANGE = "IDBKeyRange"
+    IDB_CURSOR = "IDBCursor"
+    IDB_CURSOR_WITH_VALUE = "IDBCursorWithValue"
+    IDB_VERSION_CHANGE_EVENT = "IDBVersionChangeEvent"
+    DOM_STRING_LIST = "DOMStringList"
+
+class BasicTypeEnum(str, Enum):
+    DOM_STRING = "DOMString"
+    BOOLEAN = "boolean"
+    UNSIGNED_LONG = "unsigned long"
+    UNSIGNED_LONG_LONG = "unsigned long long"
+    NUMBER = "number"
+    ANY = "any"
+    NULL = "null"
+    DATE = "Date"
+    ARRAY = "Array"
+    OBJECT = "Object"
+    ARRAY_BUFFER = "ArrayBuffer"
+    DATA_VIEW = "DataView"
+    TYPED_ARRAY = "TypedArray"
+    BLOB = "Blob"
+    FILE = "File"

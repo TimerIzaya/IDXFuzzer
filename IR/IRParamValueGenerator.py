@@ -42,7 +42,7 @@ class IRParamValueGenerator:
             return random.choice(["fallback", 42, True])
 
         if isinstance(idbType, IDBType) and (
-                idbType.name.startswith("IDB") or "Exception" in idbType.name or "Error" in idbType.name
+                idbType.id.startswith("IDB") or "Exception" in idbType.id or "Error" in idbType.id
         ):
             return None
 
@@ -59,7 +59,7 @@ class IRParamValueGenerator:
         if idbType == IDBType.IDBRequest.value:
             return Global.irctx.getRandomIdentifier(IDBType.IDBRequest.value) or Literal("<request>")
 
-        return f"{idbType.name if isinstance(idbType, IDBType) else idbType}_instance"
+        return f"{idbType.id if isinstance(idbType, IDBType) else idbType}_instance"
 
     @staticmethod
     def generateValueByParamInfo(param: ParamInfo) -> str:
@@ -87,7 +87,7 @@ class IRParamValueGenerator:
             objParam = {}
             for prop in param.properties:
                 # 对每个属性递归生成其值
-                objParam[prop.name] = IRParamValueGenerator.generateValueFromType(prop.type)
+                objParam[prop.id] = IRParamValueGenerator.generateValueFromType(prop.type)
             return str(objParam)
 
         # 参数类型可能是 TypeInfo 或 List[TypeInfo]，统一解析为一个 TypeInfo 实例
@@ -115,7 +115,7 @@ class IRParamValueGenerator:
         for param in params:
             args.append(IRParamValueGenerator.generateValueByParamInfo(param))
 
-        if method.name == "createIndex":
+        if method.id == "createIndex":
             if len(params) >= 3:
                 keyPath = args[1]
                 options = args[2]

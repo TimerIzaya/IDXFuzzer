@@ -47,7 +47,7 @@ class Variable(IRNode):
     def to_dict(self):
         return {
             "type": "Variable",
-            "name": self.name.to_dict(),
+            "id": self.name.to_dict(),
             "varType": self.varType.value,
             "varLiteral": self.varLiteral
         }
@@ -168,8 +168,8 @@ class VariableDeclaration(IRNode):
     def to_dict(self):
         return {
             "type": "VariableDeclaration",
-            "kind": self.kind,
-            "name": self.name.to_dict()
+            "id": self.kind,
+            "id": self.name.to_dict()
         }
 
 
@@ -199,8 +199,8 @@ class IRNodeFactory:
             return Literal(d["value"])
         elif t == "VariableDeclaration":
             return VariableDeclaration(
-                name=IRNodeFactory.from_dict(d["name"]),
-                kind=d["kind"]
+                name=IRNodeFactory.from_dict(d["id"]),
+                kind=d["id"]
             )
         elif t == "AssignmentExpression":
             return AssignmentExpression(
@@ -229,7 +229,7 @@ class IRNodeFactory:
             return ConsoleLog(IRNodeFactory.from_dict(d["value"]))
         elif t == "Variable":
             return Variable(
-                name=d["name"]["raw"],
+                name=d["id"]["raw"],
                 varType=IDBType(d["varType"]),
                 varLiteral=d["varLiteral"]
             )

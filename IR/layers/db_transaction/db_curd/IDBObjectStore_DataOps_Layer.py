@@ -79,6 +79,6 @@ class IDBObjectStore_DataOps_Layer(LayerBuilder):
 
 
         # 首先扔掉事务变量
-        Global.irctx.unregisterVariable(txnVar.name)
+        Global.irctx.unregisterVariable(txnVar.id)
         return Layer(IDBObjectStore_DataOps_Layer.name, body, layer_type=IDBObjectStore_DataOps_Layer.layer_type)
 

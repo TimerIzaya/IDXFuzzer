@@ -11,7 +11,7 @@ from schema.SchemaClass import MethodInfo
 
 class PipeEnd:
     def __init__(self, method_info: MethodInfo):
-        self.name = method_info.name
+        self.name = method_info.id
         self.method = method_info
         self.is_read = self._infer_is_read()
         self.is_write = self._infer_is_write()
@@ -26,9 +26,9 @@ class PipeEnd:
     def generate_il(self, store: Identifier) -> List[IRNode]:
         """
         基于 MethodInfo + IDBType + IRContext + IDBSchemaContext 生成 CallExpression。
-        自动将结果注册进 irctx（使用 returns 推导类型）。
+        自动将结果注册进 irctx（使用 ret_type 推导类型）。
         """
-        METHOD_NAME = self.method.name
+        METHOD_NAME = self.method.id
         args = IRParamValueGenerator.generateMethodArgs(method=self.method)
         recVarName = Global.irctx.generateUniqueName(f"ret_{self.name}")
 

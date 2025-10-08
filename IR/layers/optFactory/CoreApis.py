@@ -79,7 +79,7 @@ class CoreApis:
             raise RuntimeError("No IDBObjectStore identifier available for create_object_store")
 
         args = []
-        # arg0 name
+        # arg0 id
         indexName = Global.smctx.newIndexName()
         args.append(Literal(indexName))
         # 注册一个初始IDBSchemaIndexInfo，后面补全
@@ -127,7 +127,7 @@ class CoreApis:
 
         idxName = Global.smctx.pickRandomObjectStoreIndex(osName)
         if idxName is None:
-            raise RuntimeError("No Index name available for deleteIndex")
+            raise RuntimeError("No Index id available for deleteIndex")
 
         # 同步更新schemaCtx
         Global.smctx.unregisterIndex(osName, idxName)
