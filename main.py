@@ -101,90 +101,93 @@ def init_worker(edge_counter: Value, timeout_counter: Value,
     _shared_completed_cnt = completed_counter
     _shared_attachments_cnt = attachment_counter
 
-def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
 
-    def checkCrashCnt():
-        pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
-        new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
-        completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
-        attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
-
-        if pending_cnt > 0:
-            update_counter(pending_cnt_counter)
-        if new_cnt > 0:
-            update_counter(new_cnt_counter)
-        if completed_cnt > 0:
-            update_counter(completed_cnt_counter)
-        if attachments_cnt > 0:
-            update_counter(attachment_cnt_counter)
-
-        crashStatus = pending_cnt + new_cnt + completed_cnt + attachments_cnt
-        return crashStatus
-
-    def now_ms() -> int:
-        return int(time.time() * 1000)
-
-    html_path = os.path.abspath(html_path)
-    out_dir = os.path.dirname(html_path)
-    bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
-    tmp_dir = os.path.join(out_dir, "chrome-tmp")
-    cmd = [
-        "/timer/chromium/src/out/IndexedDBSanCov/content_shell",
-        "--no-sandbox", "--headless=new", "--ozone-platform=headless",
-        "--disable-gpu", "--disable-plugins", "--disable-extensions",
-        "--disable-breakpad", "--disable-default-apps", "--disable-sync",
-        "--disable-background-networking", "--disable-popup-blocking",
-        "--no-default-browser-check", "--password-store=basic",
-        "--use-mock-keychain", "--disable-hang-monitor",
-        "--run-all-compositor-stages-before-draw",
-        "--virtual-time-budget=20000", f"--user-data-dir={tmp_dir}",
-        "--enable-crash-reporter",
-        f"--crash-dumps-dir={out_dir}",
-        "--enable-logging=stderr",  # ✅ 保证日志输出
-        # "--v=1",                    # ✅ 提高日志等级
-        f"file://{html_path}",
-    ]
-
-    env = os.environ.copy()
-    env["SANCOV_OUTPUT_DIR"] = out_dir
-
-    try:
-        result = subprocess.run(cmd,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.PIPE,
-                       env=env,
-                       timeout=config.PROCESS_TIMEOUT)
-        #print(result.stderr)
-        
-    except subprocess.TimeoutExpired as e:
-        # print(f"e: {e.stderr}")
-        #print("timeout!!!!!!!!")
-        #print(result.stderr)
-        # 超时一定没有覆盖率，可能会触发超时crash，这个crash不用管
-        return -1, 0
-    except subprocess.CalledProcessError:
-        # 真正的非超时的非0
-        # 等待2 spending是否写入 不管是否写入 保留该case
-        time.sleep(2)
-        return -2, checkCrashCnt()
-
-    # 正常执行完走统计覆盖率流程
-    # 先把chromium tmp环境给删了
-    shutil.rmtree(tmp_dir)
-
-    # 找bin
-    bin_files = glob.glob(bin_glob)
-    if not bin_files:
-        raise Exception("覆盖率文件缺失")
-
-    total_new_edges = 0
-    for cov_file in bin_files:
-        total_new_edges += edge_bitmap.update_from_file(cov_file)
-        os.remove(cov_file)
-
-    return total_new_edges, checkCrashCnt()
 
 def run_one_case(bitmap_name: str) -> bool:
+    def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
+
+        def checkCrashCnt():
+            pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
+            new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
+            completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
+            attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
+
+            if pending_cnt > 0:
+                update_counter(pending_cnt_counter)
+            if new_cnt > 0:
+                update_counter(new_cnt_counter)
+            if completed_cnt > 0:
+                update_counter(completed_cnt_counter)
+            if attachments_cnt > 0:
+                update_counter(attachment_cnt_counter)
+
+            crashStatus = pending_cnt + new_cnt + completed_cnt + attachments_cnt
+            return crashStatus
+
+        def now_ms() -> int:
+            return int(time.time() * 1000)
+
+        html_path = os.path.abspath(html_path)
+        out_dir = os.path.dirname(html_path)
+        bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
+        tmp_dir = os.path.join(out_dir, "chrome-tmp")
+        cmd = [
+            "/timer/chromium/src/out/IndexedDBSanCov/content_shell",
+            "--no-sandbox", "--headless=new", "--ozone-platform=headless",
+            "--disable-gpu", "--disable-plugins", "--disable-extensions",
+            "--disable-breakpad", "--disable-default-apps", "--disable-sync",
+            "--disable-background-networking", "--disable-popup-blocking",
+            "--no-default-browser-check", "--password-store=basic",
+            "--use-mock-keychain", "--disable-hang-monitor",
+            "--run-all-compositor-stages-before-draw",
+            "--virtual-time-budget=20000", f"--user-data-dir={tmp_dir}",
+            "--enable-crash-reporter",
+            f"--crash-dumps-dir={out_dir}",
+            "--enable-logging=stderr",  # ✅ 保证日志输出
+            # "--v=1",                    # ✅ 提高日志等级
+            f"file://{html_path}",
+        ]
+
+        env = os.environ.copy()
+        env["SANCOV_OUTPUT_DIR"] = out_dir
+
+        try:
+            result = subprocess.run(cmd,
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.PIPE,
+                                    env=env,
+                                    timeout=config.PROCESS_TIMEOUT)
+            # print(result.stderr)
+
+        except subprocess.TimeoutExpired as e:
+            # print(f"e: {e.stderr}")
+            # print("timeout!!!!!!!!")
+            # print(result.stderr)
+            # 超时一定没有覆盖率，可能会触发超时crash，这个crash不用管
+            return -1, 0
+        except subprocess.CalledProcessError:
+            # 真正的非超时的非0
+            # 等待2 spending是否写入 不管是否写入 保留该case
+            time.sleep(2)
+            return -2, checkCrashCnt()
+
+        # 正常执行完走统计覆盖率流程
+        # 先把chromium tmp环境给删了
+        shutil.rmtree(tmp_dir)
+
+        # 找bin
+        bin_files = glob.glob(bin_glob)
+        if not bin_files:
+            raise Exception("覆盖率文件缺失")
+
+        total_new_edges = 0
+        for cov_file in bin_files:
+            total_new_edges += edge_bitmap.update_from_file(cov_file)
+            os.remove(cov_file)
+
+        return total_new_edges, checkCrashCnt()
+
+
     cid = make_uid()
     update_counter(_shared_total_exec_cnt)
     update_counter(_shared_last_interesting_exec)
@@ -290,6 +293,7 @@ if __name__ == "__main__":
     attachment_cnt_counter = Value('i', 0)
 
     start_time = time.time()
+    # 统计线程
     threading.Thread(
         target=stat_worker,
         args=(bitmap, total_edge_counter, timeout_counter, total_exec_counter,
@@ -308,8 +312,8 @@ if __name__ == "__main__":
     try:
         while True:
             args = repeat(bitmap_name, config.PROCESS_COUNT)
-            for _ in pool.imap_unordered(run_one_case, args, chunksize=1):
-                break
+            for _ in pool.imap_unordered(run_one_case, repeat(bitmap_name), chunksize=1):
+                pass  # 无限流，Ctrl-C 触发 except/ finally
     except KeyboardInterrupt:
         print("Interrupted by user.")
     finally:
