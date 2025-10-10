@@ -36,8 +36,11 @@ def testGen():
     print(out_dir)
     return html_path
 
+def testRunSpec(path):
+    testRun(path)
 
 
 if __name__ == '__main__':
-    path = testGen()
-    testRun(path)
+     path = testGen()
+     testRun(path)
+    #testRunSpec("result/corpus/7844dc39/7844dc39.html")
