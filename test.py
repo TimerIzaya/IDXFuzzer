@@ -32,9 +32,9 @@ def testRun(path):
 def testGen():
     cid = make_uid()
     html_path, out_dir = gen_case(cid)
-    return html_path
     print(html_path)
     print(out_dir)
+    return html_path
 
 
 
