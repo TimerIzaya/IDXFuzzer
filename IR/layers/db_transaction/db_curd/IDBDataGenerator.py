@@ -43,11 +43,6 @@ class BaseGenerator:
             True, False, None
         ])
 
-    @staticmethod
-    def _to_js_literal(obj):
-        # 统一出口：转 JS 可用字面量（字符串带引号，数字无引号，布尔 true/false，None->null）
-        return json.dumps(obj, ensure_ascii=False, separators=(',', ':'))
-
     # ---- 分布选择：以小为主、偶尔大 ----
     @classmethod
     def _pick_field_count(cls):
@@ -154,50 +149,40 @@ class IDBDataGenerator(BaseGenerator):
     # ===== 对外：所有静态生成器都返回 JS 字面量字符串 =====
     @staticmethod
     def generateString(key=None):
-        return IDBDataGenerator._to_js_literal(IDBDataGenerator._randomString())
+        return IDBDataGenerator._randomString()
 
     @staticmethod
     def generateNumber(key=None):
-        n = key if key is not None else random.randint(0, 9999999999)
-        return IDBDataGenerator._to_js_literal(n)
+        return key if key is not None else random.randint(0, 9999999999)
 
     @staticmethod
     def generateBoolean(key=None):
-        return IDBDataGenerator._to_js_literal(random.choice([True, False]))
+        return random.choice([True, False])
 
     @staticmethod
     def generateNull(key=None):
-        return IDBDataGenerator._to_js_literal(None)  # -> "null"
+        return None  # -> "null"
 
     @staticmethod
     def generateArray(key=None):
         # 顶层数组也遵循“小为主，偶尔大”
         n = IDBDataGenerator._pick_array_len(currentDepth=0)
         arr = [IDBDataGenerator._generatePrimitive() for _ in range(n)]
-        return IDBDataGenerator._to_js_literal(arr)
+        return arr
 
     @staticmethod
     def generateObject(key=None):
         obj = IDBDataGenerator._generateObject(currentDepth=0)
         if key is not None:
             obj["id"] = key
-        return IDBDataGenerator._to_js_literal(obj)
-
-    @staticmethod
-    def generateObjectAsJS(key=None):
-        if key is None:
-            key = IDBDataGenerator._generatePrimitive()
-        obj = IDBDataGenerator._generateObject(currentDepth=0)
-        obj["id"] = key
-        js_code = IDBDataGenerator._to_js_literal(obj)
-        return js_code, key
+        return obj
 
     @staticmethod
     def generateObjectWithKeyPath(keyPath: str):
         parts = keyPath.split(".")
         keyValue = IDBDataGenerator.generateAnyOfKeyRaw()
         obj = IDBDataGenerator._generateObjectWithKeyPathAndValue(parts, keyValue, currentDepth=0)
-        return IDBDataGenerator._to_js_literal(obj), keyValue
+        return obj, keyValue
 
     @staticmethod
     def generateObjectWithKeyPathAsJS(keyPath: str):
@@ -244,25 +229,6 @@ class IDBDataGenerator(BaseGenerator):
             CallExpression(Identifier("IDBKeyRange"), meth, args)
         )
 
-    @staticmethod
-    def generateKeyRangeExprJS(os, stable: bool = False) -> str:
-        """
-        JS 片段版本，可直接放到 JS 代码中作为表达式使用。
-        """
-        lower, upper = random.choices(os.keys, k=2)
-        if stable:
-            return f"IDBKeyRange.only({IDBDataGenerator._to_js_literal(lower)})"
-        b = lambda: IDBDataGenerator._to_js_literal(random.choice([True, False]))
-        r = random.random()
-        if r < 0.25:
-            return f"IDBKeyRange.bound({IDBDataGenerator._to_js_literal(lower)},{IDBDataGenerator._to_js_literal(upper)},{b()},{b()})"
-        elif r < 0.5:
-            return f"IDBKeyRange.lowerBound({IDBDataGenerator._to_js_literal(lower)},{b()})"
-        elif r < 0.75:
-            pick = random.choice([lower, upper])
-            return f"IDBKeyRange.only({IDBDataGenerator._to_js_literal(pick)})"
-        else:
-            return f"IDBKeyRange.upperBound({IDBDataGenerator._to_js_literal(upper)},{b()})"
 
     @staticmethod
     def generateAny(key=None):
@@ -311,9 +277,6 @@ if __name__ == "__main__":
     obj, t = timed_call("generateObject", IDBDataGenerator.generateObject)
     print(f"generateObject (JS) obj -> {obj} [{t:.2f} ms]")
 
-    (js_obj, js_key), t = timed_call("generateObjectAsJS", IDBDataGenerator.generateObjectAsJS)
-    print(f"generateObjectAsJS.len -> {len(js_obj)}  key(py) -> {js_key} [{t:.2f} ms]")
-
     kp, t = timed_call("generateKeyPath", IDBDataGenerator.generateKeyPath)
     print(f"generateKeyPath (JS) -> {kp} [{t:.2f} ms]")
 
@@ -335,8 +298,7 @@ if __name__ == "__main__":
     kr2, t = timed_call("generateKeyRange(stable=False)", IDBDataGenerator.generateKeyRange, os_mock, False)
     print(f"generateKeyRange(stable=False) -> {kr2} [{t:.2f} ms]")
 
-    kr_js, t = timed_call("generateKeyRangeExprJS", IDBDataGenerator.generateKeyRangeExprJS, os_mock, False)
-    print(f"generateKeyRangeExprJS -> {kr_js} [{t:.2f} ms]")
+
 
     o, t = timed_call("final object sample", IDBDataGenerator.generateObject)
     print(f"final object sample (JS.len={len(o)}) [{t:.2f} ms]")
