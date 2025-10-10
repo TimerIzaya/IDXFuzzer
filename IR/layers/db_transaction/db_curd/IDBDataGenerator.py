@@ -210,7 +210,7 @@ class IDBDataGenerator(BaseGenerator):
             s = '.'.join(IDBDataGenerator._randomString() for _ in range(random.randint(1, 4)))
         else:
             s = IDBDataGenerator._randomString()
-        return IDBDataGenerator._to_js_literal(s)
+        return s
 
     @staticmethod
     def generateKeyRange(os, stable: bool = False) -> AssignmentExpression:
