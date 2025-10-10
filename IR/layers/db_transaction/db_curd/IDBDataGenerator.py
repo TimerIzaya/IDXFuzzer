@@ -216,13 +216,13 @@ class IDBDataGenerator(BaseGenerator):
         b = IDBDataGenerator.generateBoolean
         r = random.random()
         if r < 0.25:
-            meth, args = "bound", [Literal(lower), Literal(upper), Literal(json.loads(b())), Literal(json.loads(b()))]
+            meth, args = "bound", [Literal(lower), Literal(upper), Literal(b()), Literal(b())]
         elif r < 0.5:
-            meth, args = "lowerBound", [Literal(lower), Literal(json.loads(b()))]
+            meth, args = "lowerBound", [Literal(lower), Literal(b())]
         elif r < 0.75:
             meth, args = "only", [Literal(random.choice([lower, upper]))]
         else:
-            meth, args = "upperBound", [Literal(upper), Literal(json.loads(b()))]
+            meth, args = "upperBound", [Literal(upper), Literal(b())]
 
         return AssignmentExpression(
             Variable(Global.irctx.newMeName(KEY_RANGE), var_type),
