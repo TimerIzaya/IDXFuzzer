@@ -1,5 +1,5 @@
 from coverage.bitmap import GlobalEdgeBitmap
-from main import run, make_uid, gen_case
+from main import make_uid, gen_case, run
 from pathlib import Path
 
 

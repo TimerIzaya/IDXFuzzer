@@ -4,6 +4,9 @@ import multiprocessing.shared_memory as shm
 from config import EDGE_TOTAL_COUNT
 
 
+
+
+
 class GlobalEdgeBitmap:
     def __init__(self, name=None, size= EDGE_TOTAL_COUNT, create=True):
         self.size = size
