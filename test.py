@@ -1,5 +1,5 @@
 from coverage.bitmap import GlobalEdgeBitmap
-from main import make_uid, gen_case, run
+from main import make_uid, gen_case, run, init_worker
 from pathlib import Path
 
 
@@ -15,6 +15,7 @@ def testRun(path):
 
 
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
+    init_worker()
     new_edges, crashStatus = run(path, bitmap)
     print(new_edges, crashStatus)
 
@@ -41,6 +42,7 @@ def testRunSpec(path):
 
 
 if __name__ == '__main__':
-     path = testGen()
-     testRun(path)
+     # path = testGen()
+     # testRun(path)
+     testRun("test.html")
     #testRunSpec("result/corpus/7844dc39/7844dc39.html")
