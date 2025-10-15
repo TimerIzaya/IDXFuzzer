@@ -11,7 +11,7 @@ stat_dir = os.path.join(os.getcwd(), "stat")
 os.makedirs(stat_dir, exist_ok=True)
 
 
-def execCasees():
+def execCases():
     # ====== 遍历所有case ======
     for case_name in os.listdir(root_dir):
         case_path = os.path.join(root_dir, case_name)

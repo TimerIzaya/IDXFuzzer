@@ -19,35 +19,87 @@ import time, glob, subprocess, numpy as np, shutil, signal
 import config
 from config import *
 from coverage.bitmap import GlobalEdgeBitmap
+from execution.run_content_shell import run_content_shell
 from generator import gen_case
 from tool.tool import count_files_in_dir, make_uid
 
 
 
 #准备执行之前的
+def update_counter(counter: Value, delta: int = 1, reset: bool = False, value: int = 0):
+    with counter.get_lock():
+        if reset:
+            counter.value = value
+        else:
+            counter.value += delta
+
+
+# ---------- 共享计数器（worker 可见） ----------
+_shared_total_edges = None
+_shared_timeout_cnt = None
+_shared_total_exec_cnt = None
+_shared_last_interesting_exec = None
+_shared_pending_cnt = None
+_shared_new_cnt = None
+_shared_completed_cnt = None
+_shared_attachments_cnt = None
+
+
+def init_worker(edge_counter: Value, timeout_counter: Value,
+                exec_counter: Value, last_interesting_counter: Value,
+                pending_counter: Value, new_counter: Value,
+                completed_counter: Value, attachment_counter: Value) -> None:
+    global _shared_total_edges, _shared_timeout_cnt, _shared_total_exec_cnt, _shared_last_interesting_exec
+    global _shared_pending_cnt, _shared_new_cnt, _shared_completed_cnt, _shared_attachments_cnt
+    _shared_total_edges = edge_counter
+    _shared_timeout_cnt = timeout_counter
+    _shared_total_exec_cnt = exec_counter
+    _shared_last_interesting_exec = last_interesting_counter
+    _shared_pending_cnt = pending_counter
+    _shared_new_cnt = new_counter
+    _shared_completed_cnt = completed_counter
+    _shared_attachments_cnt = attachment_counter
+
+
+def updateCrashCnt(html_out_dir: str):
+    pending_cnt = count_files_in_dir(os.path.join(html_out_dir, "pending"))
+    new_cnt = count_files_in_dir(os.path.join(html_out_dir, "new"))
+    completed_cnt = count_files_in_dir(os.path.join(html_out_dir, "completed"))
+    attachments_cnt = count_files_in_dir(os.path.join(html_out_dir, "attachments"))
+    if pending_cnt > 0:       update_counter(_shared_pending_cnt)
+    if new_cnt > 0:           update_counter(_shared_new_cnt)
+    if completed_cnt > 0:     update_counter(_shared_completed_cnt)
+    if attachments_cnt > 0:   update_counter(_shared_attachments_cnt)
+    return pending_cnt + new_cnt + completed_cnt + attachments_cnt
+
+
+
+
 
 
 def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
 
+    html_path_abs = os.path.abspath(html_path)
+    out_dir = os.path.dirname(html_path_abs)
+    tmp_dir = os.path.join(out_dir, "chrome-tmp")
+    bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
 
+    run_content_shell(html_path_abs)
 
     # 覆盖率处理
     shutil.rmtree(tmp_dir, ignore_errors=True)
     bin_files = glob.glob(bin_glob)
+
+    #todo  没有覆盖率文件 应该和crash同理
     if not bin_files:
-        # 无覆盖率文件：按 0 新边处理（或改成 -2 归档 crash）
-        with open(os.path.join(out_dir, "metrics.txt"), "a", encoding="utf-8") as mf:
-            mf.write(f"ok in {time.monotonic() - t0:.3f}s (no sancov)\n")
-        return 0, updateCrashCnt()
+        return 0
 
     total_new_edges = 0
     for cov_file in bin_files:
         total_new_edges += edge_bitmap.update_from_file(cov_file)
         os.remove(cov_file)
 
-    with open(os.path.join(out_dir, "metrics.txt"), "a", encoding="utf-8") as mf:
-        mf.write(f"ok in {time.monotonic() - t0:.3f}s\n")
-    return total_new_edges, updateCrashCnt()
+    return total_new_edges
 
 
 # ---------- 核心执行 ----------
@@ -59,7 +111,8 @@ def run_one_case(bitmap_name: str) -> bool:
     cid = make_uid()
     html_path, out_dir = gen_case(cid)
     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    new_edges, crashStatus = run(html_path, bitmap)
+    new_edges = run(html_path, bitmap)
+    crashStatus = updateCrashCnt()
     bitmap.close()
 
     # 结果归档
