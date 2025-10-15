@@ -2,10 +2,8 @@ import os
 import signal
 import subprocess
 import time
-from multiprocessing import Value
 
 import config
-from tool.tool import count_files_in_dir
 
 
 def run_content_shell(html_path: str):
@@ -42,66 +40,51 @@ def run_content_shell(html_path: str):
         env=env, start_new_session=True
     )
 
-    # 语义窗口：从看到 BEGIN 开始计 TIMEOUT(+裕量)
-    sem_margin_s = getattr(config, "SEM_MARGIN_MS", 200) / 1000.0
-    hard_timeout_s = getattr(config, "PROCESS_TIMEOUT", 30)
 
-    pos = 0
     begin_seen = False
     done_seen = False
-    begin_deadline = time.monotonic() + 10.0  # 最多等 10s 看到 BEGIN
-    t0 = time.monotonic()
+    t0 = time.time()
 
     while True:
-        # 增量读取日志（tail 文件，不阻塞）
+        # 每间隔0.1s读一次全部文件
+        time.sleep(0.1)
         try:
             with open(log_path, "rb") as r:
-                r.seek(pos)
-                chunk = r.read()
-                if chunk:
-                    pos += len(chunk)
-                    if not begin_seen and b"FUZZ_BEGIN:" in chunk:
-                        begin_seen = True
-                        sem_deadline = time.monotonic() + (getattr(config, "TIMEOUT", 500) / 1000.0) + sem_margin_s
-                    if b"FUZZ_DONE:" in chunk:
-                        done_seen = True
-                        break
+                content = r.read()
+                if b"FUZZ_BEGIN:" in content:
+                    begin_seen = True
+                if b"FUZZ_DONE:" in content:
+                    done_seen = True
         except FileNotFoundError:
             pass
 
-        # 进程已退出但没看到 DONE → 异常/崩溃
+        # 进程已退出但没看到 DONE → 异常/崩溃， 目前没遇到过
         if proc.poll() is not None and not done_seen:
-            print("# 进程已退出但没看到 DONE → 异常/崩溃")
             time.sleep(0.2)  # 等 crash 标记落盘
             logw.close()
-            return -2
+            return -1
 
-        # BEGIN 太久没出现 → 页面没跑起来，当异常
-        if not begin_seen and time.monotonic() > begin_deadline:
+        # BEGIN 5s都没出现 → 页面没跑起来，当异常
+        if not begin_seen and time.time() - t0 > 5000:
             try:
-                print("# # BEGIN 太久没出现 → 页面没跑起来，当异常/崩溃，准备杀")
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
             logw.close()
-            return -2
+            return -1
 
-        # BEGIN 出现但超过语义窗口仍未 DONE → 语义超时
-        if begin_seen and time.monotonic() > sem_deadline:
+        # BEGIN 出现但超过语义窗口仍未
+        if time.time()  - t0 > config.PROCESS_TIMEOUT:
             try:
-                print("# BEGIN 出现但超过语义窗口仍未 DONE → 语义超时")
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            with open(os.path.join(out_dir, "metrics.txt"), "a", encoding="utf-8") as mf:
-                mf.write(f"SEM_TIMEOUT({getattr(config, 'TIMEOUT', 500)}ms) after {time.monotonic() - t0:.3f}s\n")
             logw.close()
             return -1
 
         if done_seen:
             # 看到了 DONE：尽量优雅退出
             try:
-                print("看到了 DONE：尽量优雅退出")
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 try:
@@ -110,17 +93,3 @@ def run_content_shell(html_path: str):
                     pass
             logw.close()
             return 0
-
-        # 硬兜底，防僵尸
-        if time.monotonic() - t0 > hard_timeout_s:
-            try:
-                print("# 硬兜底，防僵尸")
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            logw.close()
-            return -1
-
-        time.sleep(0.01)
-    print("跑完了，什么都么有")
-

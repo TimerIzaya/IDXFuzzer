@@ -24,8 +24,7 @@ from generator import gen_case
 from tool.tool import count_files_in_dir, make_uid
 
 
-
-#准备执行之前的
+# 准备执行之前的
 def update_counter(counter: Value, delta: int = 1, reset: bool = False, value: int = 0):
     with counter.get_lock():
         if reset:
@@ -70,66 +69,59 @@ def updateCrashCnt(html_out_dir: str):
     if new_cnt > 0:           update_counter(_shared_new_cnt)
     if completed_cnt > 0:     update_counter(_shared_completed_cnt)
     if attachments_cnt > 0:   update_counter(_shared_attachments_cnt)
-    return pending_cnt + new_cnt + completed_cnt + attachments_cnt
+    return pending_cnt + new_cnt + completed_cnt + attachments_cnt > 0
 
 
-
-
-
-
-def run(html_path: str, edge_bitmap: GlobalEdgeBitmap):
+# ---------- 核心执行 ----------
+def run_one_case(bitmap_name: str):
+    # 初始化基础数据
+    update_counter(_shared_total_exec_cnt)
+    update_counter(_shared_last_interesting_exec)
+    cid = make_uid()
+    html_path, out_dir = gen_case(cid)
+    global_bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
 
-    run_content_shell(html_path_abs)
+    # 执行content_shell
+    is_content_shell_done = run_content_shell(html_path_abs)
+    # 执行完去更新chromium自己的crash状态
+    is_crash_reporter_work = updateCrashCnt(html_path_abs)
 
     # 覆盖率处理
     shutil.rmtree(tmp_dir, ignore_errors=True)
     bin_files = glob.glob(bin_glob)
-
-    #todo  没有覆盖率文件 应该和crash同理
+    # 小概率事件，冗余考虑，如果没覆盖率文件，那肯定执行不正常
     if not bin_files:
-        return 0
+        is_content_shell_done = False
 
-    total_new_edges = 0
+    new_edges = 0
     for cov_file in bin_files:
-        total_new_edges += edge_bitmap.update_from_file(cov_file)
+        new_edges += global_bitmap.update_from_file(cov_file)
         os.remove(cov_file)
 
-    return total_new_edges
+    global_bitmap.close()
 
+    # report检测到的bug，不一定有用
+    if is_crash_reporter_work:
+        shutil.move(out_dir, CRASH_ROOT)
+        return
+    # 超时 == 语义错误 或者 crash
+    if not is_content_shell_done:
+        update_counter(_shared_timeout_cnt)
+        shutil.move(out_dir, TIMEOUT_DIR)
+        return
 
-# ---------- 核心执行 ----------
-def run_one_case(bitmap_name: str) -> bool:
-    # 计数：总执行 + 距上次有趣
-    update_counter(_shared_total_exec_cnt)
-    update_counter(_shared_last_interesting_exec)
-
-    cid = make_uid()
-    html_path, out_dir = gen_case(cid)
-    bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    new_edges = run(html_path, bitmap)
-    crashStatus = updateCrashCnt()
-    bitmap.close()
-
-    # 结果归档
-    if crashStatus > 0 or new_edges == -2:
-        shutil.move(out_dir, CRASH_ROOT)  # 异常/崩溃
+    if new_edges > 0:
+        update_counter(_shared_total_edges, delta=new_edges)
+        update_counter(_shared_last_interesting_exec, reset=True, value=0)
+        dst_dir = f"{CORPUS_ROOT}/{cid}"
+        shutil.move(out_dir, dst_dir)
     else:
-        if new_edges == -1:  # 语义超时
-            update_counter(_shared_timeout_cnt)
-            shutil.move(out_dir, TIMEOUT_DIR)
-        elif new_edges > 0:  # interesting
-            update_counter(_shared_total_edges, delta=new_edges)
-            update_counter(_shared_last_interesting_exec, reset=True, value=0)
-            dst_dir = f"{CORPUS_ROOT}/{cid}"
-            if out_dir != dst_dir:
-                shutil.move(out_dir, dst_dir)
-        else:  # 0 新边 → 丢弃
-            shutil.rmtree(out_dir, ignore_errors=True)
+        shutil.rmtree(out_dir, ignore_errors=True)
 
 
 # ---------- 统计 ----------
