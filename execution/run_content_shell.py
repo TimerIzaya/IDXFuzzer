@@ -8,8 +8,6 @@ import config
 from tool.tool import count_files_in_dir
 
 
-
-
 def run_content_shell(html_path: str):
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
@@ -72,6 +70,7 @@ def run_content_shell(html_path: str):
 
         # 进程已退出但没看到 DONE → 异常/崩溃
         if proc.poll() is not None and not done_seen:
+            print("# 进程已退出但没看到 DONE → 异常/崩溃")
             time.sleep(0.2)  # 等 crash 标记落盘
             logw.close()
             return -2
@@ -79,6 +78,7 @@ def run_content_shell(html_path: str):
         # BEGIN 太久没出现 → 页面没跑起来，当异常
         if not begin_seen and time.monotonic() > begin_deadline:
             try:
+                print("# # BEGIN 太久没出现 → 页面没跑起来，当异常/崩溃，准备杀")
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
@@ -88,6 +88,7 @@ def run_content_shell(html_path: str):
         # BEGIN 出现但超过语义窗口仍未 DONE → 语义超时
         if begin_seen and time.monotonic() > sem_deadline:
             try:
+                print("# BEGIN 出现但超过语义窗口仍未 DONE → 语义超时")
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
@@ -109,6 +110,7 @@ def run_content_shell(html_path: str):
 
     # 看到了 DONE：尽量优雅退出
     try:
+        print("# BEGIN 出现但超过语义窗口仍未 DONE → 语义超时")
         proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
         try:

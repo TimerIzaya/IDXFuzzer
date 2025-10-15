@@ -1,4 +1,5 @@
 from coverage.bitmap import GlobalEdgeBitmap
+from execution.run_content_shell import run_content_shell
 from main import make_uid, gen_case, run, init_worker
 from pathlib import Path
 
@@ -37,12 +38,13 @@ def testGen():
     print(out_dir)
     return html_path
 
-def testRunSpec(path):
-    testRun(path)
-
+def testRunSingleContentShell():
+    run_content_shell("test.html")
 
 if __name__ == '__main__':
      # path = testGen()
      # testRun(path)
-     testRun("test.html")
+     # testRun("test.html")
     #testRunSpec("result/corpus/7844dc39/7844dc39.html")
+    testRunSingleContentShell()
+
