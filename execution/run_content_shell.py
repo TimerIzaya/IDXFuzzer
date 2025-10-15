@@ -36,6 +36,7 @@ def run_content_shell(html_path: str):
 
     # 启动 content_shell；日志写文件，避免 PIPE 阻塞
     logw = open(log_path, "wb")
+    print("子进程启动")
     proc = subprocess.Popen(
         cmd, stdout=logw, stderr=logw,
         env=env, start_new_session=True
@@ -97,9 +98,23 @@ def run_content_shell(html_path: str):
             logw.close()
             return -1
 
+        if done_seen:
+            # 看到了 DONE：尽量优雅退出
+            try:
+                print("看到了 DONE：尽量优雅退出")
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            logw.close()
+            return 0
+
         # 硬兜底，防僵尸
         if time.monotonic() - t0 > hard_timeout_s:
             try:
+                print("# 硬兜底，防僵尸")
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
@@ -107,15 +122,5 @@ def run_content_shell(html_path: str):
             return -1
 
         time.sleep(0.01)
+    print("跑完了，什么都么有")
 
-    # 看到了 DONE：尽量优雅退出
-    try:
-        print("# BEGIN 出现但超过语义窗口仍未 DONE → 语义超时")
-        proc.wait(timeout=5)
-    except subprocess.TimeoutExpired:
-        try:
-            os.killpg(proc.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-    logw.close()
-    return 0

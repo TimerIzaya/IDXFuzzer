@@ -1,4 +1,5 @@
 from coverage.bitmap import GlobalEdgeBitmap
+from execution.js_wrapper import wrap_js_in_html
 from execution.run_content_shell import run_content_shell
 from main import make_uid, gen_case, run, init_worker
 from pathlib import Path
@@ -39,7 +40,10 @@ def testGen():
     return html_path
 
 def testRunSingleContentShell():
-    run_content_shell("test.html")
+    with open("tmp_env/test.html", "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        wrap_js_in_html(lines, "tmp_env/test_with_header.html", "001")
+        run_content_shell("tmp_env/test_with_header.html")
 
 if __name__ == '__main__':
      # path = testGen()
