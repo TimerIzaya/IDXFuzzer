@@ -31,7 +31,7 @@ SCHEMA_OPT_CNT = 200
 
 TXN_CNT = 10
 
-TIMEOUT = 8000  # ms
+TIMEOUT = 500  # ms
 
 PROCESS_TIMEOUT = 8 * 1000  # ms
 

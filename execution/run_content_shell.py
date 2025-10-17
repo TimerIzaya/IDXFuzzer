@@ -8,9 +8,9 @@ import config
 
 
 def run_content_shell(html_path: str):
-    def recordTimeInLog():
+    def recordTimeInLog(message: str):
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        logw.write((ts + "\n").encode("utf-8"))
+        logw.write((ts + ": " + message + "\n").encode("utf-8"))
         logw.flush()  # 刷到内存
         os.fsync(logw.fileno())  # 刷到磁盘（避免顺序被打乱）
 
@@ -41,13 +41,12 @@ def run_content_shell(html_path: str):
 
     # 启动 content_shell；日志写文件，避免 PIPE 阻塞
     logw = open(log_path, "wb")
-    recordTimeInLog()
+    recordTimeInLog("content_shell sub process started")
 
     proc = subprocess.Popen(
         cmd, stdout=logw, stderr=logw,
         env=env, start_new_session=True
     )
-
 
     begin_seen = False
     done_seen = False
@@ -64,12 +63,13 @@ def run_content_shell(html_path: str):
                 if b"FUZZ_DONE:" in content:
                     done_seen = True
         except FileNotFoundError:
+            recordTimeInLog("content shell log FileNotFoundError")
             pass
 
         # 进程已退出但没看到 DONE → 异常/崩溃， 目前没遇到过
         if proc.poll() is not None and not done_seen:
             time.sleep(0.2)  # 等 crash 标记落盘
-            recordTimeInLog()
+            recordTimeInLog("process exited but not found done")
             logw.close()
             return -1
 
@@ -79,17 +79,16 @@ def run_content_shell(html_path: str):
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            recordTimeInLog()
+            recordTimeInLog("waiting begin 5s but not found")
             logw.close()
             return -1
 
-        if time.time()  - t0 > config.PROCESS_TIMEOUT:
+        if time.time() - t0 > config.PROCESS_TIMEOUT:
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-
-            recordTimeInLog()
+            recordTimeInLog("something blocking, process timeout ")
             logw.close()
             return -1
 
@@ -102,7 +101,7 @@ def run_content_shell(html_path: str):
                     os.killpg(proc.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
-            recordTimeInLog()
+            recordTimeInLog("found done, bye")
             logw.close()
             logw.close()
             return 0
