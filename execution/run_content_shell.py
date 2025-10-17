@@ -60,14 +60,12 @@ def run_content_shell(html_path: str):
 
         # 进程已退出但没看到 DONE → 异常/崩溃， 目前没遇到过
         if proc.poll() is not None and not done_seen:
-            print("# 进程已退出但没看到 DONE → 异常/崩溃， 目前没遇到过")
             time.sleep(0.2)  # 等 crash 标记落盘
             logw.close()
             return -1
 
         # BEGIN 5s都没出现 → 页面没跑起来，当异常
         if not begin_seen and time.time() - t0 > 5000:
-            print("# BEGIN 5s都没出现 → 页面没跑起来，当异常")
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
@@ -76,7 +74,6 @@ def run_content_shell(html_path: str):
             return -1
 
         if time.time()  - t0 > config.PROCESS_TIMEOUT:
-            print("# PROCESS_TIMEOUT timeout")
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
