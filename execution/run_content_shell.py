@@ -2,11 +2,17 @@ import os
 import signal
 import subprocess
 import time
+from datetime import datetime
 
 import config
 
 
 def run_content_shell(html_path: str):
+    def recordTimeInLog():
+        # 写入当前时间（到毫秒）
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # 去掉最后3位微秒 → 毫秒
+        logw.write((timestamp + "\n").encode("utf-8"))
+
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
@@ -34,7 +40,8 @@ def run_content_shell(html_path: str):
 
     # 启动 content_shell；日志写文件，避免 PIPE 阻塞
     logw = open(log_path, "wb")
-    print("子进程启动")
+    recordTimeInLog()
+
     proc = subprocess.Popen(
         cmd, stdout=logw, stderr=logw,
         env=env, start_new_session=True
@@ -61,6 +68,7 @@ def run_content_shell(html_path: str):
         # 进程已退出但没看到 DONE → 异常/崩溃， 目前没遇到过
         if proc.poll() is not None and not done_seen:
             time.sleep(0.2)  # 等 crash 标记落盘
+            recordTimeInLog()
             logw.close()
             return -1
 
@@ -70,6 +78,7 @@ def run_content_shell(html_path: str):
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
+            recordTimeInLog()
             logw.close()
             return -1
 
@@ -78,6 +87,8 @@ def run_content_shell(html_path: str):
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
+
+            recordTimeInLog()
             logw.close()
             return -1
 
@@ -90,5 +101,7 @@ def run_content_shell(html_path: str):
                     os.killpg(proc.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+            recordTimeInLog()
+            logw.close()
             logw.close()
             return 0
