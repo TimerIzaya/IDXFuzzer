@@ -71,7 +71,7 @@ def run_content_shell(html_path: str):
             time.sleep(0.2)  # 等 crash 标记落盘
             recordTimeInLog("process exited but not found done")
             logw.close()
-            return -1
+            return 0
 
         # BEGIN 5s都没出现 → 页面没跑起来，当异常
         if not begin_seen and time.time() - t0 > 5000:
@@ -81,7 +81,7 @@ def run_content_shell(html_path: str):
                 pass
             recordTimeInLog("waiting begin 5s but not found")
             logw.close()
-            return -1
+            return 0
 
         if time.time() - t0 > config.PROCESS_TIMEOUT:
             try:
@@ -90,7 +90,7 @@ def run_content_shell(html_path: str):
                 pass
             recordTimeInLog("something blocking, process timeout ")
             logw.close()
-            return -1
+            return 0
 
         if done_seen:
             # 看到了 DONE：尽量优雅退出
@@ -103,5 +103,4 @@ def run_content_shell(html_path: str):
                     pass
             recordTimeInLog("found done, bye")
             logw.close()
-            logw.close()
-            return 0
+            return 1
