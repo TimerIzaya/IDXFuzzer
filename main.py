@@ -151,7 +151,7 @@ if __name__ == "__main__":
     # 先整一个
     threading.Thread(
         target=stat_worker,
-        args=(global_bitmap.name(), total_edge_counter, timeout_counter, total_exec_counter,
+        args=(global_bitmap, total_edge_counter, timeout_counter, total_exec_counter,
               last_interesting_counter, pending_cnt_counter, new_cnt_counter,
               completed_cnt_counter, attachment_cnt_counter, time.time()),
         daemon=True
