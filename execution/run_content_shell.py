@@ -8,7 +8,7 @@ import config
 
 
 def run_content_shell(html_path: str):
-    def recordTimeInLog(logw):
+    def recordTimeInLog():
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         logw.write((ts + "\n").encode("utf-8"))
         logw.flush()  # 刷到内存
