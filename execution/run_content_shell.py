@@ -67,6 +67,7 @@ def run_content_shell(html_path: str):
 
         # BEGIN 5s都没出现 → 页面没跑起来，当异常
         if not begin_seen and time.time() - t0 > 5000:
+            print("# BEGIN 5s都没出现 → 页面没跑起来，当异常")
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
@@ -74,8 +75,8 @@ def run_content_shell(html_path: str):
             logw.close()
             return -1
 
-        # BEGIN 出现但超过语义窗口仍未
         if time.time()  - t0 > config.PROCESS_TIMEOUT:
+            print("# PROCESS_TIMEOUT timeout")
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
