@@ -23,4 +23,4 @@ if __name__ == '__main__':
      # testRun(path)
      # testRun("test.html")
     #testRunSpec("result/corpus/7844dc39/7844dc39.html")
-     testRun("test.html")
+     testRun("test/test.html")
