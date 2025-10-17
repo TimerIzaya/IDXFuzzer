@@ -6,8 +6,8 @@ from pathlib import Path
 
 
 def testRun(path):
-    new_edges, crashStatus = run_content_shell(path)
-    print(new_edges, crashStatus)
+    is_content_shell_done = run_content_shell(path)
+    print("is_content_shell_done:", is_content_shell_done )
 
 
 def testGen():
