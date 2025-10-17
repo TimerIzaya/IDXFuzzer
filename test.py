@@ -1,35 +1,13 @@
 from coverage.bitmap import GlobalEdgeBitmap
-from execution.js_wrapper import wrap_js_in_html
 from execution.run_content_shell import run_content_shell
-from main import make_uid, gen_case, run, init_worker
+from main import make_uid, gen_case, init_exec_worker
 from pathlib import Path
 
 
 
 def testRun(path):
-    def getCases():
-        base_dir = Path("/timer/index/result/crashes/timeout")
-        html_files = [str(p) for p in base_dir.glob("*/**/*.html")]
-        return html_files
-
-    bitmap = GlobalEdgeBitmap(create=True)
-    bitmap_name = bitmap.name()
-
-
-    bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    init_worker()
-    new_edges, crashStatus = run(path, bitmap)
+    new_edges, crashStatus = run_content_shell(path)
     print(new_edges, crashStatus)
-
-    # paths = getCases()
-    # for p in paths:
-    #     print(p)
-    #     bitmap = GlobalEdgeBitmap(name=bitmap_name, create=False)
-    #     new_edges, crashStatus = run(p, bitmap)
-    #     print(new_edges, crashStatus)
-    #     print("      ")
-    #     print("      ")
-    #     print("      ")
 
 
 def testGen():
@@ -39,16 +17,10 @@ def testGen():
     print(out_dir)
     return html_path
 
-def testRunSingleContentShell():
-    with open("tmp_env/test.html", "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        wrap_js_in_html(lines, "tmp_env/test_with_header.html", "001")
-        run_content_shell("tmp_env/test_with_header.html")
 
 if __name__ == '__main__':
      # path = testGen()
      # testRun(path)
      # testRun("test.html")
     #testRunSpec("result/corpus/7844dc39/7844dc39.html")
-    testRunSingleContentShell()
-
+     testRun("test.html")
