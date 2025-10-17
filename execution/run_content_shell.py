@@ -8,10 +8,11 @@ import config
 
 
 def run_content_shell(html_path: str):
-    def recordTimeInLog():
-        # 写入当前时间（到毫秒）
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # 去掉最后3位微秒 → 毫秒
-        logw.write((timestamp + "\n").encode("utf-8"))
+    def recordTimeInLog(logw):
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        logw.write((ts + "\n").encode("utf-8"))
+        logw.flush()  # 刷到内存
+        os.fsync(logw.fileno())  # 刷到磁盘（避免顺序被打乱）
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
