@@ -5,7 +5,7 @@ CORPUS_ROOT = "result/corpus"
 
 CRASH_ROOT = "result/crashes"
 
-TIMEOUT_DIR = os.path.join(CRASH_ROOT, "timeout")
+TIMEOUT_DIR = "result/timeout"
 
 LOG_FILE = "result/fuzz_stats.log"
 
