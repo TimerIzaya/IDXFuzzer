@@ -202,26 +202,21 @@ def init_output_dirs() -> None:
         print(f"recreate path: {path}")
     print("[*] Initialized output directories.]")
 
-def archive_result_move():
-    result_dir = Path("result").resolve()
-    if not result_dir.is_dir():
-        raise FileNotFoundError(f"{result_dir} 不存在或不是目录")
+
+def archive_result_copy():
+    src = Path("result").resolve()
+    dst_root = src.parent / "history"
+    dst_root.mkdir(parents=True, exist_ok=True)
 
     ts = datetime.now().strftime("%Y%m%d%H%M%S")
-    history_dir = result_dir.parent / "history"
-    history_dir.mkdir(parents=True, exist_ok=True)
-
-    target = history_dir / f"result_{ts}"
-
-    # 若极少数情况下同一秒重复，自动加后缀避免冲突
+    dst = dst_root / f"result_{ts}"
     i = 1
-    while target.exists():
-        target = history_dir / f"result_{ts}_{i}"
+    while dst.exists():
+        dst = dst_root / f"result_{ts}_{i}"
         i += 1
 
-    shutil.copy(str(result_dir), str(target))
-    print(f"已备份到：{target}")
-
+    shutil.copytree(src, dst)
+    print(f"copied to: {dst}")
 
 
 
