@@ -44,8 +44,8 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
 
         log_msg = (
             "\n========== IDX Fuzzer Stats ==========\n"
-            +  f"========== {config.MODEL_CUR} \n"
-            + (f" (restore progess {config.MODEL_PROGRESS})" if config.MODEL_RESTORE else "")+ "\n"
+            +  f"========== {config.MODE_CUR} \n"
+            + (f" (restore progess {config.MODE_PROGRESS})" if config.MODE_RESTORE else "")+ "\n"
             f"{'Elapsed Time':<25}: {h:02d}h {m:02d}m {s:02d}s\n"
             f"{'Total Executions':<25}: {total_exec_counter.value}\n"
             f"{'Throughput (seeds/min)':<25}: {throughput:.2f}\n"

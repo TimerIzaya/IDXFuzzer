@@ -10,6 +10,7 @@ multiprocess_main.py
 - 每 60 秒打印一次运行统计信息并写入日志
 - 种子保存：有趣 → corpus，超时 → crashes/timeout，异常/崩溃 → crashes
 """
+import datetime
 from pathlib import Path
 import threading
 from itertools import repeat
@@ -185,7 +186,7 @@ def init_output_dirs() -> None:
     folder_list = [CORPUS_ROOT, CRASH_ROOT, TIMEOUT_DIR]
     for path in folder_list:
         # restore模式确保corpus存在，不要动它
-        if config.MODEL_RESTORE and path is CORPUS_ROOT:
+        if config.MODE_RESTORE and path is CORPUS_ROOT:
             os.makedirs(path, exist_ok=True)
             # 确保这个目录里的格式都是对的 corpus/cid/cid.html 有些case因为中断可能并没有生成完毕
             path = Path(path)  # 改成你的目录
@@ -200,6 +201,27 @@ def init_output_dirs() -> None:
         os.makedirs(path, exist_ok=True)
         print(f"recreate path: {path}")
     print("[*] Initialized output directories.]")
+
+def archive_result_move():
+    result_dir = Path("result").resolve()
+    if not result_dir.is_dir():
+        raise FileNotFoundError(f"{result_dir} 不存在或不是目录")
+
+    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+    history_dir = result_dir.parent / "history"
+    history_dir.mkdir(parents=True, exist_ok=True)
+
+    target = history_dir / f"result_{ts}"
+
+    # 若极少数情况下同一秒重复，自动加后缀避免冲突
+    i = 1
+    while target.exists():
+        target = history_dir / f"result_{ts}_{i}"
+        i += 1
+
+    shutil.move(str(result_dir), str(target))
+    print(f"已移动到：{target}")
+
 
 
 
@@ -225,33 +247,34 @@ if __name__ == "__main__":
         daemon=True
     ).start()
 
-    # 如果是restore模式，先跑corpus的
-    if MODEL_RESTORE:
-        config.MODEL_CUR = "restore"
+    if MODE_RESTORE:
+        # 先归档上一轮跑的结果
+        archive_result_move()
+        config.MODE_CUR = "restore"
         restore_pool = Pool(
             config.PROCESS_COUNT,
             initializer=init_exec_worker,
             initargs=(total_edge_counter, timeout_counter, total_exec_counter, last_interesting_counter,
                     pending_cnt_counter, new_cnt_counter, completed_cnt_counter, attachment_cnt_counter),
-            maxtasksperchild=100,  # 防止长期运行内存/句柄膨胀
+            maxtasksperchild=100, 
         )
-        config.MODEL_PROGRESS = 0
+        config.MODE_PROGRESS = 0
         try:        
             fn = partial(run_one_case_for_cov, global_bitmap.name())
             iter = iter_restore_cases(config.CORPUS_ROOT)
             for _ in restore_pool.imap_unordered(fn, iter, chunksize=1):
-                config.MODEL_PROGRESS += 1
+                config.MODE_PROGRESS += 1
         except KeyboardInterrupt:
             print("Interrupted by user.")
         finally:
             restore_pool.terminate()
             restore_pool.join()
-            config.MODEL_RESTORE = False
-            print(f"[*] Restore pool exited gracefully, restore corpus size: {config.MODEL_PROGRESS}]")
+            config.MODE_RESTORE = False
+            print(f"[*] Restore pool exited gracefully, restore corpus size: {config.MODE_PROGRESS}]")
 
 
     # 生成阶段进程池
-    config.MODEL_CUR = "generation"
+    config.MODE_CUR = "generation"
     gen_pool = Pool(
         config.PROCESS_COUNT,
         initializer=init_exec_worker,

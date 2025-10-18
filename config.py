@@ -48,8 +48,8 @@ PROCESS_COUNT = 8
 
 
 # 运行模式相关信息
-MODEL_CUR = None
-MODEL_RESTORE = True
-MODEL_GEN  = False
-MODEL_MUT = False
-MODEL_PROGRESS = False
+MODE_CUR = None
+MODE_RESTORE = True
+MODE_GEN  = False
+MODE_MUT = False
+MODE_PROGRESS = False
