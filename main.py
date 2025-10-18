@@ -219,8 +219,8 @@ def archive_result_move():
         target = history_dir / f"result_{ts}_{i}"
         i += 1
 
-    shutil.move(str(result_dir), str(target))
-    print(f"已移动到：{target}")
+    shutil.copy(str(result_dir), str(target))
+    print(f"已备份到：{target}")
 
 
 
