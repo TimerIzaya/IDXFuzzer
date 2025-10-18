@@ -29,4 +29,4 @@ def gen_case(case_id: str):
     js_code = IRToJSLifter.lift(ir)
     html_path = f"{out_dir}/{case_id}.html"
     wrap_js_in_html(js_code, html_path, case_id=case_id)
-    return html_path, out_dir
+    return html_path

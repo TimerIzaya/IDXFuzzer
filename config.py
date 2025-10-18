@@ -44,3 +44,12 @@ P_INSERT_NEST_IR = 0.02
 P_CLOSE_DB = 0.01
 
 PROCESS_COUNT = 8
+
+
+
+# 运行模式相关信息
+MODEL_CUR = None
+MODEL_RESTORE = True
+MODEL_GEN  = False
+MODEL_MUT = False
+MODEL_PROGRESS = False
