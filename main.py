@@ -244,7 +244,7 @@ if __name__ == "__main__":
 
     if MODE_RESTORE:
         # 先归档上一轮跑的结果
-        archive_result_move()
+        archive_result_copy()
         config.MODE_CUR = "restore"
         restore_pool = Pool(
             config.PROCESS_COUNT,
