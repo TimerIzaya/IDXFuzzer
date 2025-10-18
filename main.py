@@ -10,7 +10,7 @@ multiprocess_main.py
 - 每 60 秒打印一次运行统计信息并写入日志
 - 种子保存：有趣 → corpus，超时 → crashes/timeout，异常/崩溃 → crashes
 """
-import datetime
+from datetime import datetime
 from pathlib import Path
 import threading
 from itertools import repeat
