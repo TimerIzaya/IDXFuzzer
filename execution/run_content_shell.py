@@ -16,7 +16,8 @@ class CSExitStatus(Enum):
 
     def __str__(self):
         return self.name
-    
+
+
 
 
 def run_content_shell(html_path: str) -> CSExitStatus:
@@ -75,7 +76,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
                     begin_seen = True
                 if b"FUZZ_DONE:" in content:
                     done_seen = True
-                if b"FUZZ_JS_ERROR" or "FUZZ_UNHANDLED_REJECTION" in content:
+                if b"FUZZ_JS_ERROR" or b"FUZZ_UNHANDLED_REJECTION" in content:
                     runtime_error_seen = True
         except FileNotFoundError:
             recordTimeInLog("content shell log FileNotFoundError")

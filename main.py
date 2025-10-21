@@ -21,6 +21,7 @@ import config
 from config import *
 from coverage.bitmap import GlobalEdgeBitmap
 from execution import SharedStat
+from execution.SharedStat import Stats
 from execution.run_content_shell import CSExitStatus, run_content_shell
 from fuzzer.stat_worker import stat_worker
 from generator import gen_case
@@ -60,6 +61,7 @@ def run_one_case(case_path: str):
     global_bitmap_to_update.close()
 
     # 新边入库 否则扔掉
+    stat_mark_interesting = False
     if new_edges > 0:
         stat_mark_interesting = True
         cid = os.path.splitext(os.path.basename(case_path))[0]
@@ -81,63 +83,85 @@ def run_one_case(case_path: str):
         shutil.move(out_dir, OTHER_ROOT)
     
     # 进程超时 闻所未闻
+    stat_timeout = 0
     if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
         stat_timeout = 1
         shutil.move(out_dir, TIMEOUT_ROOT)
         return
     
     # 同步统计线程
-    stat = SharedStat(SharedStat.SHM_NAME, create=False)
-    stat.record_exec(stat_timeout, stat_pending_cnt, stat_new_cnt, stat_completed_cnt, stat_attachments_cnt, stat_mark_interesting)
+    Stats.update(
+        timeout=stat_timeout,
+        pending=stat_pending_cnt,
+        is_new=stat_new_cnt,
+        completed=stat_completed_cnt,
+        attachments=stat_attachments_cnt,
+        mark_interesting=stat_mark_interesting,
+    )
 
 
-def run_one_case_for_cov(global_bitmap_name: str, case_path: str):
-    global_bitmap_to_update = GlobalEdgeBitmap(name=global_bitmap_name, create=False)
-    html_path_abs = os.path.abspath(case_path)
-    out_dir = os.path.dirname(html_path_abs)
-    tmp_dir = os.path.join(out_dir, "chrome-tmp")
-    bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
-
-    # 执行content_shell
-    run_content_shell(html_path_abs)
-    # 覆盖率处理
-    shutil.rmtree(tmp_dir, ignore_errors=True)
-    bin_files = glob.glob(bin_glob)
-    new_edges = 0
-    for cov_file in bin_files:
-        new_edges += global_bitmap_to_update.update_from_file(cov_file)
-        os.remove(cov_file)
-    global_bitmap_to_update.close()
-
-
-
-def iter_restore_cases(corpus_dir: str) -> Iterator[str]:
-    """
-    corpus_dir/
-      ├── 0000eb8a/
-      │   └── 0000eb8a.html
-      ├── 0000f12c/
-      │   └── 0000f12c.html
-      └── ...
-
-    产出每个 case 的 html 路径；若精确命名不存在，则回退到该目录下找到的第一个 *.html。
-    """
-    for entry in os.scandir(corpus_dir):
-        if not entry.is_dir():
-            continue
-
-        case_id = entry.name
-        exact = os.path.join(entry.path, f"{case_id}.html")
-
-        if os.path.exists(exact):
-            yield exact
-            continue
-
-        # 若没有 .html 就跳过该 case，可按需打印日志
-        else:
-            print(f"[restore] skip: no html in {entry.path}")
+# def run_one_case_for_cov(global_bitmap_name: str, case_path: str):
+#     global_bitmap_to_update = GlobalEdgeBitmap(name=global_bitmap_name, create=False)
+#     html_path_abs = os.path.abspath(case_path)
+#     out_dir = os.path.dirname(html_path_abs)
+#     tmp_dir = os.path.join(out_dir, "chrome-tmp")
+#     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
+#
+#     # 执行content_shell
+#     run_content_shell(html_path_abs)
+#     # 覆盖率处理
+#     shutil.rmtree(tmp_dir, ignore_errors=True)
+#     bin_files = glob.glob(bin_glob)
+#     new_edges = 0
+#     for cov_file in bin_files:
+#         new_edges += global_bitmap_to_update.update_from_file(cov_file)
+#         os.remove(cov_file)
+#     global_bitmap_to_update.close()
 
 
+
+# def iter_restore_cases(corpus_dir: str) -> Iterator[str]:
+#     """
+#     corpus_dir/
+#       ├── 0000eb8a/
+#       │   └── 0000eb8a.html
+#       ├── 0000f12c/
+#       │   └── 0000f12c.html
+#       └── ...
+#
+#     产出每个 case 的 html 路径；若精确命名不存在，则回退到该目录下找到的第一个 *.html。
+#     """
+#     for entry in os.scandir(corpus_dir):
+#         if not entry.is_dir():
+#             continue
+#
+#         case_id = entry.name
+#         exact = os.path.join(entry.path, f"{case_id}.html")
+#
+#         if os.path.exists(exact):
+#             yield exact
+#             continue
+#
+#         # 若没有 .html 就跳过该 case，可按需打印日志
+#         else:
+#             print(f"[restore] skip: no html in {entry.path}")
+
+
+# # restore之前拷贝一份
+# def archive_result_copy():
+#     src = Path("result").resolve()
+#     dst_root = src.parent / "history"
+#     dst_root.mkdir(parents=True, exist_ok=True)
+#
+#     ts = datetime.now().strftime("%Y%m%d%H%M%S")
+#     dst = dst_root / f"result_{ts}"
+#     i = 1
+#     while dst.exists():
+#         dst = dst_root / f"result_{ts}_{i}"
+#         i += 1
+#
+#     shutil.copytree(src, dst)
+#     print(f"copied to: {dst}")
 
 def gen_run_one_case():
     cid = make_uid()
@@ -167,21 +191,7 @@ def init_output_dirs() -> None:
         print(f"recreate path: {path}")
     print("[*] Initialized output directories.]")
 
-# restore之前拷贝一份
-def archive_result_copy():
-    src = Path("result").resolve()
-    dst_root = src.parent / "history"
-    dst_root.mkdir(parents=True, exist_ok=True)
 
-    ts = datetime.now().strftime("%Y%m%d%H%M%S")
-    dst = dst_root / f"result_{ts}"
-    i = 1
-    while dst.exists():
-        dst = dst_root / f"result_{ts}_{i}"
-        i += 1
-
-    shutil.copytree(src, dst)
-    print(f"copied to: {dst}")
 
 
 
@@ -189,9 +199,7 @@ if __name__ == "__main__":
     init_output_dirs()
 
     global_bitmap = GlobalEdgeBitmap(create=True)
-
-
-    init_stats()
+    Stats.init(create=True)
 
     # 统计线程启动
     threading.Thread(

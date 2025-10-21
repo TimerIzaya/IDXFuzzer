@@ -2,32 +2,25 @@
 # -*- coding: utf-8 -*-
 
 """
-Shared counters demo: 多实例并发安全累加（共享内存 + 文件锁）
+共享计数（多实例并发安全，SharedMemory + 文件锁）
+对外只暴露四个核心操作（单例门面）：
+- Stats.init(create=True)         # 初始化（主进程调用一次；create=True 会清零/新建共享段）
+- Stats.update(...)               # 更新一条执行统计（安全累加 + 可选标记 interesting）
+- Stats.get() -> dict             # 获取快照（无锁读取，展示/监控用）
+- Stats.close()                   # 关闭本进程句柄（不删除共享段）
 
-全局指标（全部 uint64）：
-- timeout_cnt
-- total_exec_cnt
-- last_interesting_exec    # 语义：最近一次“产生新边”的全局执行序号（seq）
-- pending_cnt
-- new_cnt
-- completed_cnt
-- attachments_cnt
-
-注意：
-- total_edges 不在此累加；请直接从 GlobalEdgeBitmap 快照数位获取。
-- 锁用 /dev/shm 的文件锁；持锁区仅几次 u64 加法/赋值，开销可忽略。
+如果你需要“删除共享段”的能力，可额外调用：Stats.unlink() 由最后清理者执行。
 """
 
-from multiprocessing import shared_memory, Process
+from multiprocessing import shared_memory
 from contextlib import contextmanager
-from time import sleep, time
-import os, sys, fcntl
+import os, fcntl
 
-# ===== 配置 =====
-SHM_NAME   = os.environ.get("IDXF_STAT_SHM", "IDXF_STAT_SHM")
-LOCK_PATH  = os.environ.get("IDXF_STAT_LOCK", "/dev/shm/idxf-stat.lock")
+# ===== 环境配置（可用环境变量覆盖）=====
+SHM_NAME   = os.environ.get("BITMAP_SHM_NAME", "IDXF_STAT_SHM")
+LOCK_PATH  = os.environ.get("BITMAP_LOCK_PATH", "/dev/shm/idxf-stat.lock")
 
-# 7 个计数；留 1 个位置做版本/保留，凑整 8×8B = 64B，对齐友好
+# ===== 字段布局：8 × uint64 = 64B =====
 IDX_VERSION              = 0
 IDX_TIMEOUT_CNT          = 1
 IDX_TOTAL_EXEC_CNT       = 2
@@ -40,17 +33,11 @@ IDX_ATTACHMENTS_CNT      = 7
 NUM_U64 = 8
 BYTES   = NUM_U64 * 8  # 64B
 
-class SharedStat:
-    """
-    共享统计对象：在共享内存里放 8 个 uint64 字段。
-    通过文件锁实现跨独立进程互斥，保证 RMW（读-改-写）原子性。
-    """
+
+# ================= 内部实现类 =================
+class _SharedStat:
+    """内部实现：真正操作共享内存与文件锁。"""
     def __init__(self, name: str = SHM_NAME, create: bool | None = None):
-        """
-        create=True  : 尝试创建共享段；已存在会抛 FileExistsError
-        create=False : 只附着
-        create=None  : 先尝试创建，不行再附着（推荐）
-        """
         self.name = name
         self._lock_fd = None
 
@@ -60,13 +47,14 @@ class SharedStat:
         elif create is False:
             self.shm = shared_memory.SharedMemory(name=name, create=False)
         else:
+            # create=None：先尝试创建，不行则附着
             try:
                 self.shm = shared_memory.SharedMemory(name=name, create=True, size=BYTES)
                 self._init_memory_zero()
             except FileExistsError:
                 self.shm = shared_memory.SharedMemory(name=name, create=False)
 
-        # 作为 uint64 视图访问
+        # 作为 uint64 视图访问（'Q' = unsigned long long）
         self._u64 = memoryview(self.shm.buf).cast('Q')
 
         # 准备全局锁文件
@@ -76,32 +64,26 @@ class SharedStat:
     def _init_memory_zero(self):
         mv = memoryview(self.shm.buf)
         mv[:] = b"\x00" * len(mv)
-        mv.cast('Q')[IDX_VERSION] = 1
-        # 关键：显式释放临时 memoryview
+        mv.cast('Q')[IDX_VERSION] = 1  # 版本占位
         mv.release()
 
     @contextmanager
     def _locked(self):
-        """跨进程互斥：进入临界区"""
         fcntl.flock(self._lock_fd, fcntl.LOCK_EX)
         try:
             yield
         finally:
             fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
 
-    # ===== 基础操作 =====
-    def inc(self, idx: int, delta: int = 1) -> int:
-        """对指定字段加 delta，返回新值（在锁内调用）"""
+    # ===== 基础 RMW 操作（需在锁内调用）=====
+    def _inc(self, idx: int, delta: int = 1) -> int:
         self._u64[idx] += delta
         return int(self._u64[idx])
 
-    def get(self, idx: int) -> int:
-        return int(self._u64[idx])
-
-    def set_value(self, idx: int, value: int):
+    def _set(self, idx: int, value: int) -> None:
         self._u64[idx] = value
 
-    # ===== 语义化 APIs（建议用这些） =====
+    # ===== 语义化更新 =====
     def record_exec(
         self,
         timeout: int = 0,
@@ -111,39 +93,25 @@ class SharedStat:
         attachments: int = 0,
         mark_interesting: bool = False,
     ):
-        """
-        在“一个 case 执行完成”时调用一次。
-        - total_exec_cnt += 1（得到全局执行序号 seq）
-        - 其它计数按入参累加（非负整数）
-        - 若 mark_interesting=True：last_interesting_exec = seq
-        """
-        # —— 入参校验（防止意外传负数/非整型）——
+        # 参数校验（非负整数）
         for name, val in {
-            "timeout": timeout, "pending": pending,
-            "is_new": is_new, "completed": completed,
-            "attachments": attachments,
+            "timeout": timeout, "pending": pending, "is_new": is_new,
+            "completed": completed, "attachments": attachments,
         }.items():
             if not isinstance(val, int) or val < 0:
                 raise ValueError(f"{name} must be a non-negative int, got {val!r}")
 
         with self._locked():
-            seq = self.inc(IDX_TOTAL_EXEC_CNT, 1)
-
-            if timeout:
-                self.inc(IDX_TIMEOUT_CNT, timeout)
-            if pending:
-                self.inc(IDX_PENDING_CNT, pending)
-            if is_new:
-                self.inc(IDX_NEW_CNT, is_new)
-            if completed:
-                self.inc(IDX_COMPLETED_CNT, completed)
-            if attachments:
-                self.inc(IDX_ATTACHMENTS_CNT, attachments)
-
+            seq = self._inc(IDX_TOTAL_EXEC_CNT, 1)
+            if timeout:      self._inc(IDX_TIMEOUT_CNT, timeout)
+            if pending:      self._inc(IDX_PENDING_CNT, pending)
+            if is_new:       self._inc(IDX_NEW_CNT, is_new)
+            if completed:    self._inc(IDX_COMPLETED_CNT, completed)
+            if attachments:  self._inc(IDX_ATTACHMENTS_CNT, attachments)
             if mark_interesting:
-                self.set_value(IDX_LAST_INTERESTING_SEQ, seq)
+                self._set(IDX_LAST_INTERESTING_SEQ, seq)
 
-    # 读取快照（无锁读取，展示用足够）
+    # ===== 快照读取（无锁，展示足够）=====
     def snapshot(self) -> dict:
         arr = [int(v) for v in self._u64]
         return {
@@ -157,22 +125,17 @@ class SharedStat:
             "attachments_cnt":       arr[IDX_ATTACHMENTS_CNT],
         }
 
+    # ===== 资源管理 =====
     def close(self):
-        # 先关锁文件（可选顺序），重要的是先释放 memoryview
         if self._lock_fd is not None:
             os.close(self._lock_fd)
             self._lock_fd = None
-
-        # 关键：释放长期持有的 memoryview 视图
         if hasattr(self, "_u64") and self._u64 is not None:
             try:
                 self._u64.release()
             except AttributeError:
-                # 兼容极少数 Python 版本；没有 release 就 del
                 pass
             self._u64 = None
-
-        # 最后再 close 共享内存
         self.shm.close()
 
     def unlink(self):
@@ -182,36 +145,88 @@ class SharedStat:
             pass
 
 
+# ================== 单例门面 ==================
+class Stats:
+    """对外门面：四个核心操作 + 可选 unlink。"""
+    _inst: _SharedStat | None = None
 
+    @classmethod
+    def _ensure(cls):
+        if cls._inst is None:
+            # 子进程/外部工具首次使用时懒附着；不清零
+            cls._inst = _SharedStat(SHM_NAME, create=None)
+        return cls._inst
 
-STAT = None
+    # ---- 1) 初始化（主进程调用一次）----
+    @classmethod
+    def init(cls, create: bool = True):
+        """
+        create=True：新建或清零共享段（主进程启动时调用一次）
+        create=False：仅附着（不清零）
+        """
+        if cls._inst is None:
+            cls._inst = _SharedStat(SHM_NAME, create=create)
+        return cls
 
-def init_stats(create: bool = True):
-    """主进程在程序启动时调用一次。create=True 会清零计数。"""
-    global STAT
-    if STAT is None:
-        STAT = SharedStat(SHM_NAME, create=create)
+    # ---- 2) 更新（安全累加 / 标记 interesting）----
+    @classmethod
+    def update(
+        cls,
+        *,
+        timeout: int = 0,
+        pending: int = 0,
+        is_new: int = 0,
+        completed: int = 0,
+        attachments: int = 0,
+        mark_interesting: bool = False,
+    ):
+        inst = cls._ensure()
+        inst.record_exec(
+            timeout=timeout,
+            pending=pending,
+            is_new=is_new,
+            completed=completed,
+            attachments=attachments,
+            mark_interesting=mark_interesting,
+        )
 
-def get_stats() -> SharedStat:
-    """在任何地方拿当前共享统计实例（同一机器上所有进程共享内存）。"""
-    global STAT
-    if STAT is None:
-        # 子进程或外部工具 attach（不清零）
-        STAT = SharedStat(SHM_NAME, create=None)
-    return STAT
+    # ---- 3) 获取（快照字典）----
+    @classmethod
+    def get(cls) -> dict:
+        inst = cls._ensure()
+        return inst.snapshot()
 
-def close_stats():
-    global STAT
-    if STAT is not None:
-        STAT.close()
-        STAT = None
+    # ---- 4) 关闭（本进程句柄）----
+    @classmethod
+    def close(cls):
+        if cls._inst is not None:
+            cls._inst.close()
+            cls._inst = None
 
-def unlink_stats():  # 只有“最后清理者”调用；通常主进程退出前做
-    try:
-        s = SharedStat(SHM_NAME, create=False)
-        s.unlink()
-        s.close()
-    except FileNotFoundError:
-        pass
+    # （可选）删除共享段：最后清理者调用
+    @classmethod
+    def unlink(cls):
+        try:
+            inst = _SharedStat(SHM_NAME, create=False)
+            inst.unlink()
+            inst.close()
+        except FileNotFoundError:
+            pass
 
+if __name__ == "__main__":
+    # 仅主进程调用一次；会清零/创建共享段
+    Stats.init(create=True)
 
+    # ……在任意进程/子进程里更新（直接调用即可，懒附着）
+    Stats.update(is_new=1, mark_interesting=True)
+    Stats.update(timeout=1)
+    Stats.update(pending=2, attachments=1)
+
+    # 读取监控快照
+    print(Stats.get())  # {'version': 1, 'timeout_cnt': ..., ...}
+
+    # 本进程结束时释放句柄
+    Stats.close()
+
+    # 如果你是“最后清理者”，需要清理共享段：
+    # Stats.unlink()
