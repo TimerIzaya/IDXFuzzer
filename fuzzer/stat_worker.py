@@ -5,10 +5,10 @@ from multiprocessing import Value
 
 import numpy as np
 
+from execution.SharedStat import Stats
 import config
 from config import CORPUS_ROOT
 from coverage.bitmap import GlobalEdgeBitmap
-from execution import SharedStat
 
 
 # ---------- 统计 ----------
@@ -25,8 +25,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
 
 
         # 拿ShareStat快照
-        stat = SharedStat.get_stats()
-        snapshot = stat.snapshot()
+        snapshot = Stats.get()
         timeout_cnt           = snapshot["timeout_cnt"]
         total_exec_cnt        = snapshot["total_exec_cnt"]
         last_interesting_exec = snapshot["last_interesting_exec"]

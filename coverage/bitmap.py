@@ -28,8 +28,8 @@ class GlobalEdgeBitmap:
         self.bitmap = np.ndarray((self.size,), dtype=np.uint8, buffer=self.shm.buf)
 
         # 跨进程文件锁
-        os.makedirs(os.path.dirname(config.LOCK_PATH), exist_ok=True)
-        self._lock_fd = os.open(config.LOCK_PATH, os.O_CREAT | os.O_RDWR, 0o666)
+        os.makedirs(os.path.dirname(config.BITMAP_LOCK_PATH), exist_ok=True)
+        self._lock_fd = os.open(config.BITMAP_LOCK_PATH, os.O_CREAT | os.O_RDWR, 0o666)
 
     def _lock(self):   fcntl.flock(self._lock_fd, fcntl.LOCK_EX)
     def _unlock(self): fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
