@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from coverage.bitmap import GlobalEdgeBitmap
 from execution.run_content_shell import run_content_shell
 from main import make_uid, gen_case, init_exec_worker
@@ -29,9 +30,8 @@ def testRun(path):
 
 def testGen():
     cid = make_uid()
-    html_path, out_dir = gen_case(cid)
+    html_path = gen_case(cid)
     print(html_path)
-    print(out_dir)
     return html_path
 
 if __name__ == '__main__':

@@ -5,11 +5,17 @@ CORPUS_ROOT = "result/corpus"
 
 CRASH_ROOT = "result/crashes"
 
-TIMEOUT_DIR = "result/timeout"
+TIMEOUT_ROOT = "result/timeout"
+
+OTHER_ROOT = "result/other"
+
+SEMANTIC_ROOT  = "result/semantic"
 
 LOG_FILE = "result/fuzz_stats.log"
 
+BITMAP_SHM_NAME = "IDXF_GLOBAL_BITMAP"   # 固定名（进程间共享的“地址”）
 
+BITMAP_LOCK_PATH = "/dev/shm/idxf_global_bitmap.lock"  # 建议锁也跟着固定
 
 # 项目根目录
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

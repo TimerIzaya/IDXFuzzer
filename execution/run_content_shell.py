@@ -1,3 +1,4 @@
+from enum import Enum, auto
 import os
 import signal
 import subprocess
@@ -6,8 +7,19 @@ from datetime import datetime
 
 import config
 
+class CSExitStatus(Enum):
+    """枚举表示 content_shell 的执行状态。"""
+    NORMAL_EXIT = auto()      # 正常退出
+    PROCESS_TIMEOUT = auto()            # 程序崩溃（如 SegFault）
+    SEMANTIC_ERROR = auto()   # 语义错误（如 JS 逻辑错误、UnhandledRejection）
+    OTHER = auto()
 
-def run_content_shell(html_path: str):
+    def __str__(self):
+        return self.name
+    
+
+
+def run_content_shell(html_path: str) -> CSExitStatus:
     def recordTimeInLog(message: str):
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         logw.write((ts + ": " + message + "\n").encode("utf-8"))
@@ -50,6 +62,7 @@ def run_content_shell(html_path: str):
 
     begin_seen = False
     done_seen = False
+    semantic_error_seen = False
     t0 = time.time()
 
     while True:
@@ -62,6 +75,8 @@ def run_content_shell(html_path: str):
                     begin_seen = True
                 if b"FUZZ_DONE:" in content:
                     done_seen = True
+                if b"FUZZ_JS_ERROR" or "FUZZ_UNHANDLED_REJECTION" in content:
+                    runtime_error_seen = True
         except FileNotFoundError:
             recordTimeInLog("content shell log FileNotFoundError")
             pass
@@ -71,9 +86,14 @@ def run_content_shell(html_path: str):
             time.sleep(0.2)  # 等 crash 标记落盘
             recordTimeInLog("process exited but not found done")
             logw.close()
-            return 0
+            return CSExitStatus.OTHER
+        
+        if semantic_error_seen:
+            recordTimeInLog("semantic error in js, exit..")
+            logw.close()
+            return CSExitStatus.SEMANTIC_ERROR
 
-        # BEGIN 5s都没出现 → 页面没跑起来，当异常
+        # BEGIN 5s都没出现, 页面没跑起来，理论上来说不会再见的
         if not begin_seen and time.time() - t0 > 5000:
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
@@ -81,8 +101,9 @@ def run_content_shell(html_path: str):
                 pass
             recordTimeInLog("waiting begin 5s but not found")
             logw.close()
-            return 0
+            return CSExitStatus.OTHER
 
+        # 纯进程超时了，理论上来说不会再见的
         if time.time() - t0 > config.PROCESS_TIMEOUT:
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
@@ -90,10 +111,11 @@ def run_content_shell(html_path: str):
                 pass
             recordTimeInLog("something blocking, process timeout ")
             logw.close()
-            return 0
+            return CSExitStatus.PROCESS_TIMEOUT
 
         if done_seen:
             # 看到了 DONE：尽量优雅退出
+            print("done")
             try:
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
@@ -103,4 +125,4 @@ def run_content_shell(html_path: str):
                     pass
             recordTimeInLog("found done, bye")
             logw.close()
-            return 1
+            return CSExitStatus.NORMAL_EXIT
