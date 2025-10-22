@@ -116,7 +116,6 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
         if done_seen:
             # 看到了 DONE：尽量优雅退出
-            print("done")
             try:
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
