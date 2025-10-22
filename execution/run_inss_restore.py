@@ -1,127 +1,188 @@
-# import shutil
-# from datetime import datetime
-# from pathlib import Path
-# from typing import Iterator
-#
-# from config import *
-#
-# def iter_restore_cases(corpus_dir: str) -> Iterator[str]:
-#     for entry in os.scandir(corpus_dir):
-#         if not entry.is_dir():
-#             continue
-#
-#         case_id = entry.name
-#         exact = os.path.join(entry.path, f"{case_id}.html")
-#
-#         if os.path.exists(exact):
-#             yield exact
-#             continue
-#
-#         # 若没有 .html 就跳过该 case，可按需打印日志
-#         else:
-#             print(f"[restore] skip: no html in {entry.path}")
-#
-#
-# # restore之前拷贝一份
-# def archive_result_copy():
-#     src = Path("result").resolve()
-#     dst_root = src.parent / "history"
-#     dst_root.mkdir(parents=True, exist_ok=True)
-#
-#     ts = datetime.now().strftime("%Y%m%d%H%M%S")
-#     dst = dst_root / f"result_{ts}"
-#     i = 1
-#     while dst.exists():
-#         dst = dst_root / f"result_{ts}_{i}"
-#         i += 1
-#
-#     shutil.copytree(src, dst)
-#     print(f"copied to: {dst}")
-#
-#
-#
-# def cov_worker_main(worker_id: int, cpu_id: int, stop_event: Event, q: Queue):
-#     print(f"[cov-worker {worker_id}] pid={os.getpid()} pin -> cpu {cpu_id}")
-#     ok = set_affinity_for_current_process(cpu_id)
-#     if not ok:
-#         print(f"[cov-worker {worker_id}] WARN: cpu affinity failed (continue)")
-#
-#     try:
-#         Stats.init(create=False)
-#     except Exception:
-#         pass
-#
-#     while not stop_event.is_set():
-#         try:
-#             item = q.get(timeout=0.5)
-#         except Exception:
-#             continue
-#         if item is None:
-#             q.task_done()
-#             break
-#         try:
-#             # 关键：仍然用 run_one_case；恢复模式由 config.MODE_RESTORE 控制，不改这里
-#             run_one_case(item)
-#         except Exception as e:
-#             print(f"[cov-worker {worker_id}] error: {e}")
-#         finally:
-#             q.task_done()
-#
-#     print(f"[cov-worker {worker_id}] exit.")
-#
-#
-# def start_cov_batch(num_tasks: int,
-#                     num_workers: int,
-#                     start_cpu: int) -> None:
-#     """
-#     执行 run_one_case 共 num_tasks 次，平摊到 num_workers 个绑定 CPU 的 worker。
-#     - 若 config.MODE_RESTORE=True：从 CORPUS_ROOT 枚举现有 {cid}/{cid}.html（不改 corpus）
-#     - 若 config.MODE_RESTORE=False：先 gen_case N 个，再跑（会触发正常入库/清理）
-#     """
-#     if num_tasks <= 0 or num_workers <= 0:
-#         print("[cov] nothing to do.")
-#         return
-#
-#     cpus = choose_cpus(num_workers, start_cpu)
-#     stop_event = Event()
-#     q: Queue = Queue(maxsize=max(64, num_workers * 4))
-#
-#     if config.MODE_RESTORE:
-#         print(f"[cov] RESTORE mode: enqueue up to {num_tasks} cases from CORPUS_ROOT={CORPUS_ROOT}")
-#         for html_path in iter_restore_cases(CORPUS_ROOT, limit=num_tasks):
-#             q.put(html_path)
-#     else:
-#         print(f"[cov] GENERATE mode: enqueue {num_tasks} fresh cases")
-#         for _ in range(num_tasks):
-#             cid = make_uid()
-#             html_path = gen_case(cid)
-#             q.put(html_path)
-#
-#     procs: List[Process] = []
-#     for i in range(num_workers):
-#         p = Process(
-#             target=cov_worker_main,
-#             args=(i, cpus[i], stop_event, q),
-#             name=f"idxf-cov-worker-{i}",
-#         )
-#         p.start()
-#         procs.append(p)
-#         print(f"[cov] started worker {i} pid={p.pid} cpu={cpus[i]}")
-#
-#     for _ in range(num_workers):
-#         q.put(None)
-#
-#     try:
-#         q.join()
-#     except KeyboardInterrupt:
-#         print("[cov] KeyboardInterrupt -> stopping workers")
-#     finally:
-#         stop_event.set()
-#         for p in procs:
-#             p.join(timeout=5.0)
-#             if p.is_alive():
-#                 p.terminate()
-#                 p.join(2.0)
-#         print("[cov] batch done.")
-#
-#
+import shutil
+import time
+from asyncio import Event, Queue
+from datetime import datetime
+from multiprocessing import Process
+from pathlib import Path
+from typing import Iterator, Sequence, List
+
+import config
+from config import *
+from coverage.bitmap import GlobalEdgeBitmap
+from coverage.share_stat import Stats
+from execution.exec_case import run_one_case
+from execution.run_inss import install_signal_handlers, stop_workers
+from tool.cpu_utils import set_affinity_for_current_process, choose_cpus, get_available_cpus
+
+
+def iter_restore_cases(corpus_dir: str) -> Iterator[str]:
+    for entry in os.scandir(corpus_dir):
+        if not entry.is_dir():
+            continue
+
+        case_id = entry.name
+        exact = os.path.join(entry.path, f"{case_id}.html")
+
+        if os.path.exists(exact):
+            yield exact
+            continue
+
+        # 若没有 .html 就跳过该 case，可按需打印日志
+        else:
+            print(f"[restore] skip: no html in {entry.path}")
+
+
+# restore之前拷贝一份
+def archive_result_copy():
+    src = Path("result").resolve()
+    dst_root = src.parent / "history"
+    dst_root.mkdir(parents=True, exist_ok=True)
+
+    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+    dst = dst_root / f"result_{ts}"
+    i = 1
+    while dst.exists():
+        dst = dst_root / f"result_{ts}_{i}"
+        i += 1
+
+    shutil.copytree(src, dst)
+    print(f"copied to: {dst}")
+
+
+def split_even(items: Sequence[str], n: int) -> List[List[str]]:
+    """把 items 平均切成 n 片；最后几片长度可能多 1。"""
+    n = max(1, n)
+    L = len(items)
+    base, extra = divmod(L, n)
+    out: List[List[str]] = []
+    start = 0
+    for i in range(n):
+        size = base + (1 if i < extra else 0)
+        out.append(list(items[start:start+size]))
+        start += size
+    return out
+
+
+
+
+def worker_main_restore(instance_id: int, cpu_id: int, stop_event: Event, cases: List[str]):
+    ok = set_affinity_for_current_process(cpu_id)
+    if ok:
+        print(f"[restore {instance_id}] pinned to CPU {cpu_id}")
+    else:
+        print(f"[restore {instance_id}] WARN: pin cpu {cpu_id} failed")
+
+    try:
+        for path in cases:
+            if stop_event.is_set():
+                break
+            try:
+                run_one_case(path)  # 你的 run_one_case 接收字符串路径
+            except Exception as e:
+                print(f"[restore {instance_id}] run_one_case({path}) exception: {e}", flush=True)
+    finally:
+        print(f"[restore {instance_id}] pid={os.getpid()} exiting...")
+
+def start_workers_restore(corpus_dir: str, num_instances: int, start_cpu: int = 0) -> Tuple[List[Process], Event]:
+    # 1) 收集所有 case
+    cases = list(iter_restore_cases(corpus_dir))
+    print(f"[restore] total cases: {len(cases)}")
+    if not cases:
+        return [], Event()
+
+    # 2) 选 CPU，准备 stop_event
+    available = get_available_cpus()
+    if not available:
+        raise RuntimeError("no cpus detected")
+    cpus = choose_cpus(num_instances, start_cpu)
+    stop_event = Event()
+
+    # 3) 平均切片
+    slices = split_even(cases, num_instances)
+
+    # 4) 仅“附着”全局 bitmap（必须先在主程序创建过）
+    try:
+        gb = GlobalEdgeBitmap(create=False)
+        gb.close()
+    except FileNotFoundError:
+        print("[restore] ERROR: global bitmap not found, run normal init first")
+        raise
+
+    # 5) 启动
+    procs: List[Process] = []
+    for i in range(num_instances):
+        cpu_id = cpus[i]
+        p = Process(target=worker_main_restore,
+                    args=(i, cpu_id, stop_event, slices[i]),
+                    name=f"idxf-restore-{i}")
+        p.start()
+        procs.append(p)
+        print(f"[restore] started worker {i} pid={p.pid} cpu={cpu_id} cases={len(slices[i])}")
+    return procs, stop_event
+
+
+def split_even(items, n: int):
+    n = max(1, n)
+    L = len(items)
+    base, extra = divmod(L, n)
+    out = []
+    start = 0
+    for i in range(n):
+        size = base + (1 if i < extra else 0)
+        out.append(list(items[start:start + size]))
+        start += size
+    return out
+
+
+def resolve_restore_mode():
+    # ===== 如果需要，先跑一轮 RESTORE 模式 =====
+    if getattr(config, "MODE_RESTORE", False):
+        print("[main] MODE_RESTORE=True → replay corpus first...")
+
+
+        restore_cases = list(iter_restore_cases(config.CORPUS_ROOT))
+        print(f"[restore] total cases: {len(restore_cases)}")
+
+        if restore_cases:
+            # --- 按实例数均分 ---
+            slices = split_even(restore_cases, config.NUM_INSTANCES)
+
+            # --- 启动 restore worker（每个 worker 顺序跑自己的一片后退出） ---
+            from multiprocessing import Process, Event
+            from tool.cpu_utils import choose_cpus, get_available_cpus, set_affinity_for_current_process
+            from execution.exec_case import run_one_case
+
+
+            available = get_available_cpus()
+            if not available:
+                raise RuntimeError("no cpus detected")
+            cpus = choose_cpus(config.NUM_INSTANCES, 0)
+
+            r_stop = Event()
+            r_procs: list[Process] = []
+            for i in range(config.NUM_INSTANCES):
+                p = Process(target=worker_main_restore,
+                            args=(i, cpus[i], r_stop, slices[i]),
+                            name=f"idxf-restore-{i}")
+                p.start()
+                r_procs.append(p)
+                print(f"[restore] started worker {i} pid={p.pid} cpu={cpus[i]} cases={len(slices[i])}")
+
+            # 安装信号处理器（复用你的现有函数），支持 Ctrl-C
+            install_signal_handlers({"stop_event": r_stop}, {"procs": r_procs})
+
+            # 阻塞，直到都跑完或收到停止信号
+            try:
+                while any(p.is_alive() for p in r_procs) and not r_stop.is_set():
+                    time.sleep(0.2)
+            finally:
+                # 统一收尾
+                r_stop.set()
+                stop_workers(r_procs, r_stop, timeout=10.0)
+
+        # 关闭一次性 restore 模式开关
+        config.MODE_RESTORE = False
+        print("[main] restore finished → switch to gen mode.")
+
+
+

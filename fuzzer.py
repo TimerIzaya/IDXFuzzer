@@ -6,6 +6,7 @@ from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
 from execution.run_inss import start_workers, install_signal_handlers, stop_workers
 from coverage.stat_worker import stat_worker
+from execution.run_inss_restore import resolve_restore_mode
 from tool.tool import init_output_dirs
 
 if __name__ == '__main__':
@@ -17,6 +18,9 @@ if __name__ == '__main__':
 
     # 初始化统计共享内存
     Stats.init(create=True)
+
+    # 先处理restore模式
+    resolve_restore_mode()
 
     # 启动 worker 实例
     START_CPU = 0  # 可根据需要改成 e.g. 2 或从配置读取
