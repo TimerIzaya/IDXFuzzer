@@ -144,6 +144,7 @@ def run_one_case(case_path: str):
         )
     global_bitmap_to_update = GlobalEdgeBitmap(create=False)
 
+
     html_path_abs = os.path.abspath(case_path)
     out_dir = os.path.dirname(html_path_abs)
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
@@ -157,6 +158,8 @@ def run_one_case(case_path: str):
     stat_new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
     stat_completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
     stat_attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
+    stat_timeout = 0
+    stat_mark_interesting = False
 
     # 删除浏览器运行临时数据，处理覆盖率
     shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -172,11 +175,6 @@ def run_one_case(case_path: str):
         os.remove(cov_file)
 
     global_bitmap_to_update.close()
-
-
-
-    # 新边入库 否则扔掉
-    stat_mark_interesting = False
 
     if new_edges > 0:
         stat_mark_interesting = True
@@ -215,13 +213,12 @@ def run_one_case(case_path: str):
         return
 
     # 进程超时 闻所未闻
-    stat_timeout = 0
+
     if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
         stat_timeout = 1
         shutil.move(out_dir, config.TIMEOUT_ROOT)
         sync_stat()
         return
-
     # 兜底
     sync_stat()
 

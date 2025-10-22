@@ -2,14 +2,11 @@ import shutil
 import time
 from asyncio import Event, Queue
 from datetime import datetime
-from multiprocessing import Process
 from pathlib import Path
 from typing import Iterator, Sequence, List, Tuple
 
 import config
 from config import *
-from coverage.bitmap import GlobalEdgeBitmap
-from coverage.share_stat import Stats
 from execution.exec_case import run_one_case
 from execution.run_inss import install_signal_handlers, stop_workers
 from tool.cpu_utils import set_affinity_for_current_process, choose_cpus, get_available_cpus
