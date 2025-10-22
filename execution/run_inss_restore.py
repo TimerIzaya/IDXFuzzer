@@ -4,7 +4,7 @@ from asyncio import Event, Queue
 from datetime import datetime
 from multiprocessing import Process
 from pathlib import Path
-from typing import Iterator, Sequence, List
+from typing import Iterator, Sequence, List, Tuple
 
 import config
 from config import *
