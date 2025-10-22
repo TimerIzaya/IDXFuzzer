@@ -176,41 +176,30 @@ def run_one_case(case_path: str):
 
     global_bitmap_to_update.close()
 
-    # restore模式看一下覆盖率就得了
-    if config.MODE_RESTORE:
-        sync_stat()
-        return
-
     # report检测到的bug
     if stat_pending_cnt > 0 or stat_new_cnt > 0 or stat_completed_cnt > 0 or stat_attachments_cnt > 0:
         shutil.move(out_dir, config.CRASH_ROOT)
-        sync_stat()
-        return
 
     # 语义错误 回来受罚
     if cs_exit_status is CSExitStatus.SEMANTIC_ERROR:
         shutil.move(out_dir, config.SEMANTIC_ROOT)
-        sync_stat()
-        return
 
     # 不明愿意 回来研究
     if cs_exit_status is CSExitStatus.OTHER:
         shutil.move(out_dir, config.OTHER_ROOT)
-        sync_stat()
-        return
 
     # 进程超时 闻所未闻
     if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
         stat_timeout = 1
         shutil.move(out_dir, config.TIMEOUT_ROOT)
-        sync_stat()
-        return
 
     # 最后开始处理正常场景, 记住生成出来的case默认就是放在corpus里的，没有新边就删了
     if new_edges > 0:
         stat_mark_interesting = True
     else:
+        # 可能被上面的场景给移走了
         shutil.rmtree(out_dir, ignore_errors=True)
+
     sync_stat()
 
 
