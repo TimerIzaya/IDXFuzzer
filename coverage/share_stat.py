@@ -37,22 +37,29 @@ BYTES   = NUM_U64 * 8  # 64B
 # ================= 内部实现类 =================
 class _SharedStat:
     """内部实现：真正操作共享内存与文件锁。"""
-    def __init__(self, name: str = SHM_NAME, create: bool | None = None):
+    def __init__(self, name: str = SHM_NAME, create: bool = False):
         self.name = name
         self._lock_fd = None
 
-        if create is True:
-            self.shm = shared_memory.SharedMemory(name=name, create=True, size=BYTES)
-            self._init_memory_zero()
-        elif create is False:
-            self.shm = shared_memory.SharedMemory(name=name, create=False)
-        else:
-            # create=None：先尝试创建，不行则附着
+        if create:
             try:
+                # 尝试新建
                 self.shm = shared_memory.SharedMemory(name=name, create=True, size=BYTES)
-                self._init_memory_zero()
+                self._creator = True
             except FileExistsError:
-                self.shm = shared_memory.SharedMemory(name=name, create=False)
+                # 上次没 unlink 或其他进程残留：先删后建
+                try:
+                    shared_memory.SharedMemory(name=name).unlink()
+                except FileNotFoundError:
+                    pass
+                self.shm = shared_memory.SharedMemory(name=name, create=True, size=BYTES)
+                self._creator = True
+
+                # 创建时清零
+            self._init_memory_zero()
+        else:
+            self.shm = shared_memory.SharedMemory(name=name, create=False)
+
 
         # 作为 uint64 视图访问（'Q' = unsigned long long）
         self._u64 = memoryview(self.shm.buf).cast('Q')
