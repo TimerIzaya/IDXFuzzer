@@ -35,7 +35,7 @@ def iter_restore_cases(corpus_dir: str) -> Iterator[str]:
 # restore之前拷贝一份
 def archive_result_copy():
     src = Path("result").resolve()
-    dst_root = src.parent / "history"
+    dst_root = src.parent.parent / "history"
     dst_root.mkdir(parents=True, exist_ok=True)
 
     ts = datetime.now().strftime("%Y%m%d%H%M%S")
