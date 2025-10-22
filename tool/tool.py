@@ -14,7 +14,7 @@ def count_files_in_dir(path: str) -> int:
 
 # ---------- 工具函数 ----------
 def make_uid() -> str:
-    return uuid.uuid4().hex[:8]
+    return uuid.uuid4().hex[:12]
 
 
 # ---------- 初始化各种文件夹 ----------
