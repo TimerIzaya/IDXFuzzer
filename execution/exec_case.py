@@ -80,8 +80,8 @@ def run_content_shell(html_path: str) -> CSExitStatus:
                     begin_seen = True
                 if b"FUZZ_DONE:" in content:
                     done_seen = True
-                if b"FUZZ_JS_ERROR" or b"FUZZ_UNHANDLED_REJECTION" in content:
-                    runtime_error_seen = True
+                if (b"FUZZ_JS_ERROR" in content) or (b"FUZZ_UNHANDLED_REJECTION" in content):
+                    semantic_error_seen = True
         except FileNotFoundError:
             recordTimeInLog("content shell log FileNotFoundError")
             pass
@@ -99,7 +99,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             return CSExitStatus.SEMANTIC_ERROR
 
         # BEGIN 5s都没出现, 页面没跑起来，理论上来说不会再见的
-        if not begin_seen and time.time() - t0 > 5000:
+        if not begin_seen and time.time() - t0 > 5:
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
@@ -133,6 +133,15 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
 
 def run_one_case(case_path: str):
+    def sync_stat():
+        Stats.update(
+            timeout=stat_timeout,
+            pending=stat_pending_cnt,
+            is_new=stat_new_cnt,
+            completed=stat_completed_cnt,
+            attachments=stat_attachments_cnt,
+            mark_interesting=stat_mark_interesting,
+        )
     global_bitmap_to_update = GlobalEdgeBitmap(create=False)
 
     html_path_abs = os.path.abspath(case_path)
@@ -164,42 +173,49 @@ def run_one_case(case_path: str):
 
     global_bitmap_to_update.close()
 
+    # restore模式看一下覆盖率就得了
+    if config.MODE_RESTORE:
+        return
+
     # 新边入库 否则扔掉
     stat_mark_interesting = False
-    if not config.MODE_RESTORE:
-        if new_edges > 0:
-            stat_mark_interesting = True
-            cid = os.path.splitext(os.path.basename(case_path))[0]
-            dst_dir = f"{config.CORPUS_ROOT}/{cid}"
-            shutil.move(out_dir, dst_dir)
-        else:
-            shutil.rmtree(out_dir, ignore_errors=True)
+
+    if new_edges > 0:
+        stat_mark_interesting = True
+        cid = os.path.splitext(os.path.basename(case_path))[0]
+        dst_dir = f"{config.CORPUS_ROOT}/{cid}"
+        shutil.move(out_dir, dst_dir)
+    else:
+        shutil.rmtree(out_dir, ignore_errors=True)
 
     # report检测到的bug
     if stat_pending_cnt > 0 or stat_new_cnt > 0 or stat_completed_cnt > 0 or stat_attachments_cnt > 0:
         shutil.move(out_dir, config.CRASH_ROOT)
+        sync_stat()
+        return
 
     # 语义错误 回来受罚
     if cs_exit_status is CSExitStatus.SEMANTIC_ERROR:
         shutil.move(out_dir, config.SEMANTIC_ROOT)
+        sync_stat()
+        return
 
     # 不明愿意 回来研究
     if cs_exit_status is CSExitStatus.OTHER:
         shutil.move(out_dir, config.OTHER_ROOT)
+        sync_stat()
+        return
 
     # 进程超时 闻所未闻
     stat_timeout = 0
     if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
         stat_timeout = 1
         shutil.move(out_dir, config.TIMEOUT_ROOT)
+        sync_stat()
         return
 
-    # 同步统计线程
-    Stats.update(
-        timeout=stat_timeout,
-        pending=stat_pending_cnt,
-        is_new=stat_new_cnt,
-        completed=stat_completed_cnt,
-        attachments=stat_attachments_cnt,
-        mark_interesting=stat_mark_interesting,
-    )
+    # 兜底
+    sync_stat()
+
+
+
