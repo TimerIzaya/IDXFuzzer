@@ -30,7 +30,7 @@ if __name__ == '__main__':
     resolve_restore_mode()
 
     # 启动 worker 实例
-    config.MODE_CUR = config.MODE_GEN
+    config.MODE_CUR = "generation"
     START_CPU = 0  # 可根据需要改成 e.g. 2 或从配置读取
     procs = start_workers(config.NUM_INSTANCES, START_CPU, stop_event)
 

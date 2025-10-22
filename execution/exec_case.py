@@ -173,9 +173,7 @@ def run_one_case(case_path: str):
 
     global_bitmap_to_update.close()
 
-    # restore模式看一下覆盖率就得了
-    if config.MODE_RESTORE:
-        return
+
 
     # 新边入库 否则扔掉
     stat_mark_interesting = False
@@ -184,9 +182,19 @@ def run_one_case(case_path: str):
         stat_mark_interesting = True
         cid = os.path.splitext(os.path.basename(case_path))[0]
         dst_dir = f"{config.CORPUS_ROOT}/{cid}"
-        shutil.move(out_dir, dst_dir)
+
+        # restore模式你就别移动了
+        if not config.MODE_RESTORE:
+            os.makedirs(dst_dir)
+            shutil.move(out_dir, dst_dir)
     else:
         shutil.rmtree(out_dir, ignore_errors=True)
+
+    # restore模式看一下覆盖率就得了
+    if config.MODE_RESTORE:
+        sync_stat()
+        return
+
 
     # report检测到的bug
     if stat_pending_cnt > 0 or stat_new_cnt > 0 or stat_completed_cnt > 0 or stat_attachments_cnt > 0:

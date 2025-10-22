@@ -86,7 +86,7 @@ def resolve_restore_mode():
     # ===== 如果需要，先跑一轮 RESTORE 模式 =====
     if getattr(config, "MODE_RESTORE", False):
         print("[main] MODE_RESTORE=True → replay corpus first...")
-        config.MODE_CUR = config.MODE_RESTORE
+        config.MODE_CUR = "restore"
 
         restore_cases = list(iter_restore_cases(config.CORPUS_ROOT))
         print(f"[restore] total cases: {len(restore_cases)}")
