@@ -5,7 +5,7 @@ import config
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
 from execution.run_inss import start_workers, install_signal_handlers, stop_workers
-from fuzzer.stat_worker import stat_worker
+from coverage.stat_worker import stat_worker
 from tool.tool import init_output_dirs
 
 if __name__ == '__main__':
