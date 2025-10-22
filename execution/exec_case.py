@@ -90,8 +90,10 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     semantic_error_seen = False
 
     time.sleep(config.TIMEOUT)
+    logw.flush()
+    os.fsync(logw.fileno())
     try:
-        with open(log_path, "rb") as r:
+        with open(log_path, "rb", buffering=0) as r:
             content = r.read()
             if b"FUZZ_BEGIN" in content:
                 begin_seen = True
@@ -108,6 +110,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         return cleanup_kill(CSExitStatus.SEMANTIC_ERROR, "semantic error in js, exit..")
 
     if not begin_seen:
+        print("where begin")
         return cleanup_kill(CSExitStatus.OTHER, "where begin??")
 
     if done_seen:
