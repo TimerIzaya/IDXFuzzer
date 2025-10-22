@@ -176,23 +176,10 @@ def run_one_case(case_path: str):
 
     global_bitmap_to_update.close()
 
-    if new_edges > 0:
-        stat_mark_interesting = True
-        cid = os.path.splitext(os.path.basename(case_path))[0]
-        dst_dir = f"{config.CORPUS_ROOT}/{cid}"
-
-        # restore模式你就别移动了
-        if not config.MODE_RESTORE:
-            os.makedirs(dst_dir)
-            shutil.move(out_dir, dst_dir)
-    else:
-        shutil.rmtree(out_dir, ignore_errors=True)
-
     # restore模式看一下覆盖率就得了
     if config.MODE_RESTORE:
         sync_stat()
         return
-
 
     # report检测到的bug
     if stat_pending_cnt > 0 or stat_new_cnt > 0 or stat_completed_cnt > 0 or stat_attachments_cnt > 0:
@@ -213,13 +200,24 @@ def run_one_case(case_path: str):
         return
 
     # 进程超时 闻所未闻
-
     if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
         stat_timeout = 1
         shutil.move(out_dir, config.TIMEOUT_ROOT)
         sync_stat()
         return
-    # 兜底
+
+    # 最后开始处理正常场景
+    if new_edges > 0:
+        stat_mark_interesting = True
+        cid = os.path.splitext(os.path.basename(case_path))[0]
+        dst_dir = f"{config.CORPUS_ROOT}/{cid}"
+
+        # restore模式你就别移动了
+        if not config.MODE_RESTORE:
+            os.makedirs(dst_dir)
+            shutil.move(out_dir, dst_dir)
+    else:
+        shutil.rmtree(out_dir, ignore_errors=True)
     sync_stat()
 
 
