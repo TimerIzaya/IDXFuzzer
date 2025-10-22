@@ -48,20 +48,17 @@ def archive_result_copy():
     shutil.copytree(src, dst)
     print(f"copied to: {dst}")
 
-
-def split_even(items: Sequence[str], n: int) -> List[List[str]]:
-    """把 items 平均切成 n 片；最后几片长度可能多 1。"""
+def split(items, n: int):
     n = max(1, n)
     L = len(items)
     base, extra = divmod(L, n)
-    out: List[List[str]] = []
+    out = []
     start = 0
     for i in range(n):
         size = base + (1 if i < extra else 0)
-        out.append(list(items[start:start+size]))
+        out.append(list(items[start:start + size]))
         start += size
     return out
-
 
 
 
@@ -98,7 +95,7 @@ def start_workers_restore(corpus_dir: str, num_instances: int, start_cpu: int = 
     stop_event = Event()
 
     # 3) 平均切片
-    slices = split_even(cases, num_instances)
+    slices = split(cases, num_instances)
 
     # 4) 仅“附着”全局 bitmap（必须先在主程序创建过）
     try:
@@ -121,17 +118,7 @@ def start_workers_restore(corpus_dir: str, num_instances: int, start_cpu: int = 
     return procs, stop_event
 
 
-def split_even(items, n: int):
-    n = max(1, n)
-    L = len(items)
-    base, extra = divmod(L, n)
-    out = []
-    start = 0
-    for i in range(n):
-        size = base + (1 if i < extra else 0)
-        out.append(list(items[start:start + size]))
-        start += size
-    return out
+
 
 
 def resolve_restore_mode():
@@ -144,8 +131,9 @@ def resolve_restore_mode():
         print(f"[restore] total cases: {len(restore_cases)}")
 
         if restore_cases:
+            archive_result_copy()
             # --- 按实例数均分 ---
-            slices = split_even(restore_cases, config.NUM_INSTANCES)
+            slices = split(restore_cases, config.NUM_INSTANCES)
 
             # --- 启动 restore worker（每个 worker 顺序跑自己的一片后退出） ---
             from multiprocessing import Process, Event
