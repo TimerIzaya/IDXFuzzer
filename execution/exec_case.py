@@ -97,9 +97,9 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         try:
             with open(log_path, "rb") as r:
                 content = r.read()
-                if b"FUZZ_BEGIN:" in content:
+                if b"FUZZ_BEGIN" in content:
                     begin_seen = True
-                if b"FUZZ_DONE:" in content:
+                if b"FUZZ_DONE" in content:
                     done_seen = True
                 if (b"FUZZ_JS_ERROR" in content) or (b"FUZZ_UNHANDLED_REJECTION" in content):
                     semantic_error_seen = True
