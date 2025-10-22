@@ -88,24 +88,20 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     begin_seen = False
     done_seen = False
     semantic_error_seen = False
-    t0 = time.time()
-    while True:
-        if time.time() - t0 > config.TIMEOUT:
-            break
-        # 每间隔0.1s读一次全部文件
-        time.sleep(0.1)
-        try:
-            with open(log_path, "rb") as r:
-                content = r.read()
-                if b"FUZZ_BEGIN" in content:
-                    begin_seen = True
-                if b"FUZZ_DONE" in content:
-                    done_seen = True
-                if (b"FUZZ_JS_ERROR" in content) or (b"FUZZ_UNHANDLED_REJECTION" in content):
-                    semantic_error_seen = True
-        except FileNotFoundError:
-            recordTimeInLog("content shell log FileNotFoundError")
-            pass
+
+    time.sleep(config.TIMEOUT)
+    try:
+        with open(log_path, "rb") as r:
+            content = r.read()
+            if b"FUZZ_BEGIN" in content:
+                begin_seen = True
+            if b"FUZZ_DONE" in content:
+                done_seen = True
+            if (b"FUZZ_JS_ERROR" in content) or (b"FUZZ_UNHANDLED_REJECTION" in content):
+                semantic_error_seen = True
+    except FileNotFoundError:
+        recordTimeInLog("content shell log FileNotFoundError")
+        pass
 
 
     if semantic_error_seen:
