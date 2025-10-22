@@ -69,8 +69,9 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     done_seen = False
     semantic_error_seen = False
     t0 = time.time()
-
     while True:
+        if time.time() - t0 > config.TIMEOUT:
+            break
         # 每间隔0.1s读一次全部文件
         time.sleep(0.1)
         try:
@@ -86,50 +87,40 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             recordTimeInLog("content shell log FileNotFoundError")
             pass
 
-        # 进程已退出但没看到 DONE → 异常/崩溃， 目前没遇到过
-        if proc.poll() is not None and not done_seen:
-            time.sleep(0.2)  # 等 crash 标记落盘
-            recordTimeInLog("process exited but not found done")
-            logw.close()
-            return CSExitStatus.OTHER
-        
-        if semantic_error_seen:
-            recordTimeInLog("semantic error in js, exit..")
-            logw.close()
-            return CSExitStatus.SEMANTIC_ERROR
+    # # 进程已退出但没看到 DONE → 异常/崩溃， 目前没遇到过
+    # if proc.poll() is not None and not done_seen:
+    #     time.sleep(0.2)  # 等 crash 标记落盘
+    #     recordTimeInLog("process exited but not found done")
+    #     logw.close()
+    #     return CSExitStatus.OTHER
 
-        # BEGIN 5s都没出现, 页面没跑起来，理论上来说不会再见的
-        if not begin_seen and time.time() - t0 > 5:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            recordTimeInLog("waiting begin 5s but not found")
-            logw.close()
-            return CSExitStatus.OTHER
+    if semantic_error_seen:
+        os.killpg(proc.pid, signal.SIGKILL)
+        recordTimeInLog("semantic error in js, exit..")
+        logw.close()
+        return CSExitStatus.SEMANTIC_ERROR
 
-        # 纯进程超时了，理论上来说不会再见的
-        if time.time() - t0 > config.PROCESS_TIMEOUT:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            recordTimeInLog("something blocking, process timeout ")
-            logw.close()
-            return CSExitStatus.PROCESS_TIMEOUT
+    # BEGIN 5s都没出现, 页面没跑起来，理论上来说不会再见的
+    if not begin_seen:
+        os.killpg(proc.pid, signal.SIGKILL)
+        recordTimeInLog("waiting begin 5s but not found")
+        logw.close()
+        return CSExitStatus.OTHER
 
-        if done_seen:
-            # 看到了 DONE：尽量优雅退出
-            try:
-                proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(proc.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-            recordTimeInLog("found done, bye")
-            logw.close()
-            return CSExitStatus.NORMAL_EXIT
+    # # 纯进程超时了，理论上来说不会再见的
+    # if time.time() - t0 > config.PROCESS_TIMEOUT:
+    #     os.killpg(proc.pid, signal.SIGKILL)
+    #     recordTimeInLog("something blocking, process timeout ")
+    #     logw.close()
+    #     return CSExitStatus.PROCESS_TIMEOUT
+
+    if done_seen:
+        os.killpg(proc.pid, signal.SIGKILL)
+        recordTimeInLog("found done, bye")
+        logw.close()
+        return CSExitStatus.NORMAL_EXIT
+
+    return CSExitStatus.OTHER
 
 
 def run_one_case(case_path: str):

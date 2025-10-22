@@ -10,7 +10,10 @@ from config import *
 from execution.exec_case import run_one_case
 from execution.run_inss import install_signal_handlers, stop_workers
 from tool.cpu_utils import set_affinity_for_current_process, choose_cpus, get_available_cpus
-
+# --- 启动 restore worker（每个 worker 顺序跑自己的一片后退出） ---
+from multiprocessing import Process, Event
+from tool.cpu_utils import choose_cpus, get_available_cpus, set_affinity_for_current_process
+from execution.exec_case import run_one_case
 
 def iter_restore_cases(corpus_dir: str) -> Iterator[str]:
     for entry in os.scandir(corpus_dir):
@@ -95,14 +98,6 @@ def resolve_restore_mode():
             total = len(restore_cases)
             sizes = [len(s) for s in slices]
             print(f"[restore] split -> {sizes}  (sum={sum(sizes)}, total={total})")
-            # 严格验证：没有遗漏、没有重复
-            assert sum(sizes) == total, "[restore] split sum mismatch!"
-
-            # --- 启动 restore worker（每个 worker 顺序跑自己的一片后退出） ---
-            from multiprocessing import Process, Event
-            from tool.cpu_utils import choose_cpus, get_available_cpus, set_affinity_for_current_process
-            from execution.exec_case import run_one_case
-
 
             available = get_available_cpus()
             if not available:
@@ -114,10 +109,9 @@ def resolve_restore_mode():
             for i in range(config.NUM_INSTANCES):
                 p = Process(target=worker_main_restore,
                             args=(cpus[i], r_stop, slices[i]),
-                            name=f"idxf-restore-{i}")
+                            name=f"idxfuzzer-restore-{i}")
                 p.start()
                 r_procs.append(p)
-                # print(f"[restore] started worker {i} pid={p.pid} cpu={cpus[i]} cases={len(slices[i])}")
 
             # 安装信号处理器（复用你的现有函数），支持 Ctrl-C
             install_signal_handlers({"stop_event": r_stop}, {"procs": r_procs})
