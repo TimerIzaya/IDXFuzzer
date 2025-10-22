@@ -206,16 +206,9 @@ def run_one_case(case_path: str):
         sync_stat()
         return
 
-    # 最后开始处理正常场景
+    # 最后开始处理正常场景, 记住生成出来的case默认就是放在corpus里的，没有新边就删了
     if new_edges > 0:
         stat_mark_interesting = True
-        cid = os.path.splitext(os.path.basename(case_path))[0]
-        dst_dir = f"{config.CORPUS_ROOT}/{cid}"
-
-        # restore模式你就别移动了
-        if not config.MODE_RESTORE:
-            os.makedirs(dst_dir)
-            shutil.move(out_dir, dst_dir)
     else:
         shutil.rmtree(out_dir, ignore_errors=True)
     sync_stat()

@@ -38,7 +38,7 @@ def wrap_js_in_html(lines, out_path: str, case_id: str) -> None:
 
 
 def gen_case(case_id: str):
-    out_dir = f"result/{case_id}"
+    out_dir = f"{config.CORPUS_ROOT}/{case_id}"
     os.makedirs(out_dir, exist_ok=True)
     ir = generate_ir_program()
     with open(f"{out_dir}/{case_id}.json", "w") as f:
