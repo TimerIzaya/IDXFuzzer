@@ -30,6 +30,26 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         logw.write((ts + ": " + message + "\n").encode("utf-8"))
         logw.flush()  # 刷到内存
         os.fsync(logw.fileno())  # 刷到磁盘（避免顺序被打乱）
+    def cleanup_kill(status: CSExitStatus, note: str):
+        # 先尝试温和退出，再强杀，最后务必 wait() 回收，避免僵尸
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except Exception:
+            pass
+        try:
+            proc.wait(timeout=1.5)
+        except Exception:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except Exception:
+                pass
+            try:
+                proc.wait(timeout=1.5)
+            except Exception:
+                pass
+        recordTimeInLog(note)
+        logw.close()
+        return status
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
@@ -87,38 +107,15 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             recordTimeInLog("content shell log FileNotFoundError")
             pass
 
-    # # 进程已退出但没看到 DONE → 异常/崩溃， 目前没遇到过
-    # if proc.poll() is not None and not done_seen:
-    #     time.sleep(0.2)  # 等 crash 标记落盘
-    #     recordTimeInLog("process exited but not found done")
-    #     logw.close()
-    #     return CSExitStatus.OTHER
 
     if semantic_error_seen:
-        os.killpg(proc.pid, signal.SIGKILL)
-        recordTimeInLog("semantic error in js, exit..")
-        logw.close()
-        return CSExitStatus.SEMANTIC_ERROR
+        return cleanup_kill(CSExitStatus.SEMANTIC_ERROR, "semantic error in js, exit..")
 
-    # BEGIN 5s都没出现, 页面没跑起来，理论上来说不会再见的
     if not begin_seen:
-        os.killpg(proc.pid, signal.SIGKILL)
-        recordTimeInLog("waiting begin 5s but not found")
-        logw.close()
-        return CSExitStatus.OTHER
-
-    # # 纯进程超时了，理论上来说不会再见的
-    # if time.time() - t0 > config.PROCESS_TIMEOUT:
-    #     os.killpg(proc.pid, signal.SIGKILL)
-    #     recordTimeInLog("something blocking, process timeout ")
-    #     logw.close()
-    #     return CSExitStatus.PROCESS_TIMEOUT
+        return cleanup_kill(CSExitStatus.OTHER, "where begin??")
 
     if done_seen:
-        os.killpg(proc.pid, signal.SIGKILL)
-        recordTimeInLog("found done, bye")
-        logw.close()
-        return CSExitStatus.NORMAL_EXIT
+        return cleanup_kill(CSExitStatus.NORMAL_EXIT, "found done, bye")
 
     return CSExitStatus.OTHER
 
