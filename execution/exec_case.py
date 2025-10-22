@@ -1,3 +1,5 @@
+import glob
+import shutil
 from enum import Enum, auto
 import os
 import signal
@@ -6,6 +8,10 @@ import time
 from datetime import datetime
 
 import config
+from coverage.bitmap import GlobalEdgeBitmap
+from coverage.share_stat import Stats
+from tool.tool import count_files_in_dir
+
 
 class CSExitStatus(Enum):
     """枚举表示 content_shell 的执行状态。"""
@@ -16,7 +22,6 @@ class CSExitStatus(Enum):
 
     def __str__(self):
         return self.name
-
 
 
 def run_content_shell(html_path: str) -> CSExitStatus:
@@ -165,28 +170,28 @@ def run_one_case(case_path: str):
         if new_edges > 0:
             stat_mark_interesting = True
             cid = os.path.splitext(os.path.basename(case_path))[0]
-            dst_dir = f"{CORPUS_ROOT}/{cid}"
+            dst_dir = f"{config.CORPUS_ROOT}/{cid}"
             shutil.move(out_dir, dst_dir)
         else:
             shutil.rmtree(out_dir, ignore_errors=True)
 
     # report检测到的bug
     if stat_pending_cnt > 0 or stat_new_cnt > 0 or stat_completed_cnt > 0 or stat_attachments_cnt > 0:
-        shutil.move(out_dir, CRASH_ROOT)
+        shutil.move(out_dir, config.CRASH_ROOT)
 
     # 语义错误 回来受罚
     if cs_exit_status is CSExitStatus.SEMANTIC_ERROR:
-        shutil.move(out_dir, SEMANTIC_ROOT)
+        shutil.move(out_dir, config.SEMANTIC_ROOT)
 
     # 不明愿意 回来研究
     if cs_exit_status is CSExitStatus.OTHER:
-        shutil.move(out_dir, OTHER_ROOT)
+        shutil.move(out_dir, config.OTHER_ROOT)
 
     # 进程超时 闻所未闻
     stat_timeout = 0
     if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
         stat_timeout = 1
-        shutil.move(out_dir, TIMEOUT_ROOT)
+        shutil.move(out_dir, config.TIMEOUT_ROOT)
         return
 
     # 同步统计线程

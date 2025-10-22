@@ -16,10 +16,20 @@ class GlobalEdgeBitmap:
         self.created = False
 
         if create:
-            # 严格新建；存在就报错，让调用方知道不是“新建”
-            self.shm = shm.SharedMemory(create=True, size=self.size, name=BITMAP_SHM_NAME)
-            self.created = True
-            # 新建时清零
+            try:
+                # 尝试新建
+                self.shm = shm.SharedMemory(create=True, size=self.size, name=BITMAP_SHM_NAME)
+                self.created = True
+            except FileExistsError:
+                # 说明上一次异常退出遗留；先删后建
+                try:
+                    shm.SharedMemory(name=BITMAP_SHM_NAME).unlink()
+                except FileNotFoundError:
+                    pass
+                self.shm = shm.SharedMemory(create=True, size=self.size, name=BITMAP_SHM_NAME)
+                self.created = True
+
+                # 新建时清零
             np.ndarray((self.size,), dtype=np.uint8, buffer=self.shm.buf)[:] = 0
         else:
             # 严格附着；不存在就报错，让调用方知道要先创建
