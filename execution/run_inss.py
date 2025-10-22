@@ -58,12 +58,11 @@ def start_workers(num_instances: int = 10, start_cpu: int = 0) -> Tuple[List[Pro
     # 取全局 bitmap 名（如果 GlobalEdgeBitmap 提供 name()）
     gb = GlobalEdgeBitmap(create=False)
     # 如果 create=False 且没有现有 shm，这可能 Fail，但我们不依赖 name 强制传递（run_one_case 里也 new GlobalEdgeBitmap(create=False)）
-    gb_name = gb.name()
     gb.close()
 
     for i in range(num_instances):
         cpu_id = cpus[i]
-        p = Process(target=worker_main, args=(i, cpu_id, stop_event, gb_name), name=f"idxf-worker-{i}")
+        p = Process(target=worker_main, args=(i, cpu_id, stop_event), name=f"idxf-worker-{i}")
         p.start()
         procs.append(p)
         print(f"[main] started worker {i} pid={p.pid} cpu={cpu_id}")
