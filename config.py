@@ -60,4 +60,3 @@ MODE_CUR = None
 MODE_RESTORE = True
 MODE_GEN  = False
 MODE_MUT = False
-MODE_PROGRESS = False

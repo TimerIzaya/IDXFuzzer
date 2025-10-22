@@ -65,16 +65,28 @@ def split(items, n: int):
 def worker_main_restore(cpu_id: int, stop_event: Event, cases: List[str]):
     set_affinity_for_current_process(cpu_id)
 
+    done = 0
     for path in cases:
         if stop_event.is_set():
             break
-        run_one_case(path)  # 你的 run_one_case 接收字符串路径
+        try:
+            run_one_case(path)
+            done += 1
+        except Exception as e:
+            print(f"[restore] ERROR run_one_case({path}): {e}", flush=True)
+            # 继续跑后面的 case，而不是让进程直接退出
+    print(f"check done: {done}")
+
+    # for path in cases:
+    #     if stop_event.is_set():
+    #         break
+    #     run_one_case(path)  # 你的 run_one_case 接收字符串路径
 
 def resolve_restore_mode():
     # ===== 如果需要，先跑一轮 RESTORE 模式 =====
     if getattr(config, "MODE_RESTORE", False):
         print("[main] MODE_RESTORE=True → replay corpus first...")
-
+        config.MODE_CUR = config.MODE_RESTORE
 
         restore_cases = list(iter_restore_cases(config.CORPUS_ROOT))
         print(f"[restore] total cases: {len(restore_cases)}")

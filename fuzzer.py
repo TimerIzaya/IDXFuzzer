@@ -30,6 +30,7 @@ if __name__ == '__main__':
     resolve_restore_mode()
 
     # 启动 worker 实例
+    config.MODE_CUR = config.MODE_GEN
     START_CPU = 0  # 可根据需要改成 e.g. 2 或从配置读取
     procs = start_workers(config.NUM_INSTANCES, START_CPU, stop_event)
 
@@ -37,7 +38,6 @@ if __name__ == '__main__':
     stop_event_holder = {"stop_event": stop_event}
     procs_holder = {"procs": procs}
     install_signal_handlers(stop_event_holder, procs_holder)
-    print("[main] all workers started. Press Ctrl-C to stop.")
 
     try:
         # 主线程循环：仅用于保持进程存活并可处理其他周期性任务
