@@ -12,21 +12,23 @@ multiprocess_main.py
 """
 from datetime import datetime
 from pathlib import Path
+import signal
 import threading
 from itertools import repeat
-from multiprocessing import Pool, Value
+from multiprocessing import Event, Pool, Process, Value, current_process
 import time, glob, numpy as np, shutil
 
 import config
 from config import *
 from coverage.bitmap import GlobalEdgeBitmap
+from cpu_utils import choose_cpus, get_available_cpus, set_affinity_for_current_process
 from execution import SharedStat
 from execution.SharedStat import Stats
 from execution.run_content_shell import CSExitStatus, run_content_shell
 from fuzzer.stat_worker import stat_worker
 from generator import gen_case
 from tool.tool import count_files_in_dir, make_uid
-from typing import Iterator
+from typing import Iterator, List, Optional
 
 def run_one_case(case_path: str):
     global_bitmap_to_update = GlobalEdgeBitmap(create=False)
@@ -193,23 +195,173 @@ def init_output_dirs() -> None:
 
 
 
+# === Worker process main ===
+def worker_main(instance_id: int, cpu_id: int, stop_event: Event, global_bitmap_name: Optional[str]=None):
+    """
+    每个实例在子进程里执行：先绑定 CPU，再初始化所需的共享对象（Stats），然后无限循环生成 case。
+    检测 stop_event.is_set() 并退出。
+    """
+    proc = current_process()
+    print(f"[worker {instance_id}] pid={os.getpid()} start, attempting to pin to cpu {cpu_id}...")
+    ok = set_affinity_for_current_process(cpu_id)
+    if ok:
+        print(f"[worker {instance_id}] pinned to CPU {cpu_id}")
+    else:
+        print(f"[worker {instance_id}] WARNING: failed to pin to CPU {cpu_id} (continuing without affinity)")
 
+    # 如果你的 Stats 需要在子进程 attach，请在这里调用 Stats.init(create=False) 或类似; 我这里尝试通用调用（若不存在则忽略）
+    try:
+        Stats.init(create=False)
+    except Exception:
+        pass
+
+    # 子进程主循环
+    try:
+        while not stop_event.is_set():
+            # 生成并执行一个 case
+            try:
+                gen_run_one_case()
+            except Exception as e:
+                # 子进程内部不应退出，记录并继续
+                print(f"[worker {instance_id}] exception in gen_run_one_case: {e}", flush=True)
+    finally:
+        print(f"[worker {instance_id}] pid={os.getpid()} exiting...")
+
+# === Supervisor / main ===
+def start_workers(num_instances: int = 10, start_cpu: int = 0) -> List[Process]:
+    """
+    启动 num_instances 个进程，每个绑定到一个 CPU（从 start_cpu 开始选取）。
+    返回启动的 Process 列表和 stop_event（主程序保存 stop_event 以便在退出时 set）。
+    """
+    available = get_available_cpus()
+    if not available:
+        raise RuntimeError("no cpus detected")
+
+    cpus = choose_cpus(num_instances, start_cpu)
+    stop_event = Event()
+    procs: List[Process] = []
+    # 取全局 bitmap 名（如果 GlobalEdgeBitmap 提供 name()）
+    try:
+        gb = GlobalEdgeBitmap(create=False)
+        # 如果 create=False 且没有现有 shm，这可能 Fail，但我们不依赖 name 强制传递（run_one_case 里也 new GlobalEdgeBitmap(create=False)）
+        try:
+            gb_name = gb.name()
+        except Exception:
+            gb_name = getattr(gb, "shm", None) and getattr(gb.shm, "name", None)
+        try:
+            gb.close()
+        except Exception:
+            pass
+    except Exception:
+        gb_name = None
+
+    for i in range(num_instances):
+        cpu_id = cpus[i]
+        p = Process(target=worker_main, args=(i, cpu_id, stop_event, gb_name), name=f"idxf-worker-{i}")
+        p.start()
+        procs.append(p)
+        print(f"[main] started worker {i} pid={p.pid} cpu={cpu_id}")
+    return procs, stop_event
+
+def stop_workers(procs: List[Process], stop_event: Event, timeout: float = 10.0): # type: ignore
+    """
+    通知停止并等待退出，若超时则强制 terminate。
+    """
+    stop_event.set()
+    t0 = time.time()
+    for p in procs:
+        remaining = max(0.0, timeout - (time.time() - t0))
+        p.join(remaining)
+        if p.is_alive():
+            print(f"[main] worker pid={p.pid} did not exit in time, terminating...")
+            p.terminate()
+            p.join(2.0)
+
+def install_signal_handlers(stop_event_holder: dict, procs_holder: dict):
+    """
+    在主进程安装 SIGINT / SIGTERM 处理器，优雅退出所有子进程。
+    stop_event_holder, procs_holder 是字典包装以便在 handler 内修改（闭包）。
+    """
+    def _handler(signum, frame):
+        print(f"[main] caught signal {signum}, shutting down...")
+        try:
+            stop_event = stop_event_holder.get("stop_event")
+            procs = procs_holder.get("procs", [])
+            if stop_event:
+                stop_event.set()
+            if procs:
+                stop_workers(procs, stop_event or Event(), timeout=10.0)
+        finally:
+            # 之后退出主进程
+            os._exit(0)
+
+    signal.signal(signal.SIGINT, _handler)
+    signal.signal(signal.SIGTERM, _handler)
+        
 
 if __name__ == "__main__":
+
+     # 初始化文件夹、shared bitmap、Stats、统计线程
     init_output_dirs()
 
+    # 创建 / 绑定 全局 bitmap（主进程负责创建 shared object）
     global_bitmap = GlobalEdgeBitmap(create=True)
+    # 如果 GlobalEdgeBitmap 支持 name()，保留名字
+    try:
+        gb_name = global_bitmap.name()
+    except Exception:
+        gb_name = getattr(global_bitmap, "shm", None) and getattr(global_bitmap.shm, "name", None)
+
     Stats.init(create=True)
 
-    # 统计线程启动
-    threading.Thread(
-        target=stat_worker,
-        args=(global_bitmap, time.time()),
-        daemon=True
-    ).start()
+    # 启动 stat_worker 线程
+    stat_thread = threading.Thread(target=stat_worker, args=(global_bitmap, time.time()), daemon=True)
+    stat_thread.start()
 
-    while True:
-        gen_run_one_case()
+    # 启动 worker 实例（10 个，绑定 cpu 从 0 开始）
+    NUM_INSTANCES = 10
+    START_CPU = 0  # 可根据需要改成 e.g. 2 或从配置读取
+
+    procs, stop_event = start_workers(NUM_INSTANCES, START_CPU)
+
+    # 安装信号处理器，便于按 Ctrl-C 优雅退出
+    stop_event_holder = {"stop_event": stop_event}
+    procs_holder = {"procs": procs}
+    install_signal_handlers(stop_event_holder, procs_holder)
+
+    print("[main] all workers started. Press Ctrl-C to stop.")
+
+    try:
+        # 主线程循环：仅用于保持进程存活并可处理其他周期性任务
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("[main] KeyboardInterrupt, shutting down...")
+    finally:
+        stop_workers(procs, stop_event, timeout=10.0)
+        try:
+            global_bitmap.close()
+            global_bitmap.unlink()
+        except Exception:
+            pass
+        print("[main] exited.")
+
+
+        
+    # init_output_dirs()
+
+    # global_bitmap = GlobalEdgeBitmap(create=True)
+    # Stats.init(create=True)
+
+    # # 统计线程启动
+    # threading.Thread(
+    #     target=stat_worker,
+    #     args=(global_bitmap, time.time()),
+    #     daemon=True
+    # ).start()
+
+    # while True:
+    #     gen_run_one_case()
 
 
 
