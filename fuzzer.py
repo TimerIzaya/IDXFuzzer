@@ -26,7 +26,6 @@ if __name__ == '__main__':
     stat_thread = threading.Thread(target=stat_worker, args=(global_bitmap, time.time(), stop_event), daemon=True)
     stat_thread.start()
 
-
     # 先处理restore模式
     resolve_restore_mode()
 

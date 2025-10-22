@@ -83,6 +83,11 @@ def resolve_restore_mode():
             archive_result_copy()
             # --- 按实例数均分 ---
             slices = split(restore_cases, config.NUM_INSTANCES)
+            total = len(restore_cases)
+            sizes = [len(s) for s in slices]
+            print(f"[restore] split -> {sizes}  (sum={sum(sizes)}, total={total})")
+            # 严格验证：没有遗漏、没有重复
+            assert sum(sizes) == total, "[restore] split sum mismatch!"
 
             # --- 启动 restore worker（每个 worker 顺序跑自己的一片后退出） ---
             from multiprocessing import Process, Event
