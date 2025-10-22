@@ -62,64 +62,13 @@ def split(items, n: int):
 
 
 
-def worker_main_restore(instance_id: int, cpu_id: int, stop_event: Event, cases: List[str]):
-    ok = set_affinity_for_current_process(cpu_id)
-    if ok:
-        print(f"[restore {instance_id}] pinned to CPU {cpu_id}")
-    else:
-        print(f"[restore {instance_id}] WARN: pin cpu {cpu_id} failed")
+def worker_main_restore(cpu_id: int, stop_event: Event, cases: List[str]):
+    set_affinity_for_current_process(cpu_id)
 
-    try:
-        for path in cases:
-            if stop_event.is_set():
-                break
-            try:
-                run_one_case(path)  # 你的 run_one_case 接收字符串路径
-            except Exception as e:
-                print(f"[restore {instance_id}] run_one_case({path}) exception: {e}", flush=True)
-    finally:
-        print(f"[restore {instance_id}] pid={os.getpid()} exiting...")
-
-def start_workers_restore(corpus_dir: str, num_instances: int, start_cpu: int = 0) -> Tuple[List[Process], Event]:
-    # 1) 收集所有 case
-    cases = list(iter_restore_cases(corpus_dir))
-    print(f"[restore] total cases: {len(cases)}")
-    if not cases:
-        return [], Event()
-
-    # 2) 选 CPU，准备 stop_event
-    available = get_available_cpus()
-    if not available:
-        raise RuntimeError("no cpus detected")
-    cpus = choose_cpus(num_instances, start_cpu)
-    stop_event = Event()
-
-    # 3) 平均切片
-    slices = split(cases, num_instances)
-
-    # 4) 仅“附着”全局 bitmap（必须先在主程序创建过）
-    try:
-        gb = GlobalEdgeBitmap(create=False)
-        gb.close()
-    except FileNotFoundError:
-        print("[restore] ERROR: global bitmap not found, run normal init first")
-        raise
-
-    # 5) 启动
-    procs: List[Process] = []
-    for i in range(num_instances):
-        cpu_id = cpus[i]
-        p = Process(target=worker_main_restore,
-                    args=(i, cpu_id, stop_event, slices[i]),
-                    name=f"idxf-restore-{i}")
-        p.start()
-        procs.append(p)
-        print(f"[restore] started worker {i} pid={p.pid} cpu={cpu_id} cases={len(slices[i])}")
-    return procs, stop_event
-
-
-
-
+    for path in cases:
+        if stop_event.is_set():
+            break
+        run_one_case(path)  # 你的 run_one_case 接收字符串路径
 
 def resolve_restore_mode():
     # ===== 如果需要，先跑一轮 RESTORE 模式 =====
@@ -150,11 +99,11 @@ def resolve_restore_mode():
             r_procs: list[Process] = []
             for i in range(config.NUM_INSTANCES):
                 p = Process(target=worker_main_restore,
-                            args=(i, cpus[i], r_stop, slices[i]),
+                            args=(cpus[i], r_stop, slices[i]),
                             name=f"idxf-restore-{i}")
                 p.start()
                 r_procs.append(p)
-                print(f"[restore] started worker {i} pid={p.pid} cpu={cpus[i]} cases={len(slices[i])}")
+                # print(f"[restore] started worker {i} pid={p.pid} cpu={cpus[i]} cases={len(slices[i])}")
 
             # 安装信号处理器（复用你的现有函数），支持 Ctrl-C
             install_signal_handlers({"stop_event": r_stop}, {"procs": r_procs})

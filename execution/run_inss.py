@@ -17,33 +17,15 @@ def gen_run_one_case():
     run_one_case(case_path)
 
 
-# === Worker process main ===
-def worker_main(instance_id: int, cpu_id: int, stop_event: Event):
-    """
-    每个实例在子进程里执行：先绑定 CPU，再初始化所需的共享对象（Stats），然后无限循环生成 case。
-    检测 stop_event.is_set() 并退出。
-    """
-    ok = set_affinity_for_current_process(cpu_id)
-    if ok:
-        print(f"[worker {instance_id}] pinned to CPU {cpu_id}")
-    else:
-        print(f"[worker {instance_id}] WARNING: failed to pin to CPU {cpu_id} (continuing without affinity)")
+def worker_main(cpu_id: int, stop_event: Event):
+    set_affinity_for_current_process(cpu_id)
 
-    # 子进程主循环
-    try:
-        while not stop_event.is_set():
-            # 生成并执行一个 case
-            try:
-                gen_run_one_case()
-            except Exception as e:
-                # 子进程内部不应退出，记录并继续
-                print(f"[worker {instance_id}] exception in gen_run_one_case: {e}", flush=True)
-    finally:
-        print(f"[worker {instance_id}] pid={os.getpid()} exiting...")
+    while not stop_event.is_set():
+        gen_run_one_case()
 
 
 # === Supervisor / main ===
-def start_workers(num_instances: int = 10, start_cpu: int = 0) -> Tuple[List[Process], Event]:
+def start_workers(num_instances: int = 10, start_cpu: int = 0, stop_event: Event = None) -> List[Process]:
     """
     启动 num_instances 个进程，每个绑定到一个 CPU（从 start_cpu 开始选取）。
     返回启动的 Process 列表和 stop_event（主程序保存 stop_event 以便在退出时 set）。
@@ -53,7 +35,6 @@ def start_workers(num_instances: int = 10, start_cpu: int = 0) -> Tuple[List[Pro
         raise RuntimeError("no cpus detected")
 
     cpus = choose_cpus(num_instances, start_cpu)
-    stop_event = Event()
     procs: List[Process] = []
     # 取全局 bitmap 名（如果 GlobalEdgeBitmap 提供 name()）
     gb = GlobalEdgeBitmap(create=False)
@@ -62,11 +43,11 @@ def start_workers(num_instances: int = 10, start_cpu: int = 0) -> Tuple[List[Pro
 
     for i in range(num_instances):
         cpu_id = cpus[i]
-        p = Process(target=worker_main, args=(i, cpu_id, stop_event), name=f"idxf-worker-{i}")
+        p = Process(target=worker_main, args=(cpu_id, stop_event), name=f"idxf-worker-{i}")
         p.start()
         procs.append(p)
-        print(f"[main] started worker {i} pid={p.pid} cpu={cpu_id}")
-    return procs, stop_event
+        # print(f"[main] started worker {i} pid={p.pid} cpu={cpu_id}")
+    return procs
 
 
 def stop_workers(procs: List[Process], stop_event: Event, timeout: float = 10.0):  # type: ignore
@@ -79,7 +60,7 @@ def stop_workers(procs: List[Process], stop_event: Event, timeout: float = 10.0)
         remaining = max(0.0, timeout - (time.time() - t0))
         p.join(remaining)
         if p.is_alive():
-            print(f"[main] worker pid={p.pid} did not exit in time, terminating...")
+            # print(f"[main] worker pid={p.pid} did not exit in time, terminating...")
             p.terminate()
             p.join(2.0)
 
@@ -90,7 +71,7 @@ def install_signal_handlers(stop_event_holder: dict, procs_holder: dict):
     stop_event_holder, procs_holder 是字典包装以便在 handler 内修改（闭包）。
     """
     def _handler(signum, frame):
-        print(f"[main] caught signal {signum}, shutting down...")
+        # print(f"[main] caught signal {signum}, shutting down...")
         stop_event = stop_event_holder.get("stop_event")
         procs = procs_holder.get("procs", [])
         if stop_event:

@@ -1,5 +1,6 @@
 import threading
 import time
+from multiprocessing import Event
 
 import config
 from coverage.bitmap import GlobalEdgeBitmap
@@ -19,16 +20,19 @@ if __name__ == '__main__':
     # 初始化统计共享内存
     Stats.init(create=True)
 
+    stop_event = Event()
+
+    # 启动 stat_worker 线程
+    stat_thread = threading.Thread(target=stat_worker, args=(global_bitmap, time.time(), stop_event), daemon=True)
+    stat_thread.start()
+
+
     # 先处理restore模式
     resolve_restore_mode()
 
     # 启动 worker 实例
     START_CPU = 0  # 可根据需要改成 e.g. 2 或从配置读取
-    procs, stop_event = start_workers(config.NUM_INSTANCES, START_CPU)
-
-    # 启动 stat_worker 线程
-    stat_thread = threading.Thread(target=stat_worker, args=(global_bitmap, time.time(), stop_event), daemon=True)
-    stat_thread.start()
+    procs = start_workers(config.NUM_INSTANCES, START_CPU, stop_event)
 
     # 安装信号处理器，便于按 Ctrl-C 优雅退出
     stop_event_holder = {"stop_event": stop_event}
