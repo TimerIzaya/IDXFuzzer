@@ -1,6 +1,5 @@
 # ===== 演示：模拟多进程并发累加 =====
 from multiprocessing import Process
-from execution import SharedStat
 
 
 def worker(proc_id: int, rounds: int = 1000, interesting_every: int = 100):

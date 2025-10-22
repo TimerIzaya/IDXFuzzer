@@ -1,5 +1,7 @@
 import os
 
+NUM_INSTANCES = 1
+
 # ---------- 常量路径 ----------
 CORPUS_ROOT = "result/corpus"
 

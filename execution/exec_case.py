@@ -19,7 +19,6 @@ class CSExitStatus(Enum):
 
 
 
-
 def run_content_shell(html_path: str) -> CSExitStatus:
     def recordTimeInLog(message: str):
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
@@ -126,3 +125,76 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             recordTimeInLog("found done, bye")
             logw.close()
             return CSExitStatus.NORMAL_EXIT
+
+
+def run_one_case(case_path: str):
+    global_bitmap_to_update = GlobalEdgeBitmap(create=False)
+
+    html_path_abs = os.path.abspath(case_path)
+    out_dir = os.path.dirname(html_path_abs)
+    tmp_dir = os.path.join(out_dir, "chrome-tmp")
+    bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
+
+    # 执行content_shell
+    cs_exit_status = run_content_shell(html_path_abs)
+
+    # 执行完去更新chromium自己的crash状态
+    stat_pending_cnt = count_files_in_dir(os.path.join(out_dir, "pending"))
+    stat_new_cnt = count_files_in_dir(os.path.join(out_dir, "new"))
+    stat_completed_cnt = count_files_in_dir(os.path.join(out_dir, "completed"))
+    stat_attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
+
+    # 删除浏览器运行临时数据，处理覆盖率
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+    bin_files = glob.glob(bin_glob)
+
+    # 小概率事件，冗余考虑，如果没覆盖率文件，那肯定执行不正常
+    if not bin_files:
+        cs_exit_status = CSExitStatus.OTHER
+
+    new_edges = 0
+    for cov_file in bin_files:
+        new_edges += global_bitmap_to_update.update_from_file(cov_file)
+        os.remove(cov_file)
+
+    global_bitmap_to_update.close()
+
+    # 新边入库 否则扔掉
+    stat_mark_interesting = False
+    if not config.MODE_RESTORE:
+        if new_edges > 0:
+            stat_mark_interesting = True
+            cid = os.path.splitext(os.path.basename(case_path))[0]
+            dst_dir = f"{CORPUS_ROOT}/{cid}"
+            shutil.move(out_dir, dst_dir)
+        else:
+            shutil.rmtree(out_dir, ignore_errors=True)
+
+    # report检测到的bug
+    if stat_pending_cnt > 0 or stat_new_cnt > 0 or stat_completed_cnt > 0 or stat_attachments_cnt > 0:
+        shutil.move(out_dir, CRASH_ROOT)
+
+    # 语义错误 回来受罚
+    if cs_exit_status is CSExitStatus.SEMANTIC_ERROR:
+        shutil.move(out_dir, SEMANTIC_ROOT)
+
+    # 不明愿意 回来研究
+    if cs_exit_status is CSExitStatus.OTHER:
+        shutil.move(out_dir, OTHER_ROOT)
+
+    # 进程超时 闻所未闻
+    stat_timeout = 0
+    if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
+        stat_timeout = 1
+        shutil.move(out_dir, TIMEOUT_ROOT)
+        return
+
+    # 同步统计线程
+    Stats.update(
+        timeout=stat_timeout,
+        pending=stat_pending_cnt,
+        is_new=stat_new_cnt,
+        completed=stat_completed_cnt,
+        attachments=stat_attachments_cnt,
+        mark_interesting=stat_mark_interesting,
+    )

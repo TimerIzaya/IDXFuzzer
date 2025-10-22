@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 from coverage.bitmap import GlobalEdgeBitmap
-from execution.run_content_shell import run_content_shell
+from execution.exec_case import run_content_shell
 from main import make_uid, gen_case, init_exec_worker
 from pathlib import Path
 
@@ -39,4 +39,4 @@ if __name__ == '__main__':
      # testRun(path)
      # testRun("test.html")
     #testRunSpec("result/corpus/7844dc39/7844dc39.html")
-     testRun("test/test.html")
+     testRun("case_0_env/test.html")

@@ -1,11 +1,9 @@
 import os
-import threading
 import time
-from multiprocessing import Value
 
 import numpy as np
 
-from execution.SharedStat import Stats
+from coverage.share_stat import Stats
 import config
 from config import CORPUS_ROOT
 from coverage.bitmap import GlobalEdgeBitmap
