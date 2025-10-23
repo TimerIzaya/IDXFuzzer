@@ -20,8 +20,9 @@ def cleanTestEnv():
 
 def testRun(path):
     # cleanTestEnv()
-    is_content_shell_done = run_content_shell(path)
-    print("is_content_shell_done:", is_content_shell_done )
+    exit  = run_content_shell(path)
+
+    print(exit)
 
 #
 # def testGen():
@@ -35,5 +36,5 @@ if __name__ == '__main__':
      # testRun(path)
      # testRun("test.html")
     #testRunSpec("result/corpus/7844dc39/7844dc39.html")
-     testRun("test/case_0_env/test.html")
-     print(1)
+    #  testRun("test/case_0_env/test.html")
+     testRun("result/other/0e7ed9105d51/0e7ed9105d51.html")

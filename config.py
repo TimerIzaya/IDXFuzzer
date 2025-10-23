@@ -1,6 +1,6 @@
 import os
 
-NUM_INSTANCES = 1
+NUM_INSTANCES = 10
 
 # ---------- 常量路径 ----------
 CORPUS_ROOT = "result/corpus"
@@ -12,6 +12,8 @@ TIMEOUT_ROOT = "result/timeout"
 OTHER_ROOT = "result/other"
 
 SEMANTIC_ROOT  = "result/semantic"
+
+NOBIN_ROOT  = "result/nobin"
 
 LOG_FILE = "result/fuzz_stats.log"
 
@@ -31,7 +33,7 @@ OPTIONAL_JUMP = "__JUMP__"
 
 randomFuzzing = False
 
-EDGE_TOTAL_COUNT = 57837
+EDGE_TOTAL_COUNT = 56230
 
 TXN_OPT_CNT = 100
 
@@ -39,7 +41,7 @@ SCHEMA_OPT_CNT = 200
 
 TXN_CNT = 10
 
-TIMEOUT = 2
+TIMEOUT = 0.5
 
 PROCESS_TIMEOUT = 8
 

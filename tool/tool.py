@@ -19,7 +19,7 @@ def make_uid() -> str:
 
 # ---------- 初始化各种文件夹 ----------
 def init_output_dirs() -> None:
-    folder_list = [CORPUS_ROOT, CRASH_ROOT, TIMEOUT_ROOT, OTHER_ROOT, SEMANTIC_ROOT]
+    folder_list = [CORPUS_ROOT, CRASH_ROOT, TIMEOUT_ROOT, OTHER_ROOT, SEMANTIC_ROOT, config.NOBIN_ROOT]
     for path in folder_list:
         # restore模式确保corpus存在，不要动它
         if config.MODE_RESTORE and path is CORPUS_ROOT:
@@ -28,8 +28,23 @@ def init_output_dirs() -> None:
             path = Path(path)  # 改成你的目录
             for d in path.iterdir():
                 case = d / f"{d.name}.html"
+                # 不存在cid/cid.html 删除
                 if not case.is_file():
-                    shutil.rmtree(d)
+                    shutil.rmtree(d, ignore_errors=False)
+                    continue
+                # 情况2：存在 cid/cid.html → 只保留它，删掉其余一切
+                for p in d.iterdir():
+                    if p == case:
+                        continue
+                    if p.is_dir() and not p.is_symlink():
+                        shutil.rmtree(p, ignore_errors=True)
+                    else:
+                        # 文件或符号链接
+                        try:
+                            p.unlink()
+                        except IsADirectoryError:
+                            # 极少数系统上目录被当成文件处理时报错，兜底
+                            shutil.rmtree(p, ignore_errors=True)
             continue
 
         # 其余模式，先删除后创建

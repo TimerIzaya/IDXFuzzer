@@ -47,7 +47,7 @@ if __name__ == '__main__':
         print("[main] KeyboardInterrupt, shutting down...")
     finally:
         stop_event.set()
-        stop_workers(procs, stop_event, timeout=10.0)  # 内部应: set->join(timeout)->terminate遗留->join
+        stop_workers(procs, stop_event, timeout=2.0)  # 内部应: set->join(timeout)->terminate遗留->join
 
         stat_thread.join(timeout=2.0)
 

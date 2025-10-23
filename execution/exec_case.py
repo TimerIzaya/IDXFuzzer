@@ -1,4 +1,5 @@
 import glob
+from pathlib import Path
 import shutil
 from enum import Enum, auto
 import os
@@ -18,6 +19,7 @@ class CSExitStatus(Enum):
     NORMAL_EXIT = auto()      # 正常退出
     PROCESS_TIMEOUT = auto()            # 程序崩溃（如 SegFault）
     SEMANTIC_ERROR = auto()   # 语义错误（如 JS 逻辑错误、UnhandledRejection）
+    LACK_BIN = auto # 没有覆盖率文件
     OTHER = auto()
 
     def __str__(self):
@@ -25,35 +27,28 @@ class CSExitStatus(Enum):
 
 
 def run_content_shell(html_path: str) -> CSExitStatus:
+
     def markMessageLine(message):
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        return (ts + ": " + "content_shell sub process started" + "\n").encode("utf-8")
+        return (ts + ": " + message + "\n").encode("utf-8")
 
-    def cleanup_kill(status: CSExitStatus, note: str):
-        # 先尝试温和退出，再强杀，最后务必 wait() 回收，避免僵尸
-        try:
-            os.killpg(proc.pid, signal.SIGTERM)
-        except Exception:
-            pass
-        try:
-            proc.wait(timeout=1.5)
-        except Exception:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except Exception:
-                pass
-            try:
-                proc.wait(timeout=1.5)
-            except Exception:
-                pass
-        return status
+    def saveLog():
+        with open(log_path, "wb") as logw:
+            logw.writelines([line.encode("utf-8") for line in out_message])
+
+    def wait_until_bin_exists():
+        out_path = Path(out_dir)
+        while True:
+            # 仅检查该目录下的 .bin 文件（不递归）
+            if any(out_path.glob("*.bin")):
+                return
+            time.sleep(0.1)
 
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
     log_path = os.path.join(out_dir, "content_shell.log")
-    logw = open(log_path, "wb")
     out_message = []
 
 
@@ -83,37 +78,50 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         env=env, start_new_session=True
     )
 
-    # 逐行迭代，会阻塞直到有行或子进程结束
-    for line in proc.stdout:
-        out_message.append(line.decode("utf-8"))
-
-    proc.wait()
-    markMessageLine("process end...")
-
-
     begin_seen = False
     done_seen = False
     semantic_error_seen = False
-    for line in out_message:
+
+    while True:
+        line = proc.stdout.readline()      # 一次读一行，没数据时阻塞
+        if not line:                       # EOF -> 子进程退出
+            break                                                                                                                                                                           
+
+        decoded = line.decode("utf-8", errors="replace")
+        out_message.append(decoded)
+
+        # 匹配 FUZZ 标志
         if b"FUZZ_BEGIN" in line:
             begin_seen = True
-        if b"FUZZ_DONE" in line:
+        elif b"FUZZ_DONE" in line:
             done_seen = True
-        if (b"FUZZ_JS_ERROR" in line) or (b"FUZZ_UNHANDLED_REJECTION" in line):
+            break                                
+        elif b"FUZZ_JS_ERROR" in line or b"FUZZ_UNHANDLED_REJECTION" in line:
             semantic_error_seen = True
+            break
+
+    # --------- 回收进程 ---------
+    try:
+        wait_until_bin_exists()
+        os.killpg(proc.pid, signal.SIGTERM)
+        proc.wait(timeout=2)     # 最多等2秒让它退出
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait()
+
+    proc.stdout.close()
+
+    markMessageLine("process end...")
+    saveLog()
 
     if semantic_error_seen:
-        with open(log_path, "wb") as logw:
-            logw.writelines([line.encode("utf-8") for line in out_message])
-        return cleanup_kill(CSExitStatus.SEMANTIC_ERROR, "semantic error in js, exit..")
+        return CSExitStatus.SEMANTIC_ERROR
 
     if not begin_seen:
-        with open(log_path, "wb") as logw:
-            logw.writelines([line.encode("utf-8") for line in out_message])
-        return cleanup_kill(CSExitStatus.OTHER, "where begin??")
+        return CSExitStatus.OTHER
 
     if done_seen:
-        return cleanup_kill(CSExitStatus.NORMAL_EXIT, "found done, bye")
+        return CSExitStatus.NORMAL_EXIT
 
     return CSExitStatus.OTHER
 
@@ -153,13 +161,14 @@ def run_one_case(case_path: str):
 
     # 小概率事件，冗余考虑，如果没覆盖率文件，那肯定执行不正常
     if not bin_files:
-        cs_exit_status = CSExitStatus.OTHER
+        cs_exit_status = CSExitStatus.LACK_BIN
 
     new_edges = 0
     for cov_file in bin_files:
         new_edges += global_bitmap_to_update.update_from_file(cov_file)
-        os.remove(cov_file)
+        # os.remove(cov_file)
 
+    # print(out_dir + " : " + str(new_edges))
     global_bitmap_to_update.close()
 
     # report检测到的bug
@@ -178,6 +187,10 @@ def run_one_case(case_path: str):
     if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
         stat_timeout = 1
         shutil.move(out_dir, config.TIMEOUT_ROOT)
+    
+    # 没有bin文件 
+    if cs_exit_status is CSExitStatus.LACK_BIN:
+        shutil.move(out_dir, config.NOBIN_ROOT)
 
     # 最后开始处理正常场景, 记住生成出来的case默认就是放在corpus里的，没有新边就删了
     if new_edges > 0:
