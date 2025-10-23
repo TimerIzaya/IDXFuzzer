@@ -75,7 +75,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     markMessageLine("process begin...")
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        env=env, start_new_session=True
+        env=env, start_new_session=False
     )
 
     begin_seen = False
@@ -103,10 +103,10 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     # --------- 回收进程 ---------
     try:
         wait_until_bin_exists()
-        os.killpg(proc.pid, signal.SIGTERM)
+        os.kill(proc.pid, signal.SIGTERM)
         proc.wait(timeout=2)     # 最多等2秒让它退出
     except subprocess.TimeoutExpired:
-        os.killpg(proc.pid, signal.SIGKILL)
+        os.kill(proc.pid, signal.SIGKILL)
         proc.wait()
 
     proc.stdout.close()
