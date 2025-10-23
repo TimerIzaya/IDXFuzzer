@@ -89,38 +89,38 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     for line in proc.stdout:
         print("OUT:", line.rstrip())
 
-    proc.wait()
-
-    begin_seen = False
-    done_seen = False
-    semantic_error_seen = False
-
-    time.sleep(config.TIMEOUT)
-    logw.flush()
-    os.fsync(logw.fileno())
-    try:
-        with open(log_path, "rb", buffering=0) as r:
-            content = r.read()
-            if b"FUZZ_BEGIN" in content:
-                begin_seen = True
-            if b"FUZZ_DONE" in content:
-                done_seen = True
-            if (b"FUZZ_JS_ERROR" in content) or (b"FUZZ_UNHANDLED_REJECTION" in content):
-                semantic_error_seen = True
-    except FileNotFoundError:
-        recordTimeInLog("content shell log FileNotFoundError")
-        pass
-
-
-    if semantic_error_seen:
-        return cleanup_kill(CSExitStatus.SEMANTIC_ERROR, "semantic error in js, exit..")
-
-    if not begin_seen:
-        print("where begin")
-        return cleanup_kill(CSExitStatus.OTHER, "where begin??")
-
-    if done_seen:
-        return cleanup_kill(CSExitStatus.NORMAL_EXIT, "found done, bye")
+    # proc.wait()
+    #
+    # begin_seen = False
+    # done_seen = False
+    # semantic_error_seen = False
+    #
+    # time.sleep(config.TIMEOUT)
+    # logw.flush()
+    # os.fsync(logw.fileno())
+    # try:
+    #     with open(log_path, "rb", buffering=0) as r:
+    #         content = r.read()
+    #         if b"FUZZ_BEGIN" in content:
+    #             begin_seen = True
+    #         if b"FUZZ_DONE" in content:
+    #             done_seen = True
+    #         if (b"FUZZ_JS_ERROR" in content) or (b"FUZZ_UNHANDLED_REJECTION" in content):
+    #             semantic_error_seen = True
+    # except FileNotFoundError:
+    #     recordTimeInLog("content shell log FileNotFoundError")
+    #     pass
+    #
+    #
+    # if semantic_error_seen:
+    #     return cleanup_kill(CSExitStatus.SEMANTIC_ERROR, "semantic error in js, exit..")
+    #
+    # if not begin_seen:
+    #     print("where begin")
+    #     return cleanup_kill(CSExitStatus.OTHER, "where begin??")
+    #
+    # if done_seen:
+    #     return cleanup_kill(CSExitStatus.NORMAL_EXIT, "found done, bye")
 
     return CSExitStatus.OTHER
 
