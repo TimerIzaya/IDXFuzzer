@@ -81,9 +81,15 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     recordTimeInLog("content_shell sub process started")
 
     proc = subprocess.Popen(
-        cmd, stdout=logw, stderr=logw,
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         env=env, start_new_session=True
     )
+
+    # 逐行迭代，会阻塞直到有行或子进程结束
+    for line in proc.stdout:
+        print("OUT:", line.rstrip())
+
+    proc.wait()
 
     begin_seen = False
     done_seen = False
