@@ -35,5 +35,5 @@ if __name__ == '__main__':
      # testRun(path)
      # testRun("test.html")
     #testRunSpec("result/corpus/7844dc39/7844dc39.html")
-     testRun("case_0_env/test.html")
+     testRun("test/case_0_env/test.html")
      print(1)
