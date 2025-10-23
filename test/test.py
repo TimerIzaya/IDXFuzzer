@@ -1,10 +1,6 @@
 import os
 import shutil
-import time
-from coverage.bitmap import GlobalEdgeBitmap
 from execution.exec_case import run_content_shell
-from main import make_uid, gen_case, init_exec_worker
-from pathlib import Path
 
 
 def cleanTestEnv():
@@ -23,16 +19,16 @@ def cleanTestEnv():
 
 
 def testRun(path):
-    cleanTestEnv()
+    # cleanTestEnv()
     is_content_shell_done = run_content_shell(path)
     print("is_content_shell_done:", is_content_shell_done )
 
-
-def testGen():
-    cid = make_uid()
-    html_path = gen_case(cid)
-    print(html_path)
-    return html_path
+#
+# def testGen():
+#     cid = make_uid()
+#     html_path = gen_case(cid)
+#     print(html_path)
+#     return html_path
 
 if __name__ == '__main__':
      # path = testGen()

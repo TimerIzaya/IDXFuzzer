@@ -25,11 +25,10 @@ class CSExitStatus(Enum):
 
 
 def run_content_shell(html_path: str) -> CSExitStatus:
-    def recordTimeInLog(message: str):
+    def markMessageLine(message):
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        logw.write((ts + ": " + message + "\n").encode("utf-8"))
-        logw.flush()  # 刷到内存
-        os.fsync(logw.fileno())  # 刷到磁盘（避免顺序被打乱）
+        return (ts + ": " + "content_shell sub process started" + "\n").encode("utf-8")
+
     def cleanup_kill(status: CSExitStatus, note: str):
         # 先尝试温和退出，再强杀，最后务必 wait() 回收，避免僵尸
         try:
@@ -47,14 +46,16 @@ def run_content_shell(html_path: str) -> CSExitStatus:
                 proc.wait(timeout=1.5)
             except Exception:
                 pass
-        recordTimeInLog(note)
-        logw.close()
         return status
+
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
     log_path = os.path.join(out_dir, "content_shell.log")
+    logw = open(log_path, "wb")
+    out_message = []
+
 
     cmd = [
         "/timer/chromium/src/out/IndexedDBSanCov/content_shell",
@@ -76,10 +77,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     env = os.environ.copy()
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
-    # 启动 content_shell；日志写文件，避免 PIPE 阻塞
-    logw = open(log_path, "wb")
-    recordTimeInLog("content_shell sub process started")
-
+    markMessageLine("process begin...")
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         env=env, start_new_session=True
@@ -87,40 +85,35 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
     # 逐行迭代，会阻塞直到有行或子进程结束
     for line in proc.stdout:
-        print("OUT:", line.rstrip())
+        out_message.append(line.decode("utf-8"))
 
-    # proc.wait()
-    #
-    # begin_seen = False
-    # done_seen = False
-    # semantic_error_seen = False
-    #
-    # time.sleep(config.TIMEOUT)
-    # logw.flush()
-    # os.fsync(logw.fileno())
-    # try:
-    #     with open(log_path, "rb", buffering=0) as r:
-    #         content = r.read()
-    #         if b"FUZZ_BEGIN" in content:
-    #             begin_seen = True
-    #         if b"FUZZ_DONE" in content:
-    #             done_seen = True
-    #         if (b"FUZZ_JS_ERROR" in content) or (b"FUZZ_UNHANDLED_REJECTION" in content):
-    #             semantic_error_seen = True
-    # except FileNotFoundError:
-    #     recordTimeInLog("content shell log FileNotFoundError")
-    #     pass
-    #
-    #
-    # if semantic_error_seen:
-    #     return cleanup_kill(CSExitStatus.SEMANTIC_ERROR, "semantic error in js, exit..")
-    #
-    # if not begin_seen:
-    #     print("where begin")
-    #     return cleanup_kill(CSExitStatus.OTHER, "where begin??")
-    #
-    # if done_seen:
-    #     return cleanup_kill(CSExitStatus.NORMAL_EXIT, "found done, bye")
+    proc.wait()
+    markMessageLine("process end...")
+
+
+    begin_seen = False
+    done_seen = False
+    semantic_error_seen = False
+    for line in out_message:
+        if b"FUZZ_BEGIN" in line:
+            begin_seen = True
+        if b"FUZZ_DONE" in line:
+            done_seen = True
+        if (b"FUZZ_JS_ERROR" in line) or (b"FUZZ_UNHANDLED_REJECTION" in line):
+            semantic_error_seen = True
+
+    if semantic_error_seen:
+        with open(log_path, "wb") as logw:
+            logw.writelines([line.encode("utf-8") for line in out_message])
+        return cleanup_kill(CSExitStatus.SEMANTIC_ERROR, "semantic error in js, exit..")
+
+    if not begin_seen:
+        with open(log_path, "wb") as logw:
+            logw.writelines([line.encode("utf-8") for line in out_message])
+        return cleanup_kill(CSExitStatus.OTHER, "where begin??")
+
+    if done_seen:
+        return cleanup_kill(CSExitStatus.NORMAL_EXIT, "found done, bye")
 
     return CSExitStatus.OTHER
 
