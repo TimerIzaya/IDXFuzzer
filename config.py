@@ -55,10 +55,11 @@ P_CLOSE_DB = 0.01
 
 PROCESS_COUNT = 1
 
-
-
 # 运行模式相关信息
 MODE_CUR = None
+
 MODE_RESTORE = True
+
 MODE_GEN  = False
+
 MODE_MUT = False

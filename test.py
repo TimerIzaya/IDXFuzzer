@@ -1,6 +1,8 @@
 import os
 import shutil
-from execution.exec_case import run_content_shell
+from coverage.bitmap import GlobalEdgeBitmap
+from coverage.share_stat import Stats
+from execution.exec_case import run_content_shell, run_one_case
 
 
 def cleanTestEnv():
@@ -18,11 +20,15 @@ def cleanTestEnv():
     print("清理完成，仅保留 test.html")
 
 
-def testRun(path):
+def test_run_content_shell(path):
     # cleanTestEnv()
     exit  = run_content_shell(path)
-
     print(exit)
+
+def test_run_one_case(path):
+    global_bitmap = GlobalEdgeBitmap(create=True)
+    Stats.init(create=True)
+    run_one_case(path)
 
 #
 # def testGen():
@@ -33,8 +39,5 @@ def testRun(path):
 
 if __name__ == '__main__':
      # path = testGen()
-     # testRun(path)
-     # testRun("test.html")
-    #testRunSpec("result/corpus/7844dc39/7844dc39.html")
-     testRun("test/case_0_env/test.html")
-     # testRun("result/other/0e7ed9105d51/0e7ed9105d51.html")
+    #  test_run_content_shell("test/case_0_env/test.html")   
+    test_run_one_case("test/case_0_env/test.html")   

@@ -36,14 +36,6 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         with open(log_path, "wb") as logw:
             logw.writelines([line.encode("utf-8") for line in out_message])
 
-    def wait_until_bin_exists():
-        out_path = Path(out_dir)
-        while True:
-            # 仅检查该目录下的 .bin 文件（不递归）
-            if any(out_path.glob("*.bin")):
-                return
-            time.sleep(0.1)
-
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
@@ -100,19 +92,9 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             semantic_error_seen = True
             break
 
-    # --------- 回收进程 ---------
-    try:
-
-        os.kill(proc.pid, signal.SIGTERM)
-        proc.wait(timeout=2)     # 最多等2秒让它退出
-    except subprocess.TimeoutExpired:
-        os.kill(proc.pid, signal.SIGKILL)
-        proc.wait()
-
     # 温和退出，预计bin都在
-    proc.terminate()
     try:
-        proc.wait(timeout=1)
+        proc.wait(timeout=2)
     except subprocess.TimeoutExpired:
         print("# 还不走 → 直接击毙 (SIGKILL)")
         # 还不走 → 直接击毙 (SIGKILL)
@@ -176,9 +158,8 @@ def run_one_case(case_path: str):
     new_edges = 0
     for cov_file in bin_files:
         new_edges += global_bitmap_to_update.update_from_file(cov_file)
-        # os.remove(cov_file)
+        os.remove(cov_file)
 
-    # print(out_dir + " : " + str(new_edges))
     global_bitmap_to_update.close()
 
     # report检测到的bug
