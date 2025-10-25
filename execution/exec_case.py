@@ -156,12 +156,9 @@ def run_one_case(case_path: str):
         cs_exit_status = CSExitStatus.LACK_BIN
 
     new_edges = 0
-    print(case_path)
     for cov_file in bin_files:
         new_edges += global_bitmap_to_update.update_from_file(cov_file)
-        print(new_edges)
         os.remove(cov_file)
-    print()
 
     global_bitmap_to_update.close()
 
