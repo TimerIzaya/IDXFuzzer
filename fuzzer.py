@@ -2,7 +2,10 @@ import threading
 import time
 from multiprocessing import Event
 
+import numpy as np
+
 import config
+from coverage import bitmap
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
 from execution.run_inss import start_workers, install_signal_handlers, stop_workers
@@ -12,7 +15,7 @@ from tool.tool import init_output_dirs
 
 if __name__ == '__main__':
     # 初始化文件夹、shared bitmap、Stats、统计线程
-    init_output_dirs()
+    # init_output_dirs()
 
     # 创建 / 绑定 全局 bitmap（主进程负责创建 shared object）
     global_bitmap = GlobalEdgeBitmap(create=True)

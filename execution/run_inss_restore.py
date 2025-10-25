@@ -5,8 +5,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterator, Sequence, List, Tuple
 
+import numpy as np
+
 import config
 from config import *
+from coverage.bitmap import GlobalEdgeBitmap
 from execution.exec_case import run_one_case
 from execution.run_inss import install_signal_handlers, stop_workers
 from tool.cpu_utils import set_affinity_for_current_process, choose_cpus, get_available_cpus
@@ -70,17 +73,18 @@ def worker_main_restore(cpu_id: int, stop_event: Event, cases: List[str]):
         if stop_event.is_set():
             break
         try:
+            print(path)
             run_one_case(path)
             done += 1
         except Exception as e:
             print(f"[restore] ERROR run_one_case({path}): {e}", flush=True)
             # 继续跑后面的 case，而不是让进程直接退出
+    bitmap = GlobalEdgeBitmap(create=False)
+    coverage_pct = (np.count_nonzero(bitmap.bitmap) / max(1, config.EDGE_TOTAL_COUNT)) * 100.0
+    print(f"覆盖率恢复到:{coverage_pct}")
     print(f"check done: {done}")
 
-    # for path in cases:
-    #     if stop_event.is_set():
-    #         break
-    #     run_one_case(path)  # 你的 run_one_case 接收字符串路径
+
 
 def resolve_restore_mode():
     # ===== 如果需要，先跑一轮 RESTORE 模式 =====
@@ -128,6 +132,9 @@ def resolve_restore_mode():
         # 关闭一次性 restore 模式开关
         config.MODE_RESTORE = False
         print("[main] restore finished → switch to gen mode.")
+        bitmap = GlobalEdgeBitmap(create=False)
+        coverage_pct = (np.count_nonzero(bitmap.bitmap) / max(1, config.EDGE_TOTAL_COUNT)) * 100.0
+        print(f"覆盖率恢复到:{coverage_pct}")
 
 
 

@@ -1,8 +1,13 @@
 import os
+from pathlib import Path
 import shutil
+
+import numpy as np
+import config
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
 from execution.exec_case import run_content_shell, run_one_case
+from tool.tool import init_output_dirs
 
 
 def cleanTestEnv():
@@ -40,4 +45,28 @@ def test_run_one_case(path):
 if __name__ == '__main__':
      # path = testGen()
     #  test_run_content_shell("test/case_0_env/test.html")   
-    test_run_one_case("test/case_0_env/test.html")   
+
+    
+    global_bitmap = GlobalEdgeBitmap(create=True)
+    Stats.init(create=True)
+    test_run_one_case("test/case_1_env/test.html")   
+    # init_output_dirs()
+
+
+    # global_bitmap = GlobalEdgeBitmap(create=True)
+    # Stats.init(create=True)
+
+    # path = Path("result/corpus")  # 改成你的目录
+    # for d in path.iterdir():
+    #     case = d / f"{d.name}.html"
+    #     case_str = case.as_posix()
+    #     run_one_case(case_str)
+
+    # bitmap = GlobalEdgeBitmap(create=False)
+    # coverage_pct = (np.count_nonzero(bitmap.bitmap) / max(1, config.EDGE_TOTAL_COUNT)) * 100.0
+    # print(coverage_pct)
+
+
+    
+
+

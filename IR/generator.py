@@ -30,7 +30,7 @@ def wrap_js_in_html(lines, out_path: str, case_id: str) -> None:
         f.write(prelude)  # <<< 注入错误钩子（最前面）
         f.write(
             f"console.error('FUZZ_BEGIN');\n"
-            f"setTimeout(() => {{ console.error('FUZZ_DONE:{case_id}'); window.close(); }}, {config.TIMEOUT});\n"
+            f"setTimeout(() => {{ console.error('FUZZ_DONE:{case_id}'); window.close(); }}, {config.TIMEOUT * 1000});\n"
         )
         f.writelines(lines)  # 你的 fuzz 脚本主体
         f.write("</script></body></html>")
