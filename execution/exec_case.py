@@ -102,11 +102,21 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
     # --------- 回收进程 ---------
     try:
-        wait_until_bin_exists()
+
         os.kill(proc.pid, signal.SIGTERM)
         proc.wait(timeout=2)     # 最多等2秒让它退出
     except subprocess.TimeoutExpired:
         os.kill(proc.pid, signal.SIGKILL)
+        proc.wait()
+
+    # 温和退出，预计bin都在
+    proc.terminate()
+    try:
+        proc.wait(timeout=1)
+    except subprocess.TimeoutExpired:
+        print("# 还不走 → 直接击毙 (SIGKILL)")
+        # 还不走 → 直接击毙 (SIGKILL)
+        proc.kill()
         proc.wait()
 
     proc.stdout.close()
