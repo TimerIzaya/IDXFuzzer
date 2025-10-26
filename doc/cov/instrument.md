@@ -30,7 +30,10 @@ git restore third_party/blink/renderer/modules/indexeddb/BUILD.gn
 
 
 ```
-rm -rf /timer/index/test/tmp_cov/* && rm -rf /timer/index/test/chrome-tmp && SANCOV_OUTPUT_DIR=/timer/index/test/tmp_cov \
+rm -rf /timer/index/test/case_0_env/tmp_cov/* && \
+rm -rf /timer/index/test/case_0_env/chrome-tmp && \
+mkdir -p /timer/index/test/case_0_env/tmp_cov && \
+SANCOV_OUTPUT_DIR=/timer/index/test/case_0_env/tmp_cov \
 /timer/chromium/src/out/IndexedDBSanCov/content_shell \
   --no-sandbox \
   --headless=new \
@@ -49,14 +52,41 @@ rm -rf /timer/index/test/tmp_cov/* && rm -rf /timer/index/test/chrome-tmp && SAN
   --disable-hang-monitor \
   --run-all-compositor-stages-before-draw \
   --virtual-time-budget=20000 \
-  --user-data-dir=/timer/index/test/chrome-tmp \
+  --user-data-dir=/timer/index/test/case_0_env/chrome-tmp \
   --enable-crash-reporter \
-  --crash-dumps-dir=/timer/index/test \
+  --crash-dumps-dir=/timer/index/test/case_0_env/ \
   --enable-logging=stderr \
-  file:///timer/index/test/test1.html
+  file:///timer/index/test/case_0_env/test.html
+
 ```
 
 
+
+删除/timer/index/test/case_0_env/目录下除了html的所有文件
+
+```
+find /timer/index/test/case_0_env/ -mindepth 1 ! -name "*.html" -exec rm -rf {} +
+```
+
+```
+find /timer/index/test/case_0_env/ -mindepth 1 ! -name "*.html" -exec rm -rf {} + && time python3 test.py
+
+find /timer/index/test/case_1_env/ -mindepth 1 ! -name "*.html" -exec rm -rf {} + && time python3 test.py
+```
+
+corpus数量
+
+```
+ls -l /timer/index/result/corpus/ | grep '^d' | wc -l
+```
+
+
+
+python 后台执行python3 fuzzer.py 命令，并保存输出到fuzzer.log
+
+```
+nohup python3 -u fuzzer.py > fuzzer.log 2>&1 &
+```
 
 
 
@@ -213,7 +243,6 @@ config("indexeddb_sancov_flags") {
 ## 编译对象args
 
 ```
-
 is_debug = false
 is_dcheck_enabled = true
 symbol_level = 2
