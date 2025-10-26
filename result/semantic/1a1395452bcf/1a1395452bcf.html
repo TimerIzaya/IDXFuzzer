@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+(function(){
+  function p(m){ try{ console.error(m); } catch(_){} }
+  window.addEventListener('error', function(e){
+    var stack = (e.error && e.error.stack) ? ('\n' + e.error.stack) : '';
+    p('FUZZ_JS_ERROR: ' + (e.message || 'unknown') + ' @ ' + (e.filename || 'inline') + ':' + (e.lineno||0) + ':' + (e.colno||0) + stack);
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e.reason; var msg = (r && (r.stack||r.message)) ? (r.stack||r.message) : String(r);
+    p('FUZZ_UNHANDLED_REJECTION: ' + msg);
+  }, true);
+})();
+console.error('FUZZ_BEGIN');
+setTimeout(() => { console.error('FUZZ_DONE:1a1395452bcf'); window.close(); }, 500.0);
+let db_71;
+const openRequest_71 = window.indexedDB.open('str_8473', 1394997857918378)
+openRequest_71.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db_71 = event.target.result;
+    var objectStore_0 = db_71.createObjectStore('objectStore_384', {keyPath: 'sAHEDSguEECjt', autoIncrement: false});
+    var put_0 = objectStore_0.put({sAHEDSguEECjt: 599738611, f0_k: null});
+    var count_0;
+    try{
+        KeyRange_0 = IDBKeyRange.only(599738611);
+        count_0 = objectStore_0.count(KeyRange_0);
+    }
+    catch (e){
+    }
+
+    var put_1 = objectStore_0.put({sAHEDSguEECjt: 'VrBsgMqKjDhy', f0_t: null, f1_u: 79});
+    var index_308 = objectStore_0.createIndex('index_308', 'test', {unique: false});
+    var getAll_0;
+    try{
+        KeyRange_2 = IDBKeyRange.bound('VrBsgMqKjDhy', 599738611, false, true);
+        getAll_0 = objectStore_0.getAll(KeyRange_2);
+    }
+    catch (e){
+    }
+
+    var delete_0;
+    try{
+        KeyRange_4 = IDBKeyRange.only(599738611);
+        delete_0 = objectStore_0.delete(KeyRange_4);
+    }
+    catch (e){
+    }
+
+    var put_2 = objectStore_0.put({sAHEDSguEECjt: 'MvCjRmBQMagGkL', f0_r: false});
+    var objectStore_1 = db_71.createObjectStore('objectStore_385', {keyPath: 'CJvMEYaH', autoIncrement: false});
+    var clear_0 = objectStore_0.clear();
+    var getAll_1;
+    try{
+        KeyRange_6 = IDBKeyRange.only('MvCjRmBQMagGkL');
+        getAll_1 = objectStore_0.getAll(KeyRange_6);
+    }
+    catch (e){
+    }
+
+    var getAllKeys_0 = objectStore_0.getAllKeys();
+    var clear_1 = objectStore_0.clear();
+    var clear_2 = objectStore_1.clear();
+    var clear_3 = objectStore_0.clear();
+    var add_0 = objectStore_0.add({sAHEDSguEECjt: 2891060464, f0_j: true, f1_x: false});
+    var put_3 = objectStore_1.put({CJvMEYaH: 9395634194, f0_p: true, f1_w: true});
+    var objectStore_2 = db_71.createObjectStore('objectStore_386', {autoIncrement: true});
+    var put_4 = objectStore_1.put({CJvMEYaH: 866246919, f0_v: 54, f1_q: false});
+    var put_5 = objectStore_2.put({f0_g: null, f1_n: 9872876924, f2_g: false, f3_n: false}, 'XZfFSTzOnXWTdFp');
+    var index_309 = objectStore_0.createIndex('index_309', 'test');
+    var delete_1 = objectStore_0.delete(3585096272);
+    var count_1 = objectStore_2.count();
+    var getAllKeys_1 = objectStore_0.getAllKeys(7897251982);
+    var count_2 = objectStore_1.count();
+    var index_310 = objectStore_1.createIndex('index_310', 'test', {unique: false});
+    var delete_2 = objectStore_2.delete(9082065784);
+    var index_311 = objectStore_1.createIndex('index_311', 'test');
+    var count_3;
+    try{
+        KeyRange_8 = IDBKeyRange.bound('XZfFSTzOnXWTdFp', 'XZfFSTzOnXWTdFp', false, false);
+        count_3 = objectStore_2.count(KeyRange_8);
+    }
+    catch (e){
+    }
+
+    var get_0 = objectStore_0.get('zTeHdGhOgdDpTfBkgo');
+    var getAll_2 = objectStore_2.getAll(7169004255);
+    var index_312 = objectStore_2.createIndex('index_312', 'test', {unique: true});
+    var count_4 = objectStore_0.count();
+};
+openRequest_71.onsuccess = (event) => {
+    console.log('db onsuccess triggered')
+    db_71 = openRequest_71.result;
+    const txn_710 = db_71.transaction(['objectStore_385', 'objectStore_386'], 'readonly', {durability:"relaxed"})
+    var objectStore_386 = txn_710.objectStore('objectStore_386');
+    var get_1 = objectStore_386.get('iSojdAM');
+    var count_5;
+    try{
+        KeyRange_10 = IDBKeyRange.only('XZfFSTzOnXWTdFp');
+        count_5 = objectStore_386.count(KeyRange_10);
+    }
+    catch (e){
+    }
+
+    var get_2 = objectStore_386.get(1713318713);
+    var get_3;
+    try{
+        KeyRange_12 = IDBKeyRange.upperBound('XZfFSTzOnXWTdFp', false);
+        get_3 = objectStore_386.get(KeyRange_12);
+    }
+    catch (e){
+    }
+
+    var get_4 = objectStore_386.get(6488047846);
+    var get_5 = objectStore_386.get(8217240206);
+    var index_0 = objectStore_386.index('index_312');
+    var getAll_3 = objectStore_386.getAll();
+    var index_1 = objectStore_386.index('index_312');
+    var count_6 = objectStore_386.count(5085012074);
+    var get_6 = objectStore_386.get(5838935026);
+    var getAllKeys_2 = objectStore_386.getAllKeys('Ktv', 1967860488);
+    var getAllKeys_3;
+    try{
+        KeyRange_14 = IDBKeyRange.upperBound('XZfFSTzOnXWTdFp', false);
+        getAllKeys_3 = objectStore_386.getAllKeys(KeyRange_14);
+    }
+    catch (e){
+    }
+
+    var count_7;
+    try{
+        KeyRange_16 = IDBKeyRange.lowerBound('XZfFSTzOnXWTdFp', false);
+        count_7 = objectStore_386.count(KeyRange_16);
+    }
+    catch (e){
+    }
+
+    var count_8 = objectStore_386.count(6632145505);
+    var get_7 = objectStore_386.get(9153564837);
+    var get_8 = objectStore_386.get('wWTFsfZLjVEuQi');
+    var count_9 = objectStore_386.count(1374483146);
+    var get_9 = objectStore_386.get('lBEcAaYIhNqwkmIWmVSmNjpYGgHPcuU');
+    var count_10 = objectStore_386.count('fAUkCRhdWpduyMbwLijwhQxdqLE');
+    var getAll_4 = objectStore_386.getAll();
+    var get_10 = objectStore_386.get('pLYRotZQUmQuIu');
+    var get_11;
+    try{
+        KeyRange_18 = IDBKeyRange.bound('XZfFSTzOnXWTdFp', 'XZfFSTzOnXWTdFp', false, false);
+        get_11 = objectStore_386.get(KeyRange_18);
+    }
+    catch (e){
+    }
+
+    var index_2 = objectStore_386.index('index_312');
+    txn_710.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_710.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_710.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_711 = db_71.transaction(['objectStore_386'], 'readwrite', {durability:"default"})
+    var objectStore_386 = txn_711.objectStore('objectStore_386');
+    var add_1 = objectStore_386.add({f0_p: [false, null, false, 'PZeqLKHStPPBBisxBaHntKJ', false], f1_e: [78, null, false], f2_n: [true, null, true], f3_c: [null, false, 49, 24, null, 8], f4_k: 7141123451, f5_c: null}, 'uAcTszzCVqDvbCJgppq');
+    var put_6 = objectStore_386.put({f0_z: ['dvOCrnzZt', true, 82], f1_h: ['xMpv'], f2_z: [30], f3_g: null, f4_s: 'lVLcIvOTxbhmEnjVeXNSbSkc', f5_a: 9791956912}, 'fsdOYv');
+    var get_12;
+    try{
+        KeyRange_20 = IDBKeyRange.lowerBound('uAcTszzCVqDvbCJgppq', true);
+        get_12 = objectStore_386.get(KeyRange_20);
+    }
+    catch (e){
+    }
+
+    var add_2 = objectStore_386.add({f0_s: false}, 'xXiTQFHKReyOTmNNMksMGosEeVGx');
+    var count_11;
+    try{
+        KeyRange_22 = IDBKeyRange.upperBound('xXiTQFHKReyOTmNNMksMGosEeVGx', true);
+        count_11 = objectStore_386.count(KeyRange_22);
+    }
+    catch (e){
+    }
+
+    var put_7 = objectStore_386.put({f0_e: [48, false, false, 36, true], f1_b: null, f2_u: 'OFYVqqaYImGfxnDhrUEycKUqKXO', f3_h: [76], f4_w: 'ffTyLOTDYuiXpIDP'}, 'PHPrCrcLeUFtYHnxyeuuADpfw');
+    var clear_4 = objectStore_386.clear();
+    var add_3 = objectStore_386.add({f0_i: null, f1_e: 'ddVXstESPkOILAaXPlj', f2_i: null, f3_g: 8961884135, f4_g: true, f5_i: 7349476989}, 'NWcpTJiXiU');
+    var add_4 = objectStore_386.add({f0_f: 'ElqJvhYhwVgzgsLkOvBYKfbii', f1_l: 'fbkgZtcyNTiJTvTxUTQZRzRWIXdRqDZ', f2_n: 1576905053, f3_m: 6599751933, f4_o: null, f5_z: false, f6_a: {f0_i: [null, 49], f1_b: 7877281308, f2_m: [false, false, true, 10, 2, 52, 76], f3_z: 8014283706}, f7_m: [true, false, true, 'vCsiUqAxuvYqIsQTuWtexMRDBkxNI', 'csUreCbZrZIjP', 90, false, true, null, true, true, null, null, true, false, null, false, false, true, null, true, true, false, 7, true, null, null, null, null, 23, false, 33, null, true, 'WPArYmobwGnFZ', false, true, 'FigQyxRYEvHikzXtJDgJay', false, null, 2, true, null, false, false, 'PuqpfkLnChAvXcrNcztrQbFiZXgL', null, 'eoDvGNdoEjgrbdPtPnPFsSDOy', null, true, 'ETWAOnUzedWkxodTE', false], f8_w: [true, null, 'zARddaNghHlwarlSOLqnkhTlbjqufKeT'], f9_l: null, f10_l: null, f11_g: false, f12_f: 'UDCiNYKUmsN', f13_x: false, f14_t: 'vZSYtEly', f15_a: 1596659810, f16_a: 3409324204, f17_j: [8, false], f18_m: true, f19_e: [null, null, true, 'ffxpSLUqPvekDEOuCcYuTWbWu', false], f20_u: true, f21_t: [null], f22_x: 7919708895, f23_x: null, f24_f: [null, 'tPMQ', 'KLwUpByqVWueATeosHGzV', null, false], f25_y: 'oKYJ', f26_f: false, f27_f: true, f28_e: false, f29_a: true, f30_l: 6385215312, f31_k: 'XJVPLRYixGhQtZZpdDOFUQZXnaUYs', f32_e: 'oZGoqLvSBRNGFniaXCc', f33_c: false, f34_v: 8983253396, f35_s: [true, null, null, 78], f36_v: 7823557919, f37_x: 5024218059, f38_d: 1759828462, f39_i: ['fCHhd', false, true], f40_v: 'faVJBFoCETS', f41_b: 7950052015, f42_p: null, f43_c: null, f44_j: 5509795925, f45_b: null, f46_c: 'IYsZbnFFfVC', f47_b: 2105498045, f48_n: false, f49_i: true, f50_d: [93, null, 'EmLesOCw', false]}, 'heibovhEqHaihTmTWkGyV');
+    var add_5 = objectStore_386.add({f0_w: 7330883540, f1_y: [null, 'pGjCedZPvRFwgXO', 0], f2_u: null, f3_b: false}, 'XKrkREUOzrCzwUpruoYah');
+    var get_13 = objectStore_386.get('mRgWrrwRIIDzD');
+    var add_6 = objectStore_386.add({f0_u: null, f1_u: false, f2_r: 1442742555, f3_y: null}, 'kBwjTfFwhTzoudhNhjhXtghFdnLwB');
+    var put_8 = objectStore_386.put({f0_n: false, f1_f: [64, 'FjCEcBOaZtYRERjeOwsqzzIlBwYddBkY', 45, true, 80], f2_l: ['VTXkEZPBYOxnvKzokuKfNOpA', 'EGueaDu', 77, null, 'xbXFFYNgtKCguvlnxZOthGSp', null]}, 'xfeSDXgdUWTDKHQxNwPGkjegpBM');
+    var put_9 = objectStore_386.put({f0_x: false}, 'XwGfqWXHp');
+    var clear_5 = objectStore_386.clear();
+    var getAllKeys_4 = objectStore_386.getAllKeys(3534168890, 1820510356);
+    var put_10 = objectStore_386.put({f0_o: true, f1_w: 5247822537, f2_k: [false, 21, true, 65, 71, 'XUJho', null, true], f3_t: 1173358197, f4_b: false, f5_u: 2977986256}, 'FGyOq');
+    var put_11 = objectStore_386.put({f0_s: [false], f1_j: [null], f2_e: 4443403603, f3_n: [false, 5, true], f4_u: 'GNCAbrOvNzybP', f5_k: null}, 'EUeor');
+    var put_12 = objectStore_386.put({f0_v: 'QHmaOHwSJEYVyiVN', f1_n: false, f2_s: 4813212667}, 'nEdduVMYzcyJItnOawVPxGJJjGl');
+    txn_711.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_711.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_711.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_712 = db_71.transaction(['objectStore_385'], 'readonly', {durability:"default"})
+    txn_712.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_712.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_712.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_713 = db_71.transaction(['objectStore_384'], 'readwrite', {durability:"default"})
+    var objectStore_384 = txn_713.objectStore('objectStore_384');
+    var get_14;
+    try{
+        KeyRange_24 = IDBKeyRange.upperBound(599738611, false);
+        get_14 = objectStore_384.get(KeyRange_24);
+    }
+    catch (e){
+    }
+
+    var put_13 = objectStore_384.put({sAHEDSguEECjt: 6892914181, f0_f: 42, f1_l: true});
+    var add_7 = objectStore_384.add({sAHEDSguEECjt: 'khgbRQYhfESoLtAiQKWsERN', f0_y: false});
+    var add_8 = objectStore_384.add({sAHEDSguEECjt: 'LaivuwUYNLbbSDpILSARuEApIXzTamBT', f0_a: true});
+    var clear_6 = objectStore_384.clear();
+    var add_9 = objectStore_384.add({sAHEDSguEECjt: 5334664902, f0_p: false});
+    var get_15 = objectStore_384.get('bEEUIAwSbSvtcYtOQwGoJ');
+    var put_14 = objectStore_384.put({sAHEDSguEECjt: 'WmRwAwbYRggDa'});
+    var get_16 = objectStore_384.get('Dpj');
+    var put_15 = objectStore_384.put({sAHEDSguEECjt: 'WStqbCetOGAj', f0_g: 78});
+    var get_17;
+    try{
+        KeyRange_26 = IDBKeyRange.bound(5334664902, 'MvCjRmBQMagGkL', false, false);
+        get_17 = objectStore_384.get(KeyRange_26);
+    }
+    catch (e){
+    }
+
+    var add_10;
+    txn_713.abort()
+    try{
+        add_10 = objectStore_384.add({sAHEDSguEECjt: 'NHDntGvtLbgNgfHQTNh', f0_n: true, f1_c: 'McIGqgscDWfXBumQwUwlkEtefzLUMDKQ'});
+        var add_11;
+        add_11 = objectStore_384.add({sAHEDSguEECjt: 'wFAShSkPIdQtxebQP', f0_q: null});
+    }
+    catch (e){
+    }
+
+    var add_11 = objectStore_384.add({sAHEDSguEECjt: 'wFAShSkPIdQtxebQP', f0_q: null});
+    txn_713.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_713.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_713.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_714 = db_71.transaction(['objectStore_386', 'objectStore_384'], 'readwrite', {durability:"relaxed"})
+    txn_714.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_714.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_714.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_715 = db_71.transaction(['objectStore_384'], 'readonly', {durability:"strict"})
+    txn_715.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_715.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_715.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_716 = db_71.transaction(['objectStore_384', 'objectStore_385'], 'readwrite', {durability:"strict"})
+    var objectStore_385 = txn_716.objectStore('objectStore_385');
+    var add_12 = objectStore_385.add({CJvMEYaH: 4391202469});
+    var get_18 = objectStore_385.get(3724305894);
+    var put_16 = objectStore_385.put({CJvMEYaH: 8543199491, f0_c: 'kSyNYolDLhQlEVCZeuT', f1_j: 'OAIzXkUZNGvi'});
+    var get_19 = objectStore_385.get(1992527490);
+    var add_13 = objectStore_385.add({CJvMEYaH: 8291731134, f0_x: 'HoTrWnmiTFZAtiKbLMtOGLakUXlisQ', f1_r: 38});
+    var add_14 = objectStore_385.add({CJvMEYaH: 'iWSrlQHvXtNo'});
+    var put_17 = objectStore_385.put({CJvMEYaH: 2199750085});
+    var clear_7 = objectStore_385.clear();
+    var clear_8 = objectStore_385.clear();
+    var add_15 = objectStore_385.add({CJvMEYaH: 'xdB', f0_a: 54});
+    var count_12 = objectStore_385.count();
+    var put_18 = objectStore_385.put({CJvMEYaH: 'eeeKMqivIdv', f0_t: 98});
+    var getAllKeys_5 = objectStore_385.getAllKeys('pbZiKYuBMnqJtcpmdverRodvaJTDhA');
+    var clear_9 = objectStore_385.clear();
+    var index_3 = objectStore_385.index('index_311');
+    var getAllKeys_6 = objectStore_385.getAllKeys();
+    var put_19 = objectStore_385.put({CJvMEYaH: 'vVcfCFbvlOrAXiWEor', f0_r: true, f1_s: null});
+    var put_20 = objectStore_385.put({CJvMEYaH: 7782533243, f0_v: true, f1_w: null});
+    var get_20;
+    try{
+        KeyRange_28 = IDBKeyRange.bound(9395634194, 2199750085, false, true);
+        get_20 = objectStore_385.get(KeyRange_28);
+    }
+    catch (e){
+    }
+
+    var add_16 = objectStore_385.add({CJvMEYaH: 'SLwNEDtOgw', f0_c: true, f1_m: true});
+    var get_21;
+    try{
+        KeyRange_30 = IDBKeyRange.lowerBound('eeeKMqivIdv', true);
+        get_21 = objectStore_385.get(KeyRange_30);
+    }
+    catch (e){
+    }
+
+    var add_17 = objectStore_385.add({CJvMEYaH: 'fCdnzLdNikTbOvNTqhOw'});
+    txn_716.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_716.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_716.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_717 = db_71.transaction(['objectStore_384'], 'readonly', {durability:"default"})
+    txn_717.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_717.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_717.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_718 = db_71.transaction(['objectStore_384', 'objectStore_385', 'objectStore_386'], 'readonly', {durability:"strict"})
+    var objectStore_384 = txn_718.objectStore('objectStore_384');
+    var get_22 = objectStore_384.get(8397302400);
+    var getAll_5 = objectStore_384.getAll();
+    var count_13 = objectStore_384.count();
+    var get_23;
+    try{
+        KeyRange_32 = IDBKeyRange.only(2891060464);
+        get_23 = objectStore_384.get(KeyRange_32);
+    }
+    catch (e){
+    }
+
+    var count_14 = objectStore_384.count();
+    var getAllKeys_7;
+    try{
+        KeyRange_34 = IDBKeyRange.lowerBound('khgbRQYhfESoLtAiQKWsERN', false);
+        getAllKeys_7 = objectStore_384.getAllKeys(KeyRange_34);
+    }
+    catch (e){
+    }
+
+    var get_24;
+    try{
+        KeyRange_36 = IDBKeyRange.upperBound('NHDntGvtLbgNgfHQTNh', false);
+        get_24 = objectStore_384.get(KeyRange_36);
+    }
+    catch (e){
+    }
+
+    var get_25 = objectStore_384.get(1534837972);
+    var count_15;
+    try{
+        KeyRange_38 = IDBKeyRange.upperBound('khgbRQYhfESoLtAiQKWsERN', true);
+        count_15 = objectStore_384.count(KeyRange_38);
+    }
+    catch (e){
+    }
+
+    var get_26 = objectStore_384.get('pvavZVzAWOqlIz');
+    var getAllKeys_8 = objectStore_384.getAllKeys();
+    var get_27 = objectStore_384.get(3002621157);
+    var getAll_6 = objectStore_384.getAll('sjKCjoHCbTvwN', 1526866031);
+    var count_16 = objectStore_384.count();
+    var count_17;
+    try{
+        KeyRange_40 = IDBKeyRange.lowerBound('WStqbCetOGAj', false);
+        count_17 = objectStore_384.count(KeyRange_40);
+    }
+    catch (e){
+    }
+
+    var get_28;
+    try{
+        KeyRange_42 = IDBKeyRange.only('MvCjRmBQMagGkL');
+        get_28 = objectStore_384.get(KeyRange_42);
+    }
+    catch (e){
+    }
+
+    var count_18 = objectStore_384.count(8859066529);
+    var getAll_7 = objectStore_384.getAll(2340124326);
+    var get_29 = objectStore_384.get('aUIKeapqMOe');
+    var getAllKeys_9 = objectStore_384.getAllKeys();
+    var get_30 = objectStore_384.get('mwyiivSePJRpIZEcXwXp');
+    var get_31 = objectStore_384.get(5286016942);
+    var getAll_8 = objectStore_384.getAll();
+    var count_19 = objectStore_384.count();
+    txn_718.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_718.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_718.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    const txn_719 = db_71.transaction(['objectStore_384'], 'readonly', {durability:"default"})
+    txn_719.oncomplete = (event) => {
+        console.log('Transaction completed successfully');
+    };
+    txn_719.onabort = (event) => {
+        console.log('Transaction was aborted');
+    };
+    txn_719.onerror = (event) => {
+        console.log('Transaction error occurred');
+    };
+    db_71.onversionchange = (event) => {
+        console.log('The version of this database has changed, release this connection');
+        db_71.close()
+    };
+    db_71.onclose = (event) => {
+        console.log('The database connection is unexpectedly closed');
+    };
+};
+openRequest_71.onerror = (event) => {
+    console.log('open db onerror triggered')
+    var errorResult;
+    errorResult = event.target.error;
+    console.log(errorResult.message)
+    console.log(errorResult.name)
+};
+openRequest_71.onblocked = (event) => {
+    console.log('open db blocked triggered')
+};
+const deleteRequest_71 = indexedDB.deleteDatabase('str_7229')</script></body></html>

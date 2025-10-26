@@ -94,9 +94,9 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
     # 温和退出，预计bin都在
     try:
-        proc.wait(timeout=2)
+        proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
-        print("# 还不走 → 直接击毙 (SIGKILL)")
+        print(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
         # 还不走 → 直接击毙 (SIGKILL)
         proc.kill()
         proc.wait()
