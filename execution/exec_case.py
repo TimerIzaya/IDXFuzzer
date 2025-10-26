@@ -103,7 +103,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         proc.wait()
 
     proc.stdout.close()
-
+    print(f"pid {os.getpid()} ins process end~~~ ")
     markMessageLine("process end...")
     saveLog()
 
