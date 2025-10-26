@@ -65,7 +65,6 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     markMessageLine("process begin...")
-    print(f"pid {os.getpid()} ins process begin ")
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         env=env, start_new_session=False
@@ -103,7 +102,6 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         proc.wait()
 
     proc.stdout.close()
-    print(f"pid {os.getpid()} ins process end~~~ ")
     markMessageLine("process end...")
     saveLog()
 
@@ -138,7 +136,6 @@ def run_one_case(case_path: str):
     bin_glob = os.path.join(out_dir, "sancov_bitmap_*.bin")
 
     # 执行content_shell
-    print(f"pid {os.getpid()} run content_shell ")
     cs_exit_status = run_content_shell(html_path_abs)
 
     # 执行完去更新chromium自己的crash状态
@@ -155,15 +152,12 @@ def run_one_case(case_path: str):
 
     # 小概率事件，冗余考虑，如果没覆盖率文件，那肯定执行不正常
     if not bin_files:
-        print(f"pid {os.getpid()} lack bin!!!!")
         cs_exit_status = CSExitStatus.LACK_BIN
 
     new_edges = 0
-    print(f"pid {os.getpid()} ready to update bitmap")
     for cov_file in bin_files:
         new_edges += global_bitmap_to_update.update_from_file(cov_file)
         os.remove(cov_file)
-    print(f"pid {os.getpid()} update bitmap and close ")
     global_bitmap_to_update.close()
 
     # report检测到的bug

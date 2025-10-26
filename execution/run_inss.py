@@ -14,7 +14,6 @@ from tool.tool import make_uid
 def gen_run_one_case():
     cid = make_uid()
     case_path = gen_case(cid)
-    print(f"pid {os.getpid()} run one case ")
     run_one_case(case_path)
 
 
