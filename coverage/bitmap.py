@@ -50,7 +50,8 @@ class GlobalEdgeBitmap:
             raw = f.read()
         usable = min(len(raw), self.size)
         data = np.frombuffer(raw, dtype=np.uint8, count=usable)
-
+        pid = os.getpid()
+        print(f"{pid} try to get lock")
         self._lock()
         try:
             ones = (data != 0)
@@ -63,6 +64,8 @@ class GlobalEdgeBitmap:
             return new_bits
         finally:
             self._unlock()
+            print(f"{pid} release lock")
+
 
     def close(self): self.shm.close()
     def unlink(self): self.shm.unlink()   # 只让“最后清理者”调用

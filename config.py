@@ -1,6 +1,6 @@
 import os
 
-NUM_INSTANCES = 24
+NUM_INSTANCES = 30
 
 # ---------- 常量路径 ----------
 CORPUS_ROOT = "result/corpus"
