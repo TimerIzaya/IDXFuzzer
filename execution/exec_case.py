@@ -11,6 +11,7 @@ from datetime import datetime
 import config
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
+from tool.log import log
 from tool.tool import count_files_in_dir
 
 
@@ -67,7 +68,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
     markMessageLine("process begin...")
     t_start = time.time()
-    print(f"{t_start}  process ready to begin...")
+    log("process ready to begin...")
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         env=env, start_new_session=True
@@ -87,11 +88,11 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
         # 匹配 FUZZ 标志
         if b"FUZZ_BEGIN" in line:
-            print(f"{time.time()}  found fuzz begin, 启动耗时 [{time.time() - t_start}]...")
+            log(f"found fuzz begin, 启动耗时 [{time.time() - t_start}]...")
             begin_seen = True
         elif b"FUZZ_DONE" in line:
             done_seen = True
-            print(f"{time.time()}  found fuzz done, break...")
+            log("found fuzz done, break...")
             break
         elif b"FUZZ_JS_ERROR" in line or b"FUZZ_UNHANDLED_REJECTION" in line:
             semantic_error_seen = True
@@ -100,9 +101,9 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     # 温和退出，预计bin都在
     try:
         proc.wait(timeout=config.PROCESS_TIMEOUT)
-        print(f"{time.time()}  wait done, ready to close...")
+        log("wait done, ready to close...")
     except subprocess.TimeoutExpired:
-        print(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
+        log(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
         # 还不走 → 直接击毙 (SIGKILL)
         proc.kill()
         proc.wait()

@@ -4,6 +4,9 @@ from multiprocessing import shared_memory as shm
 
 from config import EDGE_TOTAL_COUNT, BITMAP_SHM_NAME
 import config  # 固定名字与大小
+from tool.log import log
+
+
 # 若你还没定义固定名，在 config 里加一行：BITMAP_SHM_NAME = "IDXF_GLOBAL_BITMAP"
 
 
@@ -57,19 +60,20 @@ class GlobalEdgeBitmap:
         # 等锁前打点
         t_wait_begin = time.time()
 
-        print(f"[BITMAP] {time.time()} pid={pid} try to get lock...")
+
+        log("try to get lock")
+        t = time.time()
         self._lock()
-        print(f"[BITMAP] {time.time()} pid={pid} got lock...")
+        t0 = time.time()
+        log(f"got lock, consume: {time.time() - t}")
         t_lock_acquired = time.time()
         wait_ms = (t_lock_acquired - t_wait_begin) * 1000.0
-
         try:
             # --- 原本逻辑开始 ---
             ones = (data != 0)
             if not np.any(ones):
                 hold_ms = (time.time() - t_lock_acquired) * 1000.0
                 # 轻量日志：无新边，提前返回
-                print(f"[BITMAP] {time.time()}  无新边，提前返回  pid={pid} wait_ms={wait_ms:.3f} hold_ms={hold_ms:.3f} new_bits=0 file={path}")
                 return 0
 
             tgt = self.bitmap[:usable]
@@ -79,11 +83,9 @@ class GlobalEdgeBitmap:
             # --- 原本逻辑结束 ---
 
             hold_ms = (time.time() - t_lock_acquired) * 1000.0
-
-            print(f"[BITMAP] {time.time()} 新边数量{new_bits}  pid={pid} wait_ms={wait_ms:.3f} hold_ms={hold_ms:.3f} new_bits={new_bits} file={path}")
-
             return new_bits
         finally:
+            log(f"unlock, hold lock consume: {time.time() - t0}")
             self._unlock()
 
 
