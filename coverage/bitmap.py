@@ -1,4 +1,5 @@
 import fcntl, os, numpy as np
+import time
 from multiprocessing import shared_memory as shm
 
 from config import EDGE_TOTAL_COUNT, BITMAP_SHM_NAME
