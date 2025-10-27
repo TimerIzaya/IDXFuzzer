@@ -55,24 +55,16 @@ class GlobalEdgeBitmap:
         usable = min(len(raw), self.size)
         data = np.frombuffer(raw, dtype=np.uint8, count=usable)
 
-        pid = os.getpid()
-
-        # 等锁前打点
-        t_wait_begin = time.time()
-
-
         log("try to get lock")
         t = time.time()
         self._lock()
         t0 = time.time()
         log(f"got lock, consume: {time.time() - t}")
         t_lock_acquired = time.time()
-        wait_ms = (t_lock_acquired - t_wait_begin) * 1000.0
         try:
             # --- 原本逻辑开始 ---
             ones = (data != 0)
             if not np.any(ones):
-                hold_ms = (time.time() - t_lock_acquired) * 1000.0
                 # 轻量日志：无新边，提前返回
                 return 0
 

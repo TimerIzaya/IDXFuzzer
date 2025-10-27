@@ -11,7 +11,7 @@ from datetime import datetime
 import config
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
-from tool.log import log
+from tool.log import log, format_s_to_ms
 from tool.tool import count_files_in_dir
 
 
@@ -88,7 +88,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
         # 匹配 FUZZ 标志
         if b"FUZZ_BEGIN" in line:
-            log(f"found fuzz begin, 启动耗时 [{time.time() - t_start}]...")
+            log(f"found fuzz begin, 启动耗时 [{format_s_to_ms(time.time() - t_start)}]...")
             begin_seen = True
         elif b"FUZZ_DONE" in line:
             done_seen = True
@@ -110,7 +110,9 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         return CSExitStatus.PROCESS_TIMEOUT
 
     proc.stdout.close()
-    print(f"{time.time()}  process_end")
+
+
+    log("process_end")
     markMessageLine("process end...")
     saveLog()
 
@@ -161,7 +163,7 @@ def run_one_case(case_path: str):
 
     # 小概率事件，冗余考虑，如果没覆盖率文件，那肯定执行不正常
     if not bin_files:
-        print("lack bin!!!!!!!!!!!!!!")
+        log("lack bin")
         cs_exit_status = CSExitStatus.LACK_BIN
 
     new_edges = 0
