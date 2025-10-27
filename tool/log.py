@@ -11,6 +11,6 @@ def log(content):
 
 def format_s_to_ms(s):
     consume = s * 1000  # 转为毫秒
-    formatted = f"{consume:.3f} ms"  # 保留三位小数
+    formatted = f"{consume:.3f}"  # 保留三位小数
     return formatted
 
