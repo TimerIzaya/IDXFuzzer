@@ -8,7 +8,7 @@ from coverage.bitmap import GlobalEdgeBitmap
 from execution.exec_case import run_one_case
 from IR.generator import gen_case
 from tool.cpu_utils import choose_cpus, get_available_cpus, set_affinity_for_current_process
-from tool.log import log
+from tool.log import log, format_s_to_ms
 from tool.tool import make_uid
 
 
@@ -24,7 +24,7 @@ def worker_main(cpu_id: int, stop_event: Event):
     while not stop_event.is_set():
         t = time.time()
         gen_run_one_case()
-        log(f"gen_run consume: [{time.time() - t}]")
+        log(f"gen_run consume: {format_s_to_ms(time.time() - t)}] ms")
 
 
 # === Supervisor / main ===
