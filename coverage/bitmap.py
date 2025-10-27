@@ -50,16 +50,36 @@ class GlobalEdgeBitmap:
             raw = f.read()
         usable = min(len(raw), self.size)
         data = np.frombuffer(raw, dtype=np.uint8, count=usable)
+
         pid = os.getpid()
+
+        # 等锁前打点
+        t_wait_begin = time.time()
+
         self._lock()
+
+        t_lock_acquired = time.time()
+        wait_ms = (t_lock_acquired - t_wait_begin) * 1000.0
+
         try:
+            # --- 原本逻辑开始 ---
             ones = (data != 0)
             if not np.any(ones):
+                hold_ms = (time.time() - t_lock_acquired) * 1000.0
+                # 轻量日志：无新边，提前返回
+                print(f"[BITMAP] pid={pid} wait_ms={wait_ms:.3f} hold_ms={hold_ms:.3f} new_bits=0 file={path}")
                 return 0
+
             tgt = self.bitmap[:usable]
             was_zero = (tgt[ones] == 0)
             new_bits = int(was_zero.sum())
             tgt[ones] = 1
+            # --- 原本逻辑结束 ---
+
+            hold_ms = (time.time() - t_lock_acquired) * 1000.0
+
+            print(f"[BITMAP] pid={pid} wait_ms={wait_ms:.3f} hold_ms={hold_ms:.3f} new_bits={new_bits} file={path}")
+
             return new_bits
         finally:
             self._unlock()
