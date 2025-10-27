@@ -65,6 +65,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     markMessageLine("process begin...")
+    print(f"{time.time()}  process ready to begin...")
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         env=env, start_new_session=True
@@ -87,7 +88,8 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             begin_seen = True
         elif b"FUZZ_DONE" in line:
             done_seen = True
-            break                                
+            print(f"{time.time()}  found fuzz done, break...")
+            break
         elif b"FUZZ_JS_ERROR" in line or b"FUZZ_UNHANDLED_REJECTION" in line:
             semantic_error_seen = True
             break
@@ -95,16 +97,19 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     if done_seen:
         # 我们认为这个case逻辑跑完了 -> 优雅退出，让它写覆盖率
         try:
+            print(f"{time.time()}  try to SIGTERM pg...")
             os.killpg(proc.pid, signal.SIGTERM)  # 给整个进程组一个温和退出信号
         except ProcessLookupError:
             pass
 
         # 给它一点时间把 sancov_bitmap_*.bin 写盘
         try:
+            print(f"{time.time()}  wait kiil pg...")
             proc.wait(timeout=1.0)  # 例如等1秒
         except subprocess.TimeoutExpired:
             # 还是不退就强杀兜底
             try:
+                print(f"{time.time()}  try kiil pg...")
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
@@ -112,6 +117,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     else:
         # 走旧逻辑：没看到 FUZZ_DONE，正常就是等到总超时
         try:
+            print(f"{time.time()}  WTF no fuzz done!!!")
             proc.wait(timeout=config.PROCESS_TIMEOUT)
         except subprocess.TimeoutExpired:
             print(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
@@ -124,6 +130,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             return CSExitStatus.PROCESS_TIMEOUT
 
     proc.stdout.close()
+    print(f"{time.time()}  process_end")
     markMessageLine("process end...")
     saveLog()
 
