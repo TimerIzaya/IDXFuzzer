@@ -67,7 +67,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     markMessageLine("process begin...")
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        env=env, start_new_session=False
+        env=env, start_new_session=True
     )
 
     begin_seen = False
@@ -92,15 +92,36 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             semantic_error_seen = True
             break
 
-    # 温和退出，预计bin都在
-    try:
-        proc.wait(timeout=config.PROCESS_TIMEOUT)
-    except subprocess.TimeoutExpired:
-        print(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
-        # 还不走 → 直接击毙 (SIGKILL)
-        proc.kill()
-        proc.wait()
-        return CSExitStatus.PROCESS_TIMEOUT
+    if done_seen:
+        # 我们认为这个case逻辑跑完了 -> 优雅退出，让它写覆盖率
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)  # 给整个进程组一个温和退出信号
+        except ProcessLookupError:
+            pass
+
+        # 给它一点时间把 sancov_bitmap_*.bin 写盘
+        try:
+            proc.wait(timeout=1.0)  # 例如等1秒
+        except subprocess.TimeoutExpired:
+            # 还是不退就强杀兜底
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+    else:
+        # 走旧逻辑：没看到 FUZZ_DONE，正常就是等到总超时
+        try:
+            proc.wait(timeout=config.PROCESS_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            print(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
+            # 还不走 → 直接击毙 (SIGKILL)
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+            return CSExitStatus.PROCESS_TIMEOUT
 
     proc.stdout.close()
     markMessageLine("process end...")
