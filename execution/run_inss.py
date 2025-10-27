@@ -23,7 +23,7 @@ def worker_main(cpu_id: int, stop_event: Event):
     while not stop_event.is_set():
         t = time.time()
         gen_run_one_case()
-        print(f"gen_run : {time.time() - t}")
+        print(f"[consume]   gen_run : {time.time() - t}")
 
 
 # === Supervisor / main ===
