@@ -2,20 +2,22 @@ import os
 
 NUM_INSTANCES = 15
 
+SHARE = "/dev/shm/"
+
 # ---------- 常量路径 ----------
-CORPUS_ROOT = "result/corpus"
+CORPUS_ROOT = SHARE + "result/corpus"
 
-CRASH_ROOT = "result/crashes"
+CRASH_ROOT = SHARE + "result/crashes"
 
-TIMEOUT_ROOT = "result/timeout"
+TIMEOUT_ROOT = SHARE + "result/timeout"
 
-OTHER_ROOT = "result/other"
+OTHER_ROOT =  SHARE + "result/other"
 
-SEMANTIC_ROOT  = "result/semantic"
+SEMANTIC_ROOT  = SHARE + "result/semantic"
 
-NOBIN_ROOT  = "result/nobin"
+NOBIN_ROOT  = SHARE + "result/nobin"
 
-LOG_FILE = "result/fuzz_stats.log"
+LOG_FILE = SHARE + "result/fuzz_stats.log"
 
 BITMAP_SHM_NAME = "IDXF_GLOBAL_BITMAP"   # 固定名（进程间共享的“地址”）
 
@@ -52,8 +54,6 @@ P_WIRED_DATA = 0.01
 P_INSERT_NEST_IR = 0.02
 
 P_CLOSE_DB = 0.01
-
-PROCESS_COUNT = 1
 
 # 运行模式相关信息
 MODE_CUR = None
