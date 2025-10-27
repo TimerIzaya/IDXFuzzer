@@ -59,7 +59,7 @@ class GlobalEdgeBitmap:
         t = time.time()
         self._lock()
         t0 = time.time()
-        log(f"got lock, consume: {format_s_to_ms(time.time() - t)}")
+        log(f"got lock, consume: [{format_s_to_ms(time.time() - t)}]")
         t_lock_acquired = time.time()
         try:
             # --- 原本逻辑开始 ---
@@ -77,7 +77,7 @@ class GlobalEdgeBitmap:
             hold_ms = (time.time() - t_lock_acquired) * 1000.0
             return new_bits
         finally:
-            log(f"unlock, hold lock consume: {format_s_to_ms(time.time() - t)}")
+            log(f"unlock, hold lock consume: [{format_s_to_ms(time.time() - t)}]")
             self._unlock()
 
 
