@@ -66,7 +66,8 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     env["SANCOV_OUTPUT_DIR"] = out_dir
 
     markMessageLine("process begin...")
-    print(f"{time.time()}  process ready to begin...")
+    t_start = time.time()
+    print(f"{t_start}  process ready to begin...")
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         env=env, start_new_session=True
@@ -86,7 +87,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
         # 匹配 FUZZ 标志
         if b"FUZZ_BEGIN" in line:
-            print(f"{time.time()}  found fuzz begin, ok...")
+            print(f"{time.time()}  found fuzz begin, 启动耗时 [{time.time() - t_start}]...")
             begin_seen = True
         elif b"FUZZ_DONE" in line:
             done_seen = True
