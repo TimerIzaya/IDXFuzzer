@@ -5,6 +5,7 @@ NUM_INSTANCES = 15
 SHARE = "/dev/shm/"
 
 # ---------- 常量路径 ----------
+RESULT = SHARE  + "result"
 CORPUS_ROOT = SHARE + "result/corpus"
 
 CRASH_ROOT = SHARE + "result/crashes"
