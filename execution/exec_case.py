@@ -183,6 +183,7 @@ def run_one_case(case_path: str):
 
     # 小概率事件，冗余考虑，如果没覆盖率文件，那肯定执行不正常
     if not bin_files:
+        print("lack bin!!!!!!!!!!!!!!")
         cs_exit_status = CSExitStatus.LACK_BIN
 
     new_edges = 0
