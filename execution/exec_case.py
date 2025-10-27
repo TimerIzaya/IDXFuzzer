@@ -85,6 +85,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
         # 匹配 FUZZ 标志
         if b"FUZZ_BEGIN" in line:
+            print(f"{time.time()}  found fuzz begin, ok...")
             begin_seen = True
         elif b"FUZZ_DONE" in line:
             done_seen = True
