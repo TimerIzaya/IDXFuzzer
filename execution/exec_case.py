@@ -52,7 +52,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         "--disable-background-networking", "--disable-popup-blocking",
         "--no-default-browser-check", "--password-store=basic",
         "--use-mock-keychain", "--disable-hang-monitor",
-        # "--no-zygote",
+        "--no-zygote",
         "--remote-debugging-port=0",
         "--run-all-compositor-stages-before-draw",
         f"--user-data-dir={tmp_dir}",
