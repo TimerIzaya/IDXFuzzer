@@ -57,8 +57,9 @@ class GlobalEdgeBitmap:
         # 等锁前打点
         t_wait_begin = time.time()
 
+        print(f"[BITMAP] pid={pid} try to get lock...")
         self._lock()
-
+        print(f"[BITMAP] pid={pid} got lock...")
         t_lock_acquired = time.time()
         wait_ms = (t_lock_acquired - t_wait_begin) * 1000.0
 
