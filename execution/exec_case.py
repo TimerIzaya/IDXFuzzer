@@ -96,40 +96,47 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             semantic_error_seen = True
             break
 
+    BIN_WAIT_SECS = 2.0  # 给它写bin的机会
+    GRACEFUL_WAIT_SECS = 1.5  # 发SIGTERM后再等它退出的时间
+    HARD_KILL_WAIT_SECS = 0.5  # SIGKILL后再等
+
     if done_seen:
-        # 我们认为这个case逻辑跑完了 -> 优雅退出，让它写覆盖率
+        # 1) 我们此时已经跳出读取循环，不再继续阻塞在 stdout 逐行读了
+        #    开始等 bin 出现
+        t0 = time.time()
+        bin_found = False
+        while time.time() - t0 < BIN_WAIT_SECS:
+            # 这里用你现在 out_dir 里搜 sancov_bitmap_*.bin 的那段逻辑
+            bin_files = [p for p in os.listdir(out_dir) if p.endswith(".bin")]
+            if bin_files:
+                bin_found = True
+                break
+            time.sleep(0.05)
+
+        print(f"{time.time()}  bin_found={bin_found} after wait {BIN_WAIT_SECS}s")
+
+        # 2) 软杀（让Chrome正常关掉）
         try:
-            print(f"{time.time()}  try to SIGTERM pg...")
-            os.killpg(proc.pid, signal.SIGTERM)  # 给整个进程组一个温和退出信号
+            print(f"{time.time()}  send SIGTERM pg...")
+            os.killpg(proc.pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
 
-        # 给它一点时间把 sancov_bitmap_*.bin 写盘
         try:
-            print(f"{time.time()}  wait kiil pg...")
-            proc.wait(timeout=1.0)  # 例如等1秒
+            proc.wait(timeout=GRACEFUL_WAIT_SECS)
+            print(f"{time.time()}  proc exited gracefully")
         except subprocess.TimeoutExpired:
-            # 还是不退就强杀兜底
+            # 3) 兜底硬杀
             try:
-                print(f"{time.time()}  try kiil pg...")
+                print(f"{time.time()}  send SIGKILL pg...")
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            proc.wait()
-    else:
-        # 走旧逻辑：没看到 FUZZ_DONE，正常就是等到总超时
-        try:
-            print(f"{time.time()}  WTF no fuzz done!!!")
-            proc.wait(timeout=config.PROCESS_TIMEOUT)
-        except subprocess.TimeoutExpired:
-            print(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
-            # 还不走 → 直接击毙 (SIGKILL)
             try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
+                proc.wait(timeout=HARD_KILL_WAIT_SECS)
+            except subprocess.TimeoutExpired:
+                # 理论上不太会到这
                 pass
-            proc.wait()
-            return CSExitStatus.PROCESS_TIMEOUT
 
     proc.stdout.close()
     print(f"{time.time()}  process_end")
