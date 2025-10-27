@@ -57,9 +57,9 @@ class GlobalEdgeBitmap:
         # 等锁前打点
         t_wait_begin = time.time()
 
-        print(f"[BITMAP] pid={pid} try to get lock...")
+        print(f"[BITMAP] {time.time()} pid={pid} try to get lock...")
         self._lock()
-        print(f"[BITMAP] pid={pid} got lock...")
+        print(f"[BITMAP] {time.time()} pid={pid} got lock...")
         t_lock_acquired = time.time()
         wait_ms = (t_lock_acquired - t_wait_begin) * 1000.0
 
@@ -69,7 +69,7 @@ class GlobalEdgeBitmap:
             if not np.any(ones):
                 hold_ms = (time.time() - t_lock_acquired) * 1000.0
                 # 轻量日志：无新边，提前返回
-                print(f"[BITMAP] pid={pid} wait_ms={wait_ms:.3f} hold_ms={hold_ms:.3f} new_bits=0 file={path}")
+                print(f"[BITMAP] {time.time()}  无新边，提前返回  pid={pid} wait_ms={wait_ms:.3f} hold_ms={hold_ms:.3f} new_bits=0 file={path}")
                 return 0
 
             tgt = self.bitmap[:usable]
@@ -80,7 +80,7 @@ class GlobalEdgeBitmap:
 
             hold_ms = (time.time() - t_lock_acquired) * 1000.0
 
-            print(f"[BITMAP] pid={pid} wait_ms={wait_ms:.3f} hold_ms={hold_ms:.3f} new_bits={new_bits} file={path}")
+            print(f"[BITMAP] {time.time()} 新边数量{new_bits}  pid={pid} wait_ms={wait_ms:.3f} hold_ms={hold_ms:.3f} new_bits={new_bits} file={path}")
 
             return new_bits
         finally:
