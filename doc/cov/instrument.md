@@ -91,10 +91,12 @@ nohup python3 -u fuzzer.py > fuzzer.log 2>&1 &
 查看所有python3的句柄数量
 
 ```
- for p in $(pgrep -f python3); do     pipe_cnt=$(ls -l /proc/$p/fd 2>/dev/null \
+
+for p in $(pgrep -f python3); do     pipe_cnt=$(ls -l /proc/$p/fd 2>/dev/null \
         | awk '{print $NF}' \
         | grep -E "^pipe:\[" \
         | wc -l);     fd_cnt=$(ls /proc/$p/fd 2>/dev/null | wc -l);     cmdline=$(tr '\0' ' ' < /proc/$p/cmdline 2>/dev/null);     echo "$pipe_cnt pipes | $fd_cnt FDs | PID $p | $cmdline"; done | sort -nr
+
 ```
 
 
