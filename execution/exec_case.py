@@ -43,8 +43,8 @@ class CSExitStatus(Enum):
 
 
 def run_content_shell(html_path: str) -> CSExitStatus:
-
-    global final_status, proc
+    global proc  # final_status 不需要是 global 了
+    proc = None
 
     def markMessageLine(message):
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
@@ -54,43 +54,47 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         with open(log_path, "wb") as logw:
             logw.writelines([line.encode("utf-8") for line in out_message])
 
-    def cleanup_proc(proc):
-        # 把整个 content_shell 进程组干掉，防止残留 renderer / storage 之类
-        if proc is not None:
+    def cleanup_proc(p):
+        if p is None:
+            return
+        # 杀/回收子进程组 + 关 stdout，避免 fd 泄漏
+        try:
             # 先试TERM整组
             try:
-                if proc.poll() is None:
-                    os.killpg(proc.pid, signal.SIGTERM)
+                if p.poll() is None:
+                    os.killpg(p.pid, signal.SIGTERM)
             except ProcessLookupError:
                 pass
 
-            # 尝试等一下，确保子进程真的退了
+            # 给它时间写sancov并退出
             try:
-                proc.wait(timeout=1.0)
+                p.wait(timeout=1.0)
             except subprocess.TimeoutExpired:
-                # 还不死就KILL整组
+                # 还活着就KILL整组
                 try:
-                    os.killpg(proc.pid, signal.SIGKILL)
+                    os.killpg(p.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
                 try:
-                    proc.wait(timeout=1.0)
+                    p.wait(timeout=1.0)
                 except Exception:
                     pass
-
-            # 关 stdout，防 fd 泄漏
+        finally:
+            # 不管怎样最后都关 stdout
             try:
-                if proc.stdout and not proc.stdout.closed:
-                    proc.stdout.close()
+                if p.stdout and not p.stdout.closed:
+                    p.stdout.close()
             except Exception as e:
-                log(f"[cleanup_proc close stdout fail: {e}")
-
+                log(f"[cleanup_proc close stdout fail: {e}]")
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
     log_path = os.path.join(out_dir, "content_shell.log")
     out_message = []
+
+    ### 修改 1: 用本地变量 result_status，统一出口 return
+    result_status = CSExitStatus.OTHER
 
     try:
         cmd = [
@@ -117,9 +121,13 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         markMessageLine("process begin...")
         t_start = time.time()
         log("process ready to begin...")
+
         proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            env=env, start_new_session=True
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=env,
+            start_new_session=True  # 让我们可以 killpg
         )
 
         register_content_shell_pid(proc.pid)
@@ -128,15 +136,15 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         done_seen = False
         semantic_error_seen = False
 
+        # === 读取输出 ===
         while True:
-            line = proc.stdout.readline()      # 一次读一行，没数据时阻塞
-            if not line:                       # EOF -> 子进程退出
+            line = proc.stdout.readline()
+            if not line:
                 break
 
             decoded = line.decode("utf-8", errors="replace")
             out_message.append(decoded)
 
-            # 匹配 FUZZ 标志
             if b"FUZZ_BEGIN" in line:
                 log(f"found fuzz begin, 启动耗时 [{format_s_to_ms(time.time() - t_start)}]...")
                 begin_seen = True
@@ -148,34 +156,43 @@ def run_content_shell(html_path: str) -> CSExitStatus:
                 semantic_error_seen = True
                 break
 
+        # === 等待退出 or 判定超时 ===
         try:
             proc.wait(timeout=config.PROCESS_TIMEOUT)
             log("wait done, ready to close...")
-        except subprocess.TimeoutExpired:
-            log(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
-            final_status = CSExitStatus.PROCESS_TIMEOUT
-            unregister_content_shell_pid(proc.pid)
-            return final_status
+            # 等到了 -> 可以根据标志决定 result_status
+            if semantic_error_seen:
+                result_status = CSExitStatus.SEMANTIC_ERROR
+            elif not begin_seen:
+                result_status = CSExitStatus.OTHER
+            elif done_seen:
+                result_status = CSExitStatus.NORMAL_EXIT
+            else:
+                result_status = CSExitStatus.OTHER
 
-        proc.stdout.close()
+        except subprocess.TimeoutExpired:
+            # 超时：不直接 return，记录状态，让 finally 去杀
+            log(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
+            result_status = CSExitStatus.PROCESS_TIMEOUT
+
+        # 这里不手动 close stdout，也不手动 unregister
+        # 统一交给 finally -> cleanup_proc -> unregister
 
         log("process_end")
         markMessageLine("process end...")
         saveLog()
 
-        if semantic_error_seen:
-            final_status = CSExitStatus.SEMANTIC_ERROR
-        elif not begin_seen:
-            final_status = CSExitStatus.OTHER
-        elif done_seen:
-            final_status = CSExitStatus.NORMAL_EXIT
-        else:
-            final_status = CSExitStatus.OTHER
-
-        unregister_content_shell_pid(proc.pid)
-        return final_status
     finally:
-        cleanup_proc(proc)  # 你已有的收尸逻辑
+        ### 修改 2: 先清理进程（关掉 fd）
+        cleanup_proc(proc)
+
+        ### 修改 3: 再从全局集合里移除 pid
+        if proc is not None:
+            unregister_content_shell_pid(proc.pid)
+
+    ### 修改 4: 统一出口
+    return result_status
+
 
 def run_one_case(case_path: str):
     def sync_stat():
