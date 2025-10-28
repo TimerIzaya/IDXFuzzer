@@ -37,6 +37,37 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         with open(log_path, "wb") as logw:
             logw.writelines([line.encode("utf-8") for line in out_message])
 
+    def cleanup_proc(proc, tag: str):
+        # 把整个 content_shell 进程组干掉，防止残留 renderer / storage 之类
+        if proc is not None:
+            # 先试TERM整组
+            try:
+                if proc.poll() is None:
+                    os.killpg(proc.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+            # 尝试等一下，确保子进程真的退了
+            try:
+                proc.wait(timeout=1.0)
+            except subprocess.TimeoutExpired:
+                # 还不死就KILL整组
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                try:
+                    proc.wait(timeout=1.0)
+                except Exception:
+                    pass
+
+            # 关 stdout，防 fd 泄漏
+            try:
+                if proc.stdout and not proc.stdout.closed:
+                    proc.stdout.close()
+            except Exception as e:
+                log(f"[cleanup_proc {tag}] close stdout fail: {e}")
+
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
@@ -98,34 +129,37 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             semantic_error_seen = True
             break
 
-    # 温和退出，预计bin都在
     try:
         proc.wait(timeout=config.PROCESS_TIMEOUT)
         log("wait done, ready to close...")
     except subprocess.TimeoutExpired:
         log(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
-        # 还不走 → 直接击毙 (SIGKILL)
-        proc.kill()
-        proc.wait()
-        return CSExitStatus.PROCESS_TIMEOUT
+        # 我们不改业务语义：这还是超时
+        final_status = CSExitStatus.PROCESS_TIMEOUT
+        # 收尸，防止残留进程 & fd 泄漏
+        cleanup_proc(proc, final_status.name)
+        return final_status
+
 
     proc.stdout.close()
-
 
     log("process_end")
     markMessageLine("process end...")
     saveLog()
 
     if semantic_error_seen:
-        return CSExitStatus.SEMANTIC_ERROR
+        final_status = CSExitStatus.SEMANTIC_ERROR
+    elif not begin_seen:
+        final_status = CSExitStatus.OTHER
+    elif done_seen:
+        final_status = CSExitStatus.NORMAL_EXIT
+    else:
+        final_status = CSExitStatus.OTHER
 
-    if not begin_seen:
-        return CSExitStatus.OTHER
+    # 统一在这里做清理，防止 Chrome 残留和 fd 泄漏
+    cleanup_proc(proc, final_status.name)
 
-    if done_seen:
-        return CSExitStatus.NORMAL_EXIT
-
-    return CSExitStatus.OTHER
+    return final_status
 
 
 def run_one_case(case_path: str):
