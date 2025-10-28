@@ -55,33 +55,32 @@ class GlobalEdgeBitmap:
         usable = min(len(raw), self.size)
         data = np.frombuffer(raw, dtype=np.uint8, count=usable)
 
-        # log("try to get lock")
-        t = time.time()
         self._lock()
-        t0 = time.time()
-        # log(f"got lock, consume: [{format_s_to_ms(time.time() - t)}]")
-        t_lock_acquired = time.time()
         try:
-            # --- 原本逻辑开始 ---
             ones = (data != 0)
             if not np.any(ones):
-                # 轻量日志：无新边，提前返回
                 return 0
 
             tgt = self.bitmap[:usable]
             was_zero = (tgt[ones] == 0)
             new_bits = int(was_zero.sum())
             tgt[ones] = 1
-            # --- 原本逻辑结束 ---
-
-            # hold_ms = (time.time() - t_lock_acquired) * 1000.0
             return new_bits
         finally:
-            # log(f"unlock, hold lock consume: [{format_s_to_ms(time.time() - t)}]")
             self._unlock()
 
+    def close(self):
+        # 关共享内存视图
+        self.shm.close()
+        # 关锁文件 fd，防止 /dev/shm/idxf_global_bitmap.lock 泄漏
+        try:
+            os.close(self._lock_fd)
+        except OSError:
+            pass
+        self._lock_fd = None
 
-    def close(self): self.shm.close()
+
+
     def unlink(self): self.shm.unlink()   # 只让“最后清理者”调用
     def name(self):  return BITMAP_SHM_NAME   # 固定名
     def get_array(self): return self.bitmap.copy()

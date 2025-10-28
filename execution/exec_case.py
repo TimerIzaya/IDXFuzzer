@@ -57,44 +57,50 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     def cleanup_proc(p):
         if p is None:
             return
-        # 杀/回收子进程组 + 关 stdout，避免 fd 泄漏
-        try:
-            # 先试TERM整组
-            try:
-                if p.poll() is None:
-                    os.killpg(p.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
 
-            # 给它时间写sancov并退出
+        # 1. 杀进程组
+        try:
+            if p.poll() is None:
+                try:
+                    os.killpg(p.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+        except Exception:
+            pass
+
+        # 2. 等待
+        try:
+            p.wait(timeout=1.0)
+        except subprocess.TimeoutExpired:
             try:
-                p.wait(timeout=1.0)
-            except subprocess.TimeoutExpired:
-                # 还活着就KILL整组
                 try:
                     os.killpg(p.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+                p.wait(timeout=1.0)
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        # 3. 统一关闭所有流，防止父进程继续握着管道端
+        for stream in ("stdout", "stderr", "stdin"):
+            s = getattr(p, stream, None)
+            if s is not None:
                 try:
-                    p.wait(timeout=1.0)
-                except Exception:
-                    pass
-        finally:
-            # 不管怎样最后都关 stdout
-            try:
-                if p.stdout and not p.stdout.closed:
-                    p.stdout.close()
-            except Exception as e:
-                log(f"[cleanup_proc close stdout fail: {e}]")
+                    if hasattr(s, "closed"):
+                        if not s.closed:
+                            s.close()
+                    else:
+                        s.close()
+                except Exception as e:
+                    log(f"[cleanup_proc close {stream} fail: {e}]")
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
     log_path = os.path.join(out_dir, "content_shell.log")
     out_message = []
-
-    ### 修改 1: 用本地变量 result_status，统一出口 return
-    result_status = CSExitStatus.OTHER
 
     try:
         cmd = [
