@@ -14,6 +14,21 @@ from coverage.share_stat import Stats
 from tool.log import log, format_s_to_ms
 from tool.tool import count_files_in_dir
 
+import signal
+import threading
+
+# 全局集合（线程安全）
+_launched_content_shell_pids = set()
+_launched_content_shell_lock = threading.Lock()
+
+def register_content_shell_pid(pid: int):
+    with _launched_content_shell_lock:
+        _launched_content_shell_pids.add(pid)
+
+def unregister_content_shell_pid(pid: int):
+    with _launched_content_shell_lock:
+        _launched_content_shell_pids.discard(pid)
+
 
 class CSExitStatus(Enum):
     """枚举表示 content_shell 的执行状态。"""
@@ -105,6 +120,8 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         env=env, start_new_session=True
     )
 
+    register_content_shell_pid(proc.pid)
+
     begin_seen = False
     done_seen = False
     semantic_error_seen = False
@@ -137,7 +154,10 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         # 我们不改业务语义：这还是超时
         final_status = CSExitStatus.PROCESS_TIMEOUT
         # 收尸，防止残留进程 & fd 泄漏
-        cleanup_proc(proc, final_status.name)
+        try:
+            cleanup_proc(proc, final_status.name)  # 你已有的收尸逻辑
+        finally:
+            unregister_content_shell_pid(proc.pid)
         return final_status
 
 
@@ -157,7 +177,10 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         final_status = CSExitStatus.OTHER
 
     # 统一在这里做清理，防止 Chrome 残留和 fd 泄漏
-    cleanup_proc(proc, final_status.name)
+    try:
+        cleanup_proc(proc, final_status.name)  # 你已有的收尸逻辑
+    finally:
+        unregister_content_shell_pid(proc.pid)
 
     return final_status
 

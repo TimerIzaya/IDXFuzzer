@@ -1,3 +1,4 @@
+import signal
 import threading
 import time
 from multiprocessing import Event
@@ -8,10 +9,17 @@ import config
 from coverage import bitmap
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
-from execution.run_inss import start_workers, install_signal_handlers, stop_workers
+from execution.run_inss import start_workers, install_signal_handlers, stop_workers, _sigint_handler
 from coverage.stat_worker import stat_worker
 from execution.run_inss_restore import resolve_restore_mode
 from tool.tool import init_output_dirs
+
+
+
+# 在主入口处注册：
+
+
+
 
 if __name__ == '__main__':
     # 初始化文件夹、shared bitmap、Stats、统计线程
@@ -28,6 +36,9 @@ if __name__ == '__main__':
     # 启动 stat_worker 线程
     stat_thread = threading.Thread(target=stat_worker, args=(global_bitmap, time.time(), stop_event), daemon=True)
     stat_thread.start()
+    signal.signal(signal.SIGINT, _sigint_handler)
+    signal.signal(signal.SIGTERM, _sigint_handler)
+
 
     # 先处理restore模式
     resolve_restore_mode()

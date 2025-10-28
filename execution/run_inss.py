@@ -5,7 +5,7 @@ from multiprocessing import Event, Process, current_process
 from typing import List, Tuple
 
 from coverage.bitmap import GlobalEdgeBitmap
-from execution.exec_case import run_one_case
+from execution.exec_case import run_one_case, _launched_content_shell_lock, _launched_content_shell_pids
 from IR.generator import gen_case
 from tool.cpu_utils import choose_cpus, get_available_cpus, set_affinity_for_current_process
 from tool.log import log, format_s_to_ms
@@ -83,3 +83,31 @@ def install_signal_handlers(stop_event_holder: dict, procs_holder: dict):
             stop_workers(procs, stop_event or Event(), timeout=10.0)
     signal.signal(signal.SIGINT, _handler)
     signal.signal(signal.SIGTERM, _handler)
+
+
+def _kill_all_registered_content_shells(reason="SIGINT"):
+    with _launched_content_shell_lock:
+        pids = list(_launched_content_shell_pids)
+    for pid in pids:
+        try:
+            # kill process group (需要 start_new_session=True 才行)
+            os.killpg(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    # 等一小会儿再 KILL
+    time.sleep(0.5)
+    with _launched_content_shell_lock:
+        pids = list(_launched_content_shell_pids)
+    for pid in pids:
+        try:
+            os.killpg(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+def _sigint_handler(signum, frame):
+    log(f"main got signal {signum}, cleaning child content_shells...")
+    _kill_all_registered_content_shells(reason=f"signal {signum}")
+    # 若你想让主程序继续退出（原来 Ctrl+C 行为），再恢复默认处理并 re-raise KeyboardInterrupt
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    # optional: raise KeyboardInterrupt to unwind
+    raise KeyboardInterrupt
