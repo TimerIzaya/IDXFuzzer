@@ -209,6 +209,9 @@ def run_one_case(case_path: str):
             completed=stat_completed_cnt,
             attachments=stat_attachments_cnt,
             mark_interesting=stat_mark_interesting,
+            stat_lack_bin=stat_lack_bin,
+            stat_other_error=stat_other_error,
+            stat_semantic_error=stat_semantic_error,
         )
     global_bitmap_to_update = GlobalEdgeBitmap(create=False)
 
@@ -255,9 +258,13 @@ def run_one_case(case_path: str):
 
     # 语义错误 回来受罚
     if cs_exit_status is CSExitStatus.SEMANTIC_ERROR:
-        shutil.move(out_dir, config.SEMANTIC_ROOT)
-        stat_semantic_error = 1
-        sync_stat()
+        snapshot = Stats.get()
+        stat_semantic_error = snapshot["stat_semantic_error"]
+        # 当前语义错误太多，只要100就够了
+        if stat_semantic_error < 100:
+            shutil.move(out_dir, config.SEMANTIC_ROOT)
+            stat_semantic_error = 1
+            sync_stat()
         return
 
     # 不明愿意 回来研究
