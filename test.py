@@ -46,7 +46,7 @@ if __name__ == '__main__':
      # path = testGen()
     #  test_run_content_shell("test/case_0_env/test.html")   
 
-    
+    init_output_dirs()
     global_bitmap = GlobalEdgeBitmap(create=True)
     Stats.init(create=True)
     test_run_one_case("test/case_1_env/test.html")   
