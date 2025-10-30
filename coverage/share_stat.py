@@ -17,26 +17,30 @@ from contextlib import contextmanager
 import os, fcntl
 
 # ===== 环境配置（可用环境变量覆盖）=====
-SHM_NAME   = os.environ.get("BITMAP_SHM_NAME", "IDXF_STAT_SHM")
-LOCK_PATH  = os.environ.get("BITMAP_LOCK_PATH", "/dev/shm/idxf-stat.lock")
+SHM_NAME = os.environ.get("BITMAP_SHM_NAME", "IDXF_STAT_SHM")
+LOCK_PATH = os.environ.get("BITMAP_LOCK_PATH", "/dev/shm/idxf-stat.lock")
 
 # ===== 字段布局：8 × uint64 = 64B =====
-IDX_VERSION              = 0
-IDX_TIMEOUT_CNT          = 1
-IDX_TOTAL_EXEC_CNT       = 2
+IDX_VERSION = 0
+IDX_TIMEOUT_CNT = 1
+IDX_TOTAL_EXEC_CNT = 2
 IDX_LAST_INTERESTING_SEQ = 3
-IDX_PENDING_CNT          = 4
-IDX_NEW_CNT              = 5
-IDX_COMPLETED_CNT        = 6
-IDX_ATTACHMENTS_CNT      = 7
+IDX_PENDING_CNT = 4
+IDX_NEW_CNT = 5
+IDX_COMPLETED_CNT = 6
+IDX_ATTACHMENTS_CNT = 7
+IDX_OTHER = 8
+IDX_SEMANTIC = 9
+IDX_NOBIN = 10
 
-NUM_U64 = 8
-BYTES   = NUM_U64 * 8  # 64B
+NUM_U64 = 11
+BYTES = NUM_U64 * 8  # 64B
 
 
 # ================= 内部实现类 =================
 class _SharedStat:
     """内部实现：真正操作共享内存与文件锁。"""
+
     def __init__(self, name: str = SHM_NAME, create: bool = False):
         self.name = name
         self._lock_fd = None
@@ -59,7 +63,6 @@ class _SharedStat:
             self._init_memory_zero()
         else:
             self.shm = shared_memory.SharedMemory(name=name, create=False)
-
 
         # 作为 uint64 视图访问（'Q' = unsigned long long）
         self._u64 = memoryview(self.shm.buf).cast('Q')
@@ -92,13 +95,16 @@ class _SharedStat:
 
     # ===== 语义化更新 =====
     def record_exec(
-        self,
-        timeout: int = 0,
-        pending: int = 0,
-        is_new: int = 0,
-        completed: int = 0,
-        attachments: int = 0,
-        mark_interesting: bool = False,
+            self,
+            timeout: int = 0,
+            pending: int = 0,
+            is_new: int = 0,
+            completed: int = 0,
+            attachments: int = 0,
+            mark_interesting: bool = False,
+            stat_other_error: int = 0,
+            stat_semantic_error: int = 0,
+            stat_lack_bin: int = 0,
     ):
         # 参数校验（非负整数）
         for name, val in {
@@ -117,19 +123,25 @@ class _SharedStat:
             if attachments:  self._inc(IDX_ATTACHMENTS_CNT, attachments)
             if mark_interesting:
                 self._set(IDX_LAST_INTERESTING_SEQ, seq)
+            if stat_other_error: self._inc(IDX_OTHER, stat_other_error)
+            if stat_semantic_error: self._inc(IDX_SEMANTIC, stat_semantic_error)
+            if stat_lack_bin: self._inc(IDX_LAST_INTERESTING_SEQ, stat_lack_bin)
 
     # ===== 快照读取（无锁，展示足够）=====
     def snapshot(self) -> dict:
         arr = [int(v) for v in self._u64]
         return {
-            "version":               arr[IDX_VERSION],
-            "timeout_cnt":           arr[IDX_TIMEOUT_CNT],
-            "total_exec_cnt":        arr[IDX_TOTAL_EXEC_CNT],
+            "version": arr[IDX_VERSION],
+            "timeout_cnt": arr[IDX_TIMEOUT_CNT],
+            "total_exec_cnt": arr[IDX_TOTAL_EXEC_CNT],
             "last_interesting_exec": arr[IDX_LAST_INTERESTING_SEQ],
-            "pending_cnt":           arr[IDX_PENDING_CNT],
-            "new_cnt":               arr[IDX_NEW_CNT],
-            "completed_cnt":         arr[IDX_COMPLETED_CNT],
-            "attachments_cnt":       arr[IDX_ATTACHMENTS_CNT],
+            "pending_cnt": arr[IDX_PENDING_CNT],
+            "new_cnt": arr[IDX_NEW_CNT],
+            "completed_cnt": arr[IDX_COMPLETED_CNT],
+            "attachments_cnt": arr[IDX_ATTACHMENTS_CNT],
+            "stat_other_error": arr[IDX_OTHER],
+            "stat_semantic_error": arr[IDX_SEMANTIC],
+            "stat_lack_bin": arr[IDX_LAST_INTERESTING_SEQ],
         }
 
     # ===== 资源管理 =====
@@ -178,14 +190,17 @@ class Stats:
     # ---- 2) 更新（安全累加 / 标记 interesting）----
     @classmethod
     def update(
-        cls,
-        *,
-        timeout: int = 0,
-        pending: int = 0,
-        is_new: int = 0,
-        completed: int = 0,
-        attachments: int = 0,
-        mark_interesting: bool = False,
+            cls,
+            *,
+            timeout: int = 0,
+            pending: int = 0,
+            is_new: int = 0,
+            completed: int = 0,
+            attachments: int = 0,
+            mark_interesting: bool = False,
+            stat_other_error: int = 0,
+            stat_semantic_error: int = 0,
+            stat_lack_bin: int = 0,
     ):
         inst = cls._ensure()
         inst.record_exec(
@@ -195,6 +210,9 @@ class Stats:
             completed=completed,
             attachments=attachments,
             mark_interesting=mark_interesting,
+            stat_other_error=stat_other_error,
+            stat_semantic_error=stat_semantic_error,
+            stat_lack_bin=stat_lack_bin
         )
 
     # ---- 3) 获取（快照字典）----
@@ -219,6 +237,7 @@ class Stats:
             inst.close()
         except FileNotFoundError:
             pass
+
 
 if __name__ == "__main__":
     # 仅主进程调用一次；会清零/创建共享段

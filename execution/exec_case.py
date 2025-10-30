@@ -110,10 +110,10 @@ def run_content_shell(html_path: str) -> CSExitStatus:
             "--disable-breakpad", "--disable-default-apps", "--disable-sync",
             "--disable-background-networking", "--disable-popup-blocking",
             "--no-default-browser-check", "--password-store=basic",
-            "--use-mock-keychain", "--disable-hang-monitor",
-            "--no-zygote",
-            "--remote-debugging-port=0",
-            "--run-all-compositor-stages-before-draw",
+            "--disable-hang-monitor",
+            # "--no-zygote",
+            # "--remote-debugging-port=0",
+            # "--run-all-compositor-stages-before-draw",
             f"--user-data-dir={tmp_dir}",
             "--enable-crash-reporter",
             "--enable-logging=stderr",  # 把 console/error 打到 stderr
@@ -228,6 +228,9 @@ def run_one_case(case_path: str):
     stat_attachments_cnt = count_files_in_dir(os.path.join(out_dir, "attachments"))
     stat_timeout = 0
     stat_mark_interesting = False
+    stat_semantic_error = 0
+    stat_other_error = 0
+    stat_lack_bin = 0
 
     # 删除浏览器运行临时数据，处理覆盖率
     shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -247,23 +250,36 @@ def run_one_case(case_path: str):
     # report检测到的bug
     if stat_pending_cnt > 0 or stat_new_cnt > 0 or stat_completed_cnt > 0 or stat_attachments_cnt > 0:
         shutil.move(out_dir, config.CRASH_ROOT)
+        sync_stat()
+        return
 
     # 语义错误 回来受罚
     if cs_exit_status is CSExitStatus.SEMANTIC_ERROR:
         shutil.move(out_dir, config.SEMANTIC_ROOT)
+        stat_semantic_error = 1
+        sync_stat()
+        return
 
     # 不明愿意 回来研究
     if cs_exit_status is CSExitStatus.OTHER:
         shutil.move(out_dir, config.OTHER_ROOT)
+        stat_other_error = 1
+        sync_stat()
+        return
 
     # 进程超时 闻所未闻
     if cs_exit_status is CSExitStatus.PROCESS_TIMEOUT:
         stat_timeout = 1
         shutil.move(out_dir, config.TIMEOUT_ROOT)
+        sync_stat()
+        return
     
     # 没有bin文件 
     if cs_exit_status is CSExitStatus.LACK_BIN:
         shutil.move(out_dir, config.NOBIN_ROOT)
+        stat_lack_bin = 1
+        sync_stat()
+        return
 
     # 最后开始处理正常场景, 记住生成出来的case默认就是放在corpus里的，没有新边就删了
     if new_edges > 0:
@@ -271,7 +287,6 @@ def run_one_case(case_path: str):
     else:
         # 可能被上面的场景给移走了
         shutil.rmtree(out_dir, ignore_errors=True)
-
     sync_stat()
 
 

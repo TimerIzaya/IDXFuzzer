@@ -34,6 +34,9 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
         new_cnt = snapshot["new_cnt"]
         completed_cnt = snapshot["completed_cnt"]
         attachments_cnt = snapshot["attachments_cnt"]
+        stat_other_error = snapshot["stat_other_error"]
+        stat_semantic_error = snapshot["stat_semantic_error"]
+        stat_lack_bin = snapshot["stat_lack_bin"]
 
         exec_diff = total_exec_cnt - last_exec
         throughput = exec_diff / max((now - last_time) / 60.0, 1e-6)
@@ -58,6 +61,9 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
                   f"{'Last Interesting Seed @':<25}: {last_interesting_exec}\n"
                   f"{'Coverage':<25}: {coverage_pct:.4f}%\n"
                   f"{'Timeout Cases':<25}: {timeout_cnt}\n"
+                  f"{'Lack Bin':<25}: {stat_lack_bin}\n"
+                  f"{'Unknown':<25}: {stat_other_error}\n"
+                  f"{'SemanticError':<25}: {stat_semantic_error}\n"
                   f"{'Crash (pending)':<25}: {pending_cnt}\n"
                   f"{'Crash (new)':<25}: {new_cnt}\n"
                   f"{'Crash (completed)':<25}: {completed_cnt}\n"
