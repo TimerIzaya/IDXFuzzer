@@ -126,7 +126,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
         markMessageLine("process begin...")
         t_start = time.time()
-        log("process ready to begin...")
+        # log("process ready to begin...")
 
         proc = subprocess.Popen(
             cmd,
@@ -156,7 +156,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
                 begin_seen = True
             elif b"FUZZ_DONE" in line:
                 done_seen = True
-                log("found fuzz done, break...")
+                # log("found fuzz done, break...")
                 break
             elif b"FUZZ_JS_ERROR" in line or b"FUZZ_UNHANDLED_REJECTION" in line:
                 semantic_error_seen = True
@@ -165,7 +165,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         # === 等待退出 or 判定超时 ===
         try:
             proc.wait(timeout=config.PROCESS_TIMEOUT)
-            log("wait done, ready to close...")
+            # log("wait done, ready to close...")
             # 等到了 -> 可以根据标志决定 result_status
             if semantic_error_seen:
                 result_status = CSExitStatus.SEMANTIC_ERROR
@@ -184,7 +184,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         # 这里不手动 close stdout，也不手动 unregister
         # 统一交给 finally -> cleanup_proc -> unregister
 
-        log("process_end")
+        # log("process_end")
         markMessageLine("process end...")
         saveLog()
 
@@ -241,7 +241,7 @@ def run_one_case(case_path: str):
 
     # 小概率事件，冗余考虑，如果没覆盖率文件，那肯定执行不正常
     if not bin_files:
-        log("lack bin")
+        # log("lack bin")
         cs_exit_status = CSExitStatus.LACK_BIN
 
     new_edges = 0

@@ -125,7 +125,7 @@ class _SharedStat:
                 self._set(IDX_LAST_INTERESTING_SEQ, seq)
             if stat_other_error: self._inc(IDX_OTHER, stat_other_error)
             if stat_semantic_error: self._inc(IDX_SEMANTIC, stat_semantic_error)
-            if stat_lack_bin: self._inc(IDX_LAST_INTERESTING_SEQ, stat_lack_bin)
+            if stat_lack_bin: self._inc(IDX_NOBIN, stat_lack_bin)
 
     # ===== 快照读取（无锁，展示足够）=====
     def snapshot(self) -> dict:
@@ -141,7 +141,7 @@ class _SharedStat:
             "attachments_cnt": arr[IDX_ATTACHMENTS_CNT],
             "stat_other_error": arr[IDX_OTHER],
             "stat_semantic_error": arr[IDX_SEMANTIC],
-            "stat_lack_bin": arr[IDX_LAST_INTERESTING_SEQ],
+            "stat_lack_bin": arr[IDX_NOBIN],
         }
 
     # ===== 资源管理 =====
