@@ -260,10 +260,10 @@ def run_one_case(case_path: str):
     if cs_exit_status is CSExitStatus.SEMANTIC_ERROR:
         snapshot = Stats.get()
         stat_semantic_error = snapshot["stat_semantic_error"]
+        stat_semantic_error = 1
+        sync_stat()
         # 当前语义错误太多，只要100就够了
         if stat_semantic_error < 100:
-            stat_semantic_error = 1
-            sync_stat()
             shutil.move(out_dir, config.SEMANTIC_ROOT)
         else:
             shutil.rmtree(out_dir)
