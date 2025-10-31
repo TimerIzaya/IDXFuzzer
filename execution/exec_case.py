@@ -262,9 +262,11 @@ def run_one_case(case_path: str):
         stat_semantic_error = snapshot["stat_semantic_error"]
         # 当前语义错误太多，只要100就够了
         if stat_semantic_error < 100:
-            shutil.move(out_dir, config.SEMANTIC_ROOT)
             stat_semantic_error = 1
             sync_stat()
+            shutil.move(out_dir, config.SEMANTIC_ROOT)
+        else:
+            shutil.rmtree(out_dir)
         return
 
     # 不明愿意 回来研究
