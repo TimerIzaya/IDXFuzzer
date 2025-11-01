@@ -94,7 +94,7 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
     html_path_abs = os.path.abspath(html_path)
     out_dir = os.path.dirname(html_path_abs)
-    tmp_dir = os.path.join(out_dir, "chrome-tmp")
+    tmp_dir = os.path.join(config.CS_TMP, str(os.getpid()))
     log_path = os.path.join(out_dir, "content_shell.log")
 
     try:

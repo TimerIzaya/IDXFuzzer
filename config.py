@@ -5,7 +5,10 @@ NUM_INSTANCES = 15
 SHARE = "/dev/shm/"
 
 # ---------- 常量路径 ----------
+CS_TMP = SHARE + "tmp"
+
 RESULT = SHARE  + "result"
+
 CORPUS_ROOT = SHARE + "result/corpus"
 
 CRASH_ROOT = SHARE + "result/crashes"
@@ -59,7 +62,7 @@ P_CLOSE_DB = 0.01
 # 运行模式相关信息
 MODE_CUR = None
 
-MODE_RESTORE = True
+MODE_RESTORE = False
 
 MODE_GEN  = False
 
