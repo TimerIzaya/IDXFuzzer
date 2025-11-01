@@ -50,10 +50,6 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         return (ts + ": " + message + "\n").encode("utf-8")
 
-    def saveLog():
-        with open(log_path, "wb") as logw:
-            logw.writelines([line.encode("utf-8") for line in out_message])
-
     def cleanup_proc(p):
         if p is None:
             return
@@ -100,7 +96,6 @@ def run_content_shell(html_path: str) -> CSExitStatus:
     out_dir = os.path.dirname(html_path_abs)
     tmp_dir = os.path.join(out_dir, "chrome-tmp")
     log_path = os.path.join(out_dir, "content_shell.log")
-    out_message = []
 
     try:
         cmd = [
@@ -128,13 +123,14 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         t_start = time.time()
         # log("process ready to begin...")
 
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            env=env,
-            start_new_session=True  # 让我们可以 killpg
-        )
+        with open(log_path, "wb") as lf:
+            proc = subprocess.Popen(
+                cmd,
+                stdout=lf,
+                stderr=subprocess.STDOUT,
+                env=env,
+                start_new_session=True  # 让我们可以 killpg
+            )
 
         register_content_shell_pid(proc.pid)
 
@@ -142,25 +138,36 @@ def run_content_shell(html_path: str) -> CSExitStatus:
         done_seen = False
         semantic_error_seen = False
 
-        # === 读取输出 ===
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
+        log_buf = ""   # 就是一条不断变长的字符串
 
-            decoded = line.decode("utf-8", errors="replace")
-            out_message.append(decoded)
+        with open(log_path, "rb") as reader:
+            while True:
+                chunk = reader.read() 
+                if chunk:
+                    text = chunk.decode("utf-8", errors="replace")
+                    log_buf += text
 
-            if b"FUZZ_BEGIN" in line:
-                log(f"found fuzz begin, 启动耗时 [{format_s_to_ms(time.time() - t_start)}]...")
-                begin_seen = True
-            elif b"FUZZ_DONE" in line:
-                done_seen = True
-                # log("found fuzz done, break...")
-                break
-            elif b"FUZZ_JS_ERROR" in line or b"FUZZ_UNHANDLED_REJECTION" in line:
-                semantic_error_seen = True
-                break
+                    # 在累计的字符串里查
+                    if not begin_seen and "FUZZ_BEGIN" in log_buf:
+                        log(f"found fuzz begin, 启动耗时 [{format_s_to_ms(time.time() - t_start)}]...")
+                        begin_seen = True
+
+                    if "FUZZ_JS_ERROR" in log_buf or "FUZZ_UNHANDLED_REJECTION" in log_buf:
+                        semantic_error_seen = True
+                        break
+
+                    if "FUZZ_DONE" in log_buf:
+                        done_seen = True
+                        break
+                else:
+                    # 这一瞬间读不到新内容
+                    if proc.poll() is not None:
+                        # 子进程已经退出了，而且这会儿也没新内容 -> 真结束
+                        break
+                    # 子进程还活着，只是还没写 -> 等一下再读
+                    time.sleep(0.05)
+                    continue
+        
 
         # === 等待退出 or 判定超时 ===
         try:
@@ -178,25 +185,18 @@ def run_content_shell(html_path: str) -> CSExitStatus:
 
         except subprocess.TimeoutExpired:
             # 超时：不直接 return，记录状态，让 finally 去杀
-            log(f"# proc 读取stdout超时，目前输出为 \n {out_message}")
+            log(f"# proc 读取stdout超时, 目前输出为 \n {out_message}")
             result_status = CSExitStatus.PROCESS_TIMEOUT
-
-        # 这里不手动 close stdout，也不手动 unregister
-        # 统一交给 finally -> cleanup_proc -> unregister
 
         # log("process_end")
         markMessageLine("process end...")
-        saveLog()
 
     finally:
-        ### 修改 2: 先清理进程（关掉 fd）
         cleanup_proc(proc)
 
-        ### 修改 3: 再从全局集合里移除 pid
         if proc is not None:
             unregister_content_shell_pid(proc.pid)
 
-    ### 修改 4: 统一出口
     return result_status
 
 
@@ -236,7 +236,7 @@ def run_one_case(case_path: str):
     stat_lack_bin = 0
 
     # 删除浏览器运行临时数据，处理覆盖率
-    shutil.rmtree(tmp_dir, ignore_errors=True)
+    # shutil.rmtree(tmp_dir, ignore_errors=True)
     bin_files = glob.glob(bin_glob)
 
     # 小概率事件，冗余考虑，如果没覆盖率文件，那肯定执行不正常

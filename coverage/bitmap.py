@@ -70,9 +70,13 @@ class GlobalEdgeBitmap:
             self._unlock()
 
     def close(self):
-        # 关共享内存视图
+        # 先把 numpy view 干掉，不然 SharedMemory.close() 会说还有 exported pointers
+        if hasattr(self, "bitmap") and self.bitmap is not None:
+            del self.bitmap
+
         self.shm.close()
-        # 关锁文件 fd，防止 /dev/shm/idxf_global_bitmap.lock 泄漏
+
+        # 关锁文件 fd
         try:
             os.close(self._lock_fd)
         except OSError:
@@ -80,7 +84,9 @@ class GlobalEdgeBitmap:
         self._lock_fd = None
 
 
-
-    def unlink(self): self.shm.unlink()   # 只让“最后清理者”调用
-    def name(self):  return BITMAP_SHM_NAME   # 固定名
+    def unlink(self):
+        # 只让创建者删
+        if self.created:
+            self.shm.unlink()    
+    def name(self):  return BITMAP_SHM_NAME
     def get_array(self): return self.bitmap.copy()
