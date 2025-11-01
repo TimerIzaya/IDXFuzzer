@@ -17,39 +17,70 @@ def gen_run_one_case():
     case_path = gen_case(cid)
     run_one_case(case_path)
 
+import os
+import time
+from multiprocessing import Process, Event
+from typing import List, Union
 
-def worker_main(cpu_id: int, stop_event: Event):
-    set_affinity_for_current_process(cpu_id)
+# 你原来的这个工具函数可能是这样的：
+# def set_affinity_for_current_process(cpu_id: int): ...
+# 我这里包一层兼容多核的
+def set_affinity_for_current_process_multi(cpus: Union[int, List[int]]):
+    if isinstance(cpus, int):
+        cpus = [cpus]
+    os.sched_setaffinity(0, set(cpus))
 
+
+def worker_main(cpu_ids: Union[int, List[int]], stop_event: Event):
+    # 1) 先绑核（支持单核/多核）
+    set_affinity_for_current_process_multi(cpu_ids)
+
+    # 2) 原来的循环逻辑保持不变
     while not stop_event.is_set():
         t = time.time()
         gen_run_one_case()
         log(f"gen_run consume: [{format_s_to_ms(time.time() - t)}] ms")
 
 
-# === Supervisor / main ===
-def start_workers(num_instances: int = 10, start_cpu: int = 0, stop_event: Event = None) -> List[Process]:
+def start_workers(
+    num_instances: int = 10,
+    start_cpu: int = 0,
+    stop_event: Event = None,
+    cpus_per_worker: int = 2,   # ★ 新增：一个 worker 用几个核
+) -> List[Process]:
     """
-    启动 num_instances 个进程，每个绑定到一个 CPU（从 start_cpu 开始选取）。
-    返回启动的 Process 列表和 stop_event（主程序保存 stop_event 以便在退出时 set）。
+    启动 num_instances 个进程，每个绑定到一组 CPU（默认 1 个）。
+    cpus_per_worker=2 就是一进程绑 2 个核。
     """
     available = get_available_cpus()
     if not available:
         raise RuntimeError("no cpus detected")
 
-    cpus = choose_cpus(num_instances, start_cpu)
+    # 我们要的总核数 = worker 数 * 每个 worker 占用的核数
+    total_needed = num_instances * cpus_per_worker
+    all_cpus = choose_cpus(total_needed, start_cpu)  # 比如要 30 个就给你 0..29
+
     procs: List[Process] = []
+
     # 取全局 bitmap 名（如果 GlobalEdgeBitmap 提供 name()）
     gb = GlobalEdgeBitmap(create=False)
-    # 如果 create=False 且没有现有 shm，这可能 Fail，但我们不依赖 name 强制传递（run_one_case 里也 new GlobalEdgeBitmap(create=False)）
     gb.close()
 
     for i in range(num_instances):
-        cpu_id = cpus[i]
-        p = Process(target=worker_main, args=(cpu_id, stop_event), name=f"idxf-worker-{i}")
+        # 给第 i 个 worker 分一段核
+        begin = i * cpus_per_worker
+        end = begin + cpus_per_worker
+        cpu_group = all_cpus[begin:end]   # 可能是 [2] 或 [2, 3]
+
+        p = Process(
+            target=worker_main,
+            args=(cpu_group, stop_event),
+            name=f"idxf-worker-{i}",
+        )
         p.start()
         procs.append(p)
-        # print(f"[main] started worker {i} pid={p.pid} cpu={cpu_id}")
+        # log(f"[main] started worker {i} pid={p.pid} cpus={cpu_group}")
+
     return procs
 
 
