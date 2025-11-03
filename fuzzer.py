@@ -9,7 +9,7 @@ import config
 from coverage import bitmap
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
-from execution.run_inss import start_workers, install_signal_handlers, stop_workers, _sigint_handler
+from execution.run_inss import start_workers, _sigint_handler, install_signal_handlers, stop_workers
 from coverage.stat_worker import stat_worker
 from execution.run_inss_restore import resolve_restore_mode
 from tool.tool import init_output_dirs

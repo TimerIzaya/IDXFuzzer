@@ -1,144 +1,145 @@
+# /timer/index/execution/run_inss.py
+
 import os
 import signal
 import time
-from multiprocessing import Event, Process, current_process
-from typing import List, Tuple
+import multiprocessing as mp
+from typing import Optional, List, Dict, Any
 
-from coverage.bitmap import GlobalEdgeBitmap
-from execution.exec_case import run_one_case, _launched_content_shell_lock, _launched_content_shell_pids
+import config
 from IR.generator import gen_case
-from tool.cpu_utils import choose_cpus, get_available_cpus, set_affinity_for_current_process
-from tool.log import log, format_s_to_ms
-from tool.tool import make_uid
+from execution.exec_case import run_one_case
+from tool.log import log
+
+# 全局保存，信号里好用
+_GLOBAL_STOP_EVENT: Optional[mp.Event] = None
+_GLOBAL_PROCS: List[mp.Process] = []
 
 
-def gen_run_one_case():
-    cid = make_uid()
-    case_path = gen_case(cid)
-    run_one_case(case_path)
-
-import os
-import time
-from multiprocessing import Process, Event
-from typing import List, Union
-
-# 你原来的这个工具函数可能是这样的：
-# def set_affinity_for_current_process(cpu_id: int): ...
-# 我这里包一层兼容多核的
-def set_affinity_for_current_process_multi(cpus: Union[int, List[int]]):
-    if isinstance(cpus, int):
-        cpus = [cpus]
-    os.sched_setaffinity(0, set(cpus))
+def _pin_to_cpu(cpu_id: int) -> None:
+    """绑核，失败就算了"""
+    try:
+        os.sched_setaffinity(0, {cpu_id})
+    except Exception:
+        pass
 
 
-def worker_main(cpu_ids: Union[int, List[int]], stop_event: Event):
-    # 1) 先绑核（支持单核/多核）
-    set_affinity_for_current_process_multi(cpu_ids)
+def _worker_main(worker_idx: int, cpu_id: int, stop_event: mp.Event) -> None:
+    _pin_to_cpu(cpu_id)
+    log(f"[worker {os.getpid()}] started on cpu {cpu_id}")
 
-    # 2) 原来的循环逻辑保持不变
+    case_id = 0
+    executed = 0
+
     while not stop_event.is_set():
-        t = time.time()
-        gen_run_one_case()
-        log(f"gen_run consume: [{format_s_to_ms(time.time() - t)}] ms")
+        # 1) 生成一个 html
+        try:
+            # 你仓库里的 gen_case 要一个 case_id
+            html_path = gen_case(case_id)
+        except Exception as e:
+            log(f"[worker {os.getpid()}] gen_case failed: {e}")
+            time.sleep(0.1)
+            continue
+
+        # 2) 跑一次，用的是你刚刚那版 exec_case，里面有复用逻辑
+        try:
+            run_one_case(html_path)
+        except Exception as e:
+            log(f"[worker {os.getpid()}] run_one_case failed: {e}")
+            time.sleep(0.05)
+
+        executed += 1
+        case_id += 1
+
+        if executed % 3 == 0:
+            log(f"[worker {os.getpid()}] executed {executed} cases")
+
+        # 稍微让出一点时间
+        time.sleep(0.001)
+
+    log(f"[worker {os.getpid()}] stop because event is set")
 
 
-def start_workers(
-    num_instances: int = 10,
-    start_cpu: int = 0,
-    stop_event: Event = None,
-    cpus_per_worker: int = 2,   # ★ 新增：一个 worker 用几个核
-) -> List[Process]:
+def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> List[mp.Process]:
     """
-    启动 num_instances 个进程，每个绑定到一组 CPU（默认 1 个）。
-    cpus_per_worker=2 就是一进程绑 2 个核。
+    和你 fuzzer.py 的调用保持一致：
+        procs = start_workers(config.NUM_INSTANCES, START_CPU, stop_event)
     """
-    available = get_available_cpus()
-    if not available:
-        raise RuntimeError("no cpus detected")
+    global _GLOBAL_STOP_EVENT, _GLOBAL_PROCS
 
-    # 我们要的总核数 = worker 数 * 每个 worker 占用的核数
-    total_needed = num_instances * cpus_per_worker
-    all_cpus = choose_cpus(total_needed, start_cpu)  # 比如要 30 个就给你 0..29
-
-    procs: List[Process] = []
-
-    # 取全局 bitmap 名（如果 GlobalEdgeBitmap 提供 name()）
-    gb = GlobalEdgeBitmap(create=False)
-    gb.close()
+    procs: List[mp.Process] = []
 
     for i in range(num_instances):
-        # 给第 i 个 worker 分一段核
-        begin = i * cpus_per_worker
-        end = begin + cpus_per_worker
-        cpu_group = all_cpus[begin:end]   # 可能是 [2] 或 [2, 3]
-
-        p = Process(
-            target=worker_main,
-            args=(cpu_group, stop_event),
+        cpu_id = start_cpu + i
+        p = mp.Process(
+            target=_worker_main,
+            args=(i, cpu_id, stop_event),
             name=f"idxf-worker-{i}",
         )
         p.start()
         procs.append(p)
-        # log(f"[main] started worker {i} pid={p.pid} cpus={cpu_group}")
 
+    _GLOBAL_STOP_EVENT = stop_event
+    _GLOBAL_PROCS = procs
     return procs
 
 
-def stop_workers(procs: List[Process], stop_event: Event, timeout: float = 10.0):  # type: ignore
+def stop_workers(
+    stop_event: Optional[mp.Event] = None,
+    procs: Optional[List[mp.Process]] = None,
+) -> None:
     """
-    通知停止并等待退出，若超时则强制 terminate。
+    可以被：
+      1. fuzzer.py 主线程显式调用
+      2. 信号处理函数间接调用
     """
-    stop_event.set()
-    t0 = time.time()
+    global _GLOBAL_STOP_EVENT, _GLOBAL_PROCS
+
+    if stop_event is None:
+        stop_event = _GLOBAL_STOP_EVENT
+    if procs is None:
+        procs = _GLOBAL_PROCS
+
+    if stop_event is not None:
+        stop_event.set()
+
+    if procs is None:
+        return
+
+    # 给他们一点时间自己退
     for p in procs:
-        remaining = max(0.0, timeout - (time.time() - t0))
-        p.join(remaining)
+        p.join(timeout=1.0)
+
+    # 还活着就杀
+    for p in procs:
         if p.is_alive():
-            # print(f"[main] worker pid={p.pid} did not exit in time, terminating...")
-            p.terminate()
-            p.join(2.0)
+            try:
+                os.kill(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
 
 
-def install_signal_handlers(stop_event_holder: dict, procs_holder: dict):
+def install_signal_handlers(
+    stop_event_holder: Dict[str, Any],
+    procs_holder: Dict[str, Any],
+) -> None:
     """
-    在主进程安装 SIGINT / SIGTERM 处理器，优雅退出所有子进程。
-    stop_event_holder, procs_holder 是字典包装以便在 handler 内修改（闭包）。
+    你原来的 fuzzer.py 应该是这么写的：
+        stop_event_holder = {"event": stop_event}
+        procs_holder = {"procs": procs}
+        install_signal_handlers(stop_event_holder, procs_holder)
+    我就按这个接口来。
     """
+
     def _handler(signum, frame):
-        # print(f"[main] caught signal {signum}, shutting down...")
-        stop_event = stop_event_holder.get("stop_event")
-        procs = procs_holder.get("procs", [])
-        if stop_event:
-            stop_event.set()
-        if procs:
-            stop_workers(procs, stop_event or Event(), timeout=10.0)
+        ev = stop_event_holder.get("event")
+        ps = procs_holder.get("procs")
+        stop_workers(ev, ps)
+
     signal.signal(signal.SIGINT, _handler)
     signal.signal(signal.SIGTERM, _handler)
 
 
-def _kill_all_registered_content_shells(reason="SIGINT"):
-    with _launched_content_shell_lock:
-        pids = list(_launched_content_shell_pids)
-    for pid in pids:
-        try:
-            # kill process group (需要 start_new_session=True 才行)
-            os.killpg(pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-    # 等一小会儿再 KILL
-    time.sleep(0.5)
-    with _launched_content_shell_lock:
-        pids = list(_launched_content_shell_pids)
-    for pid in pids:
-        try:
-            os.killpg(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-
 def _sigint_handler(signum, frame):
-    log(f"main got signal {signum}, cleaning child content_shells...")
-    _kill_all_registered_content_shells(reason=f"signal {signum}")
-    # 若你想让主程序继续退出（原来 Ctrl+C 行为），再恢复默认处理并 re-raise KeyboardInterrupt
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    # optional: raise KeyboardInterrupt to unwind
-    raise KeyboardInterrupt
+    """有些地方可能直接 import 这个名字，给个兜底"""
+    stop_workers()
