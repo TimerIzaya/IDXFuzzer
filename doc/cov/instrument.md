@@ -110,15 +110,16 @@ for p in $(pgrep -f python3); do     pipe_cnt=$(ls -l /proc/$p/fd 2>/dev/null \
 
 
 
+# 插桩目标
 
-
-# 单模块总边数统计
+- 8bit模式
+- 每次发送kill自定义信号，导出bin，同时clear掉bitmap，保证复用
 
 ## runtime.cc
 
-cat third_party/chromium_instrumentation/runtime.cc
-
-```c
+```
+root@timer:/timer/chromium/src# cat third_party/chromium_instrumentation/runtime.cc 
+// third_party/chromium_instrumentation/runtime.cc
 #ifndef currentModule
 #define currentModule "unknown"
 #endif
@@ -127,125 +128,167 @@ cat third_party/chromium_instrumentation/runtime.cc
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>         // getpid, read, write, close
+#include <signal.h>         // sigaction
+#include <stdatomic.h>      // atomic_ulong
+#include <errno.h>
+#include <fcntl.h>          // open
+#include <sys/stat.h>
+#include <sys/types.h>
 
-// === 全局状态 ===
-static uint8_t* __sancov_bitmap = nullptr;
-static size_t __sancov_bitmap_size = 0;
-
-// === linker 提供的符号 ===
-extern uint32_t __start___sancov_guards;
-extern uint32_t __stop___sancov_guards;
-
-// === 强制链接函数 ===
-extern "C" void __force_link_runtime() {}
-
-// === 插桩回调函数，每次触发边时调用 ===
-extern "C" void __sanitizer_cov_trace_pc_guard(uint32_t* guard) {
-    if (!*guard || !__sancov_bitmap) return;
-    if (*guard >= __sancov_bitmap_size) return;
-    __sancov_bitmap[*guard] = 1;
+// === sancov 8-bit counters (ELF section) ===
+// clang/llvm with -fsanitize-coverage=inline-8bit-counters provides these.
+extern "C" {
+  extern uint8_t __start___sancov_cntrs[];
+  extern uint8_t __stop___sancov_cntrs[];
 }
 
-// === 初始化函数，程序启动时运行 ===
+// ========== 全局状态 ==========
+static uint8_t* __sancov_bitmap = NULL;      // 进程内 0/1 计数/标志数组
+static size_t   __sancov_bitmap_size = 0;    // bytes
+
+static atomic_ulong __sancov_epoch = 0;      // 1..N 递增
+
+// ========== 工具函数/日志 ==========
+static inline void log_ok_init(pid_t pid, size_t size) {
+  // 注意保持一行字符串常量，避免编译器将换行误解为未闭合引号
+  fprintf(stderr,
+          "[SanCov] OK [%s] Initialized in pid %d, %zu edges (signal=SIGUSR1)\n",
+          currentModule, (int)pid, size);
+}
+
+static inline void log_export_path(pid_t pid, unsigned long epoch,
+                                   size_t bytes, const char* path) {
+  fprintf(stderr,
+          "[SanCov] EXPORT [%s] pid=%d epoch=%lu wrote=%zu -> %s\n",
+          currentModule, (int)pid, epoch, bytes, path);
+}
+
+static inline void log_warn(const char* msg) {
+  fprintf(stderr, "[SanCov][warn] pid=%d %s\n", (int)getpid(), msg);
+}
+
+static bool is_zygote_process() {
+  // 读取 /proc/self/cmdline 判断 --type=zygote
+  FILE* f = fopen("/proc/self/cmdline", "rb");
+  if (!f) return false;
+  char buf[4096];
+  size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+  fclose(f);
+  if (n == 0) return false;
+  buf[n] = '\0';
+  // cmdline 是 '\0' 分隔，改成空格便于 strstr
+  for (size_t i = 0; i < n; ++i) {
+    if (buf[i] == '\0') buf[i] = ' ';
+  }
+  const char* needle = "--type=zygote";
+  return strstr(buf, needle) != NULL;
+}
+
+static void* get_bitmap_base(size_t* out_size) {
+  uint8_t* start = __start___sancov_cntrs;
+  uint8_t* stop  = __stop___sancov_cntrs;
+  if (!start || !stop || stop <= start) {
+    *out_size = 0;
+    return NULL;
+  }
+  *out_size = (size_t)(stop - start);
+  return (void*)start;
+}
+
+static int write_all(int fd, const void* buf, size_t n) {
+  const uint8_t* p = (const uint8_t*)buf;
+  size_t left = n;
+  while (left) {
+    ssize_t w = write(fd, p, left);
+    if (w < 0) {
+      if (errno == EINTR) continue;
+      return -1;
+    }
+    p += (size_t)w;
+    left -= (size_t)w;
+  }
+  return 0;
+}
+
+// ========== SIGUSR1 导出处理 ==========
+static void sancov_export_now() {
+  if (!__sancov_bitmap || __sancov_bitmap_size == 0) {
+    log_warn("export requested but bitmap is not ready");
+    return;
+  }
+
+  const char* out_dir = getenv("SANCOV_OUTPUT_DIR");
+  if (!out_dir || !*out_dir) {
+    out_dir = ".";
+  }
+
+  // 递增 epoch
+  unsigned long epoch = atomic_fetch_add_explicit(&__sancov_epoch, 1, memory_order_relaxed) + 1UL;
+
+  // 构造路径
+  char path[1024];
+  snprintf(path, sizeof(path),
+           "%s/sancov_bitmap_%s_%d_%lu.bin",
+           out_dir, currentModule, (int)getpid(), epoch);
+
+  // 写出
+  int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+  if (fd < 0) {
+    log_warn("failed to open export file");
+    return;
+  }
+
+  if (write_all(fd, __sancov_bitmap, __sancov_bitmap_size) != 0) {
+    close(fd);
+    log_warn("failed to write export file");
+    return;
+  }
+  close(fd);
+
+  log_export_path(getpid(), epoch, __sancov_bitmap_size, path);
+
+  // 可选清零
+  const char* clear = getenv("SANCOV_CLEAR");
+  if (clear && (clear[0] == '1' || clear[0] == 'y' || clear[0] == 'Y' || clear[0] == 't' || clear[0] == 'T')) {
+    memset(__sancov_bitmap, 0, __sancov_bitmap_size);
+  }
+}
+
+static void sigusr1_handler(int signo) {
+  (void)signo;
+  sancov_export_now();
+}
+
+// ========== 进程构造器：初始化（跳过 zygote） ==========
 __attribute__((constructor))
-static void __sancov_init() {
-    size_t num_guards = &__stop___sancov_guards - &__start___sancov_guards;
-    __sancov_bitmap_size = num_guards;
+static void sancov_runtime_init() {
+  // zygote 严格要求单线程，这里直接跳过所有初始化（含信号安装）
+  if (is_zygote_process()) {
+    return;
+  }
 
-    __sancov_bitmap = (uint8_t*)calloc(__sancov_bitmap_size, sizeof(uint8_t));
-    if (!__sancov_bitmap) {
-        fprintf(stderr, "[SanCov] ✘ Failed to allocate bitmap\n");
-        return;
-    }
+  size_t sz = 0;
+  void* base = get_bitmap_base(&sz);
+  __sancov_bitmap = (uint8_t*)base;
+  __sancov_bitmap_size = sz;
 
-    for (size_t i = 0; i < num_guards; i++) {
-        (&__start___sancov_guards)[i] = (uint32_t)i;
-    }
-    fprintf(stderr, "[SanCov] ✔ [%s] Initialized, %zu edges\n", currentModule, num_guards);
+  if (!__sancov_bitmap || __sancov_bitmap_size == 0) {
+    log_warn("no sancov counters found");
+    return;
+  }
+
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = sigusr1_handler;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = SA_RESTART;
+  if (sigaction(SIGUSR1, &sa, NULL) != 0) {
+    log_warn("sigaction(SIGUSR1) failed");
+  }
+
+  log_ok_init(getpid(), __sancov_bitmap_size);
 }
-
-// === 析构函数，程序退出时导出 bitmap ===
-__attribute__((destructor))
-static void __sancov_dump() {
-    if (!__sancov_bitmap) return;
-
-    const char* output_dir = getenv("SANCOV_OUTPUT_DIR");
-    if (!output_dir) {
-        fprintf(stderr, "[SanCov] ✘ SANCOV_OUTPUT_DIR not set\n");
-        return;
-    }
-
-    char path[4096];
-    snprintf(path, sizeof(path), "%s/sancov_bitmap_%s.bin", output_dir, currentModule);
-
-    FILE* fp = fopen(path, "wb");
-    if (!fp) {
-        fprintf(stderr, "[SanCov] ✘ Failed to open bitmap output: %s\n", path);
-        return;
-    }
-
-    // 写入 header: magic + size
-    uint32_t magic = 0xC0FFEE01;
-    fwrite(&magic, sizeof(magic), 1, fp);
-    fwrite(&__sancov_bitmap_size, sizeof(__sancov_bitmap_size), 1, fp);
-
-    // 写入 bitmap 数据
-    fwrite(__sancov_bitmap, 1, __sancov_bitmap_size, fp);
-    fclose(fp);
-
-    fprintf(stderr, "[SanCov] ✔ [%s] Bitmap saved to %s\n", currentModule, path);
-}
-```
-
-third_party/chromium_instrumentation/BUILD.gn
-
-```c
-source_set("sancov_runtime") {
-  sources = [ "runtime.cc" ]
-  deps = []
-}
-```
-
-
-
-## 任意模块主动链接
-
-third_party/blink/renderer/modules/indexeddb/idb_database.cc
-
-```
-extern "C" void __force_link_runtime();
-__attribute__((used)) static void (*runtime_link_ptr)() = &__force_link_runtime;
-```
-
-
-
-## 被插桩模块适配
-
-third_party/blink/renderer/modules/indexeddb/BUILD.gn
-
-顶部配置
-
-```shell
-config("indexeddb_sancov_flags") {
-  cflags_cc = [
-    "-fsanitize-coverage=trace-pc-guard",
-    "-Wno-global-constructors",
-    "-Wno-error=global-constructors",
-    "-DcurrentModule=\"blink_indexeddb\""
-]
-}
-```
-
-引用配置
-
-```
- configs += [ ":indexeddb_sancov_flags" ]
-```
-
-引入runtime.cc
-
-```
-"//third_party/chromium_instrumentation/runtime.cc"
 ```
 
 
@@ -253,11 +296,129 @@ config("indexeddb_sancov_flags") {
 ## 编译对象args
 
 ```
+root@timer:/timer/chromium/src# cat out/IndexedDBSanCov/args.gn 
 is_debug = false
 is_dcheck_enabled = true
 symbol_level = 2
-# use_sanitizer_coverage = true  # ❌ Not needed for local instrumentation
-is_asan = true  # Required for linking sanitizer runtime
-blink_unified_build = false  # Disable unified build to allow per-file instrumentation
+is_asan = true
+blink_unified_build = false
+enable_web_test = false
+use_sanitizer_coverage = false
+```
+
+
+
+## 三个模块修改内容
+
+```
+root@timer:/timer/chromium/src# git diff 
+diff --git a/components/services/storage/BUILD.gn b/components/services/storage/BUILD.gn
+index 9d8689f8323bd..7c94b8cd7648c 100644
+--- a/components/services/storage/BUILD.gn
++++ b/components/services/storage/BUILD.gn
+@@ -4,6 +4,18 @@
+ 
+ import("//third_party/protobuf/proto_library.gni")
+ 
++
++# 在目标所在 BUILD.gn 顶部放两个 config
++# 在目标所在 BUILD.gn 顶部放两个 config
++config("sancov_8bit_compile") {
++  cflags_cc = [
++    "-fsanitize-coverage=inline-8bit-counters,pc-table",
++    "-Wno-global-constructors",
++    "-Wno-error=global-constructors",
++    "-DcurrentModule=\"storage_indexeddb\"",
++  ]
++}
++
+ source_set("storage") {
+   sources = [
+     "dom_storage/async_dom_storage_database.cc",
+@@ -117,6 +129,9 @@ source_set("storage") {
+     "//storage/common:database_status",
+     "//storage/common:leveldb_status_helper",
+   ]
++
++   sources += [ "//third_party/chromium_instrumentation/runtime.cc" ]
++   configs += [ ":sancov_8bit_compile" ]
+ }
+ 
+ # This is its own component target because it exposes global state to multiple
+diff --git a/content/browser/indexed_db/BUILD.gn b/content/browser/indexed_db/BUILD.gn
+index b9df275169f46..8f6483be68e19 100644
+--- a/content/browser/indexed_db/BUILD.gn
++++ b/content/browser/indexed_db/BUILD.gn
+@@ -4,6 +4,16 @@
+ 
+ import("//mojo/public/tools/bindings/mojom.gni")
+ 
++config("sancov_8bit_compile") {
++  cflags_cc = [
++    "-fsanitize-coverage=inline-8bit-counters,pc-table",
++    "-Wno-global-constructors",
++    "-Wno-error=global-constructors",
++    "-DcurrentModule=\"browser_indexeddb\"",
++  ]
++}
++
++
+ source_set("indexed_db") {
+   public = [ "indexed_db_control_wrapper.h" ]
+ 
+@@ -114,6 +124,8 @@ source_set("indexed_db") {
+   ]
+ 
+   configs += [ "//content:content_implementation" ]
++  
++  configs += [ ":sancov_8bit_compile" ]
+ 
+   friend = [
+     ":unit_tests",
+diff --git a/third_party/blink/renderer/modules/indexeddb/BUILD.gn b/third_party/blink/renderer/modules/indexeddb/BUILD.gn
+index 66e977069f8d5..14469d928d633 100644
+--- a/third_party/blink/renderer/modules/indexeddb/BUILD.gn
++++ b/third_party/blink/renderer/modules/indexeddb/BUILD.gn
+@@ -4,6 +4,17 @@
+ 
+ import("//third_party/blink/renderer/modules/modules.gni")
+ 
++
++config("sancov_8bit_compile") {
++  cflags_cc = [
++    "-fsanitize-coverage=inline-8bit-counters,pc-table",
++    "-Wno-global-constructors",
++    "-Wno-error=global-constructors",
++    "-DcurrentModule=\"blink_indexeddb\"",
++  ]
++}
++
++
+ blink_modules_sources("indexeddb") {
+   sources = [
+     "global_indexed_db.cc",
+@@ -68,6 +79,11 @@ blink_modules_sources("indexeddb") {
+     "//third_party/blink/public/mojom:mojom_modules_blink",
+     "//third_party/snappy",
+   ]
++  
++
++  configs += [ ":sancov_8bit_compile" ]
++
++
+ }
+ 
+ source_set("unit_tests") {
+```
+
+
+
+## 查看插桩成功的文件（8bit模式）
+
+```
+gn gen out/IndexedDBSanCov --export-compile-commands
+
+jq -r '.[] | select(.command | test("fsanitize-coverage=inline-8bit-counters")) | .file' \
+  out/IndexedDBSanCov/compile_commands.json | sort -u
 ```
 
