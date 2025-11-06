@@ -102,26 +102,22 @@ for (( i=1; i<=RUNS; i++ )); do
   # 固定等待（或换成等待页内标志）
   msleep "$WAIT_MS"
 
-  # 导出（给 runtime.cc）
-  echo "[*] Export bitmap: kill -USR1 $CS_PID"
-  kill -USR1 "$CS_PID" || true
 
-
-  # 固定等 3 秒（写死）
-  sleep 3
-
-  # 等导出文件出现（最多 3s）
-  BIN=""
-  for _ in {1..60}; do
-    BIN="$(ls -t "$SANCOV_OUTPUT_DIR"/sancov_bitmap_*_"$CS_PID"_*.bin 2>/dev/null | head -n1 || true)"
-    [ -n "$BIN" ] && break
-    msleep 50
+  echo "[*] Export bitmap: broadcast SIGUSR1 to all content_shell"
+  for p in $(pgrep -f "content_shell"); do
+    kill -USR1 "$p" 2>/dev/null || true
   done
 
-  if [ -z "$BIN" ]; then
-    echo "[!] No sancov bin found in $SANCOV_OUTPUT_DIR (pid=$CS_PID). Check runtime.cc or logs."
+  # 固定等 3 秒
+  sleep 3
+
+  # 收集所有 bin（不限定 $CS_PID）
+  shopt -s nullglob
+  BINS=("$SANCOV_OUTPUT_DIR"/sancov_bitmap_*.bin)
+  if ((${#BINS[@]}==0)); then
+    echo "[!] No sancov bin found in $SANCOV_OUTPUT_DIR. Check runtime init (zygote/atfork) and 8bit configs."
   else
-    report_bin "$BIN"
+    for f in "${BINS[@]}"; do report_bin "$f"; done
   fi
 
   # 关掉本轮 content_shell
