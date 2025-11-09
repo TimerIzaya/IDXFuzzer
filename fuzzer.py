@@ -5,8 +5,8 @@ from multiprocessing import Event
 import config
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
-from execution.run_inss import start_workers, _sigint_handler, install_signal_handlers, stop_workers
 from coverage.stat_worker import stat_worker
+from execution.run_inss import install_signal_handlers, start_workers, stop_workers
 from tool.tool import init_output_dirs
 
 
@@ -28,8 +28,8 @@ if __name__ == '__main__':
     # 启动 stat_worker 线程
     stat_thread = threading.Thread(target=stat_worker, args=(global_bitmap, time.time(), stop_event), daemon=True)
     stat_thread.start()
-    signal.signal(signal.SIGINT, _sigint_handler)
-    signal.signal(signal.SIGTERM, _sigint_handler)
+    signal.signal(signal.SIGINT, stop_workers)
+    signal.signal(signal.SIGTERM, stop_workers)
 
 
     # 先处理restore模式
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         print("[main] KeyboardInterrupt, shutting down...")
     finally:
         stop_event.set()
-        stop_workers(procs, stop_event, timeout=2.0)  # 内部应: set->join(timeout)->terminate遗留->join
+        stop_workers(procs, stop_event)  # 内部应: set->join(timeout)->terminate遗留->join
 
         stat_thread.join(timeout=2.0)
 

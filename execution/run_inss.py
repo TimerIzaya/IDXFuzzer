@@ -142,6 +142,4 @@ def install_signal_handlers(
         pass
 
 
-def _sigint_handler(signum, frame):
-    """兜底路径：某些老代码 import 这个名字时也能生效。"""
-    stop_workers()
+
