@@ -41,48 +41,18 @@ def _worker_main(worker_idx: int, cpu_id: int, stop_event: mp.Event) -> None: # 
         log(f"[worker#{worker_idx}] launch content_shell failed: {e}")
         return
 
-    case_id = 0
-    executed = 0
-    gen_backoff = 0.05
-    run_backoff = 0.05
-    MAX_BACKOFF = 1.0
-
-    def _should_stop(timeout: float) -> bool:
-        return stop_event.wait(timeout)
-
     try:
         while not stop_event.is_set():
-            # 1) 生成 html（指数退避）
-            try:
-                html_path = gen_case(case_id)
-                gen_backoff = 0.05
-            except Exception as e:
-                log(f"[worker#{worker_idx}] gen_case failed: {e}")
-                if _should_stop(gen_backoff):
-                    break
-                gen_backoff = min(gen_backoff * 2, MAX_BACKOFF)
-                continue
-
             if stop_event.is_set():
                 break
 
-            # 2) 跑一轮：开新页→等待→导出（复用同一个 CS）
+            out_dir = os.path.join(config.CS_TMP, str(os.getpid()))
+            html_path = gen_case(out_dir)
+
             try:
                 ctrl.run_case_once(html_path)
-                run_backoff = 0.05
             except Exception as e:
                 log(f"[worker#{worker_idx}] run_case_once failed: {e}")
-                if _should_stop(run_backoff):
-                    break
-                run_backoff = min(run_backoff * 2, MAX_BACKOFF)
-            else:
-                executed += 1
-                case_id += 1
-                if executed % 3 == 0:
-                    log(f"[worker#{worker_idx}] executed={executed} cases")
-
-            if _should_stop(0.0):
-                break
     finally:
         ctrl.stop()
         log(f"[worker#{worker_idx} pid={pid}] stop: event set or loop exit")

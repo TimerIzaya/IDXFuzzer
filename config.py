@@ -7,7 +7,7 @@ SHARE = "/dev/shm/"
 # ---------- 常量路径 ----------
 CS_TMP = SHARE + "tmp"
 
-RESULT = SHARE  + "result"
+RESULT = SHARE + "result"
 
 CORPUS_ROOT = SHARE + "result/corpus"
 

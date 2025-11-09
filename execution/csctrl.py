@@ -1,54 +1,50 @@
-
-# ---------------- 每个 worker 独享的 content_shell 控制器 ----------------
-# --- 在 run_inss.py 顶部 imports 里需要多的依赖 ---
-from cmath import log
-from enum import Enum, auto
+import glob
 import io
 import os
 import shutil
-from signal import signal
-from time import time
-
+import signal  # 这个是模块
+import subprocess
+import time
 import urllib
+# ---------------- 每个 worker 独享的 content_shell 控制器 ----------------
+# --- 在 run_inss.py 顶部 imports 里需要多的依赖 ---
+from enum import Enum, auto
+
 import config
 from coverage.bitmap import GlobalEdgeBitmap
 from coverage.share_stat import Stats
+from tool.log import log
 from tool.tool import count_files_in_dir
 
 DEFAULT_CS = "/timer/chromium/src/out/IndexedDBSanCov/content_shell"
 DEFAULT_WAIT_MS = 300
 DEFAULT_PORT_BASE = 9300
 
+
 class CSController:
     def __init__(self, worker_idx: int, cpu_id: int):
-        # 目录
-        ts = time.strftime("%Y%m%d_%H%M%S")
-        # self.base = os.path.join("test", "env", f"{ts}_w{worker_idx}")
-        # self.bin_dir = os.path.join(self.base, "bin")
-        # self.crash_dir = os.path.join(self.base, "crash")
-        # self.profile_dir = os.path.join(self.base, "profile", "ud_1")
-        # self.logs_dir = os.path.join(self.base, "logs")
+        self.base = os.path.join(config.CS_TMP, str(os.getpid()))
+        self.bin_dir = os.path.join(self.base, "bin")
+        self.crash_dir = os.path.join(self.base, "crash")
+        self.profile_dir = os.path.join(self.base, "profile", "ud_1")
+        self.logs_dir = os.path.join(self.base, "logs")
         for d in (self.bin_dir, self.crash_dir, self.profile_dir, self.logs_dir):
             os.makedirs(d, exist_ok=True)
 
-        # 配置
         self.port = getattr(config, "PORT_BASE", DEFAULT_PORT_BASE) + worker_idx
         self.wait_ms = getattr(config, "WAIT_MS", DEFAULT_WAIT_MS)
         self.cs_path = getattr(config, "CONTENT_SHELL", DEFAULT_CS)
         self.cpu_id = cpu_id
 
-        # 进程与日志
         self.proc = None
         self.pid = None
         self.log_path = os.path.join(self.logs_dir, "content_shell.log")
 
-        # sancov/asan 环境
         self.env = os.environ.copy()
         self.env["SANCOV_OUTPUT_DIR"] = os.path.realpath(self.bin_dir)
         self.env["SANCOV_CLEAR"] = "1"
         self.env["ASAN_OPTIONS"] = "allow_user_segv_handler=1:fast_unwind_on_fatal=0"
 
-        # 日志增量偏移
         self._log_offset = 0
 
     def launch(self) -> None:
@@ -85,7 +81,6 @@ class CSController:
             )
         self.pid = self.proc.pid
 
-        # ✅ 等 DevTools 就绪（这里就用上 _wait_for_devtools）
         if not _wait_for_devtools(self.port, timeout_s=5.0):
             raise RuntimeError(f"DevTools not ready on :{self.port}, see {self.log_path}")
 
@@ -121,7 +116,7 @@ class CSController:
                 st = os.stat(p)
             except FileNotFoundError:
                 continue
-            if st.st_mtime >= since_ts - 1e-3:   # 给一点浮动
+            if st.st_mtime >= since_ts - 1e-3:  # 给一点浮动
                 basename = os.path.basename(p)
                 dst = os.path.join(dst_dir, basename)
                 try:
@@ -131,156 +126,129 @@ class CSController:
                 moved.append(dst)
         return moved
 
-    def run_case_once(self, html_path: str) -> tuple["CSExitStatus", int]:
+    def run_case_once(self, html_path: str):
+        def updateStatThread():
+            Stats.update(
+                timeout=stat_timeout,
+                pending=pending,
+                is_new=new,
+                completed=completed,
+                attachments=attachments,
+                mark_interesting=stat_mark_interesting,
+                stat_lack_bin=stat_lack_bin,
+                stat_other_error=stat_other_error,
+                stat_semantic_error=stat_semantic_error,
+            )
         """
         单轮: 开新页→等待→dump→收集产物→解析日志增量→更新全局位图与统计→落盘/搬迁。
         返回：(exit_status, new_edges)
         """
-        # === 1) 准备 per-case 目录（与旧 run_one_case 对齐） ===
         html_path_abs = os.path.realpath(html_path)
-        if not os.path.isfile(html_path_abs):
-            log(f"[!] HTML not found: {html_path_abs}")
-            return (CSExitStatus.OTHER, 0)
 
-        case_dir = os.path.dirname(html_path_abs)          # 兼容你现有 generator 的输出目录结构
-        tmp_dir  = os.path.join(case_dir, "chrome-tmp")
+        case_dir = os.path.dirname(html_path_abs)
+        tmp_dir = os.path.join(case_dir, "chrome-tmp")
         os.makedirs(tmp_dir, exist_ok=True)
 
-        # 标记“本轮起点”：时间戳 + 日志偏移
-        t_round_begin = time.time()
-        log_inc_before = self._log_offset  # 只是检查点；真正读取在后面
-
-        # === 2) 开新页 ===
         if not _open_new_page(self.port, html_path_abs):
             log("[!] open_new_page failed")
-            # 认定为 OTHER，保持与旧 run_one_case “没有 FUZZ_BEGIN” 近似
-            return (CSExitStatus.OTHER, 0)
+            return CSExitStatus.OTHER, 0
 
         log(f"[*] Opened: {html_path_abs}")
         _msleep(self.wait_ms)
 
-        # === 3) 导出覆盖：对“主 pid”发 SIGUSR1（保持与 runtime.cc 清零语义一致）===
+        # 发送自定义信号获得覆盖
         if self.pid:
             try:
                 os.kill(self.pid, signal.SIGUSR1)
             except Exception:
                 pass
 
-        # === 4) 等待本轮 bin 落盘，然后只搬“本轮新 bin”到 case_dir ===
+        # 等待bin落盘
         deadline = time.time() + 3.0
-        moved_bins: list[str] = []
+        bins = []
         while time.time() < deadline:
-            moved_bins = self._collect_bins_since(t_round_begin, case_dir)
-            if moved_bins:
+            bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
+            if len(bins) >= 2:
                 break
             _msleep(50)
+        bin_seen = 1 if len(bins) == 0 else 0
 
-        # === 5) 解析日志增量，做“语义错误”等判定（兼容你原有标记）===
         log_chunk = self._read_log_increment()
-        begin_seen = ("FUZZ_BEGIN" in log_chunk)
-        done_seen = ("FUZZ_DONE" in log_chunk)
         semantic_error_seen = ("FUZZ_JS_ERROR" in log_chunk) or ("FUZZ_UNHANDLED_REJECTION" in log_chunk)
 
-        # === 6) 统计 Chromium-side 产物（你原来的四类）===
         pending = count_files_in_dir(os.path.join(case_dir, "pending"))
-        new     = count_files_in_dir(os.path.join(case_dir, "new"))
-        completed   = count_files_in_dir(os.path.join(case_dir, "completed"))
+        new = count_files_in_dir(os.path.join(case_dir, "new"))
+        completed = count_files_in_dir(os.path.join(case_dir, "completed"))
         attachments = count_files_in_dir(os.path.join(case_dir, "attachments"))
 
-        # === 7) 处理覆盖率：更新全局位图 & 删除 bin ===
         new_edges = 0
         global_bitmap = GlobalEdgeBitmap(create=False)
         try:
-            for bf in moved_bins:
+            for b in bins:
                 try:
-                    new_edges += global_bitmap.update_from_file(bf)
+                    new_edges += global_bitmap.update_from_file(b)
                 finally:
-                    try:
-                        os.remove(bf)
-                    except Exception:
-                        pass
+                    os.remove(b)
         finally:
             global_bitmap.close()
 
-        # === 8) 基于“日志增量 + 产物 + 覆盖”综合判定 CSExitStatus ===
-        status = CSExitStatus.OTHER
-        if semantic_error_seen:
-            status = CSExitStatus.SEMANTIC_ERROR
-        else:
-            if moved_bins:            # 有 bin -> 认为执行正常（或至少 runtime 正常）
-                status = CSExitStatus.NORMAL_EXIT if done_seen or begin_seen else CSExitStatus.OTHER
-            else:
-                status = CSExitStatus.LACK_BIN
-
-        # === 9) 汇总到 Stats 并做“目录迁移/删除” ===
-        # 注：为保持与原逻辑一致，先更新 Stats，再搬运/删除
         stat_timeout = 0
-        stat_mark_interesting = (new_edges > 0)
-        stat_semantic_error = 1 if status is CSExitStatus.SEMANTIC_ERROR else 0
-        stat_other_error = 1 if status is CSExitStatus.OTHER else 0
-        stat_lack_bin = 1 if status is CSExitStatus.LACK_BIN else 0
+        stat_mark_interesting = new_edges > 0
+        stat_semantic_error = semantic_error_seen
+        stat_other_error = 0
+        stat_lack_bin = not bin_seen
+        stat_process_timeout = 0
 
-        Stats.update(
-            timeout=stat_timeout,
-            pending=pending,
-            is_new=new,
-            completed=completed,
-            attachments=attachments,
-            mark_interesting=stat_mark_interesting,
-            stat_lack_bin=stat_lack_bin,
-            stat_other_error=stat_other_error,
-            stat_semantic_error=stat_semantic_error,
-        )
-
-        # 目录搬运策略基本复刻你原版：
         if pending > 0 or new > 0 or completed > 0 or attachments > 0:
-            # 认为命中过“crash 相关四类”之一
             shutil.move(case_dir, config.CRASH_ROOT)
-            return (status, new_edges)
+            updateStatThread()
+            return
 
-        if status is CSExitStatus.SEMANTIC_ERROR:
+        if stat_semantic_error:
             # “只收 100 个”的逻辑保持：超过就删
             snap = Stats.get()
             if snap.get("stat_semantic_error", 0) < 100:
                 shutil.move(case_dir, config.SEMANTIC_ROOT)
             else:
                 shutil.rmtree(case_dir, ignore_errors=True)
-            return (status, new_edges)
+            updateStatThread()
+            return
 
-        if status is CSExitStatus.OTHER:
+        if stat_other_error:
             shutil.move(case_dir, config.OTHER_ROOT)
-            return (status, new_edges)
+            updateStatThread()
+            return
 
-        if status is CSExitStatus.PROCESS_TIMEOUT:
+        if stat_process_timeout:
             shutil.move(case_dir, config.TIMEOUT_ROOT)
-            return (status, new_edges)
+            updateStatThread()
+            return
 
-        if status is CSExitStatus.LACK_BIN:
+        if stat_lack_bin:
             shutil.move(case_dir, config.NOBIN_ROOT)
-            return (status, new_edges)
+            updateStatThread()
+            return
 
-        # NORMAL_EXIT：
         if new_edges > 0:
-            # 保留在 corpus（你原注释：默认生成出来的 case 就在 corpus）
-            return (status, new_edges)
+            shutil.move(case_dir, config.CORPUS_ROOT)
         else:
-            # 没有新边：删除 case_dir
             shutil.rmtree(case_dir, ignore_errors=True)
-            return (status, new_edges)
-        
+        updateStatThread()
+        return
 
 
 class CSExitStatus(Enum):
     """枚举表示 content_shell 的执行状态。"""
-    NORMAL_EXIT = auto()      # 正常退出
-    PROCESS_TIMEOUT = auto()            # 程序崩溃（如 SegFault）
-    SEMANTIC_ERROR = auto()   # 语义错误（如 JS 逻辑错误、UnhandledRejection）
-    LACK_BIN = auto # 没有覆盖率文件
+    NORMAL_EXIT = auto()  # 正常退出
+    PROCESS_TIMEOUT = auto()  # 程序崩溃（如 SegFault）
+    SEMANTIC_ERROR = auto()  # 语义错误（如 JS 逻辑错误、UnhandledRejection）
+    LACK_BIN = auto  # 没有覆盖率文件
     OTHER = auto()
 
     def __str__(self):
         return self.name
-    
+
+
 def _msleep(ms: int) -> None:
     time.sleep(ms / 1000.0)
 
@@ -297,7 +265,7 @@ def _opener_no_proxy():
     return opener
 
 
-def _wait_for_devtools(port: int, timeout_s: float = 5.0) -> bool:
+def _wait_for_devtools(port: int, time, timeout_s: float = 5.0) -> bool:
     opener = _opener_no_proxy()
     url = f"http://127.0.0.1:{port}/json/version"
     deadline = time.time() + timeout_s
@@ -343,4 +311,3 @@ def _kill_process_tree(pid: int, grace_s: float = 0.3) -> None:
         os.kill(pid, signal.SIGKILL)
     except Exception:
         pass
-
