@@ -5,8 +5,8 @@ import shutil
 import signal  # 这个是模块
 import subprocess
 import time
-import urllib.request
-import urllib.parse
+import urllib.request as urlreq
+import urllib.parse as urlparse
 from enum import Enum, auto
 
 import config
@@ -254,12 +254,12 @@ def _msleep(ms: int) -> None:
 
 def _url_encode_file(path: str) -> str:
     p = os.path.realpath(path)
-    return urllib.parse.quote(f"file://{p}", safe=":/")
+    return urlparse.quote(f"file://{p}", safe=":/")
 
 
 def _opener_no_proxy():
-    handler = urllib.request.ProxyHandler({})
-    opener = urllib.request.build_opener(handler)
+    handler = urlreq.ProxyHandler({})
+    opener = urlreq.build_opener(handler)
     opener.addheaders = [("User-Agent", "idxf-run/1.0")]
     return opener
 
@@ -283,7 +283,7 @@ def _open_new_page(port: int, abs_html: str) -> bool:
     opener = _opener_no_proxy()
     enc_url = _url_encode_file(abs_html)
     url = f"http://127.0.0.1:{port}/json/new?{enc_url}"
-    req = urllib.request.Request(url, data=b"", method="PUT")
+    req = urlreq.Request(url, data=b"", method="PUT")
     try:
         with opener.open(req, timeout=2.0):
             return True
