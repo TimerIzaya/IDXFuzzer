@@ -1,5 +1,6 @@
 import glob
 import io
+import json
 import os
 import shutil
 import signal  # 这个是模块
@@ -158,23 +159,39 @@ class CSController:
                 shutil.move(ir_path, dst_dir)
                 shutil.move(html_path, dst_dir)
 
-                # 清空profile
-                for name in os.listdir(self.profile_dir):
-                    path = os.path.join(self.profile_dir, name)
-                    if os.path.isfile(path) or os.path.islink(path):
-                        os.remove(path)
-                    else:
-                        shutil.rmtree(path)
-
                 # 移动bin信息
                 bin_foler = os.path.join(dst_dir, "bins")
                 os.makedirs(bin_foler, exist_ok=True)
                 for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
                     shutil.move(b, bin_foler)
+
+                # 关闭当前tab
+                _close_page(self.port, tab_id)
+
             except Exception as e:
                 log(f"[!] archiveCase failed: {e}") 
 
+        # 不用归档的case
+        def clearCase():
+            try:
+                # 清空log
+                log_file = os.path.join(self.logs_dir, "content_shell.log")
+                with open(log_file, "rb+") as src:
+                    src.seek(0)
+                    src.truncate(0)
+                # 清空IR和html
+                ir_path = os.path.join(self.base, os.path.basename(html_path)[:-5] + ".json")
+                os.remove(ir_path)
+                os.remove(html_path)
 
+                # 清空bin
+                for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
+                    os.remove(b)
+                # 关闭当前tab
+                _close_page(self.port, tab_id)
+
+            except Exception as e:
+                log(f"[!] clearCase failed: {e}")
         
         # 开新页→等待→dump→收集产物→解析日志增量→更新全局位图与统计→落盘/搬迁。
         html_path_abs = os.path.realpath(html_path)
@@ -184,7 +201,8 @@ class CSController:
         tmp_dir = os.path.join(case_dir, "chrome-tmp")
         os.makedirs(tmp_dir, exist_ok=True)
 
-        if not _open_new_page(self.port, html_path_abs):
+        tab_id = _open_new_page(self.port, html_path_abs)
+        if not tab_id:
             log("[!] open_new_page failed")
             return CSExitStatus.OTHER, 0
 
@@ -244,7 +262,7 @@ class CSController:
             if snap.get("stat_semantic_error", 0) < 100:
                 archiveCase(os.path.join(config.SEMANTIC_ROOT, case_id))
             else:
-                shutil.rmtree(case_dir, ignore_errors=True)
+                clearCase()
             updateStatThread()
             return
 
@@ -266,7 +284,7 @@ class CSController:
         if new_edges > 0:
             archiveCase(os.path.join(config.CORPUS_ROOT, case_id))
         else:
-            shutil.rmtree(case_dir, ignore_errors=True)
+            clearCase()
         updateStatThread()
 
 
@@ -313,18 +331,26 @@ def _wait_for_devtools(port: int, timeout_s: float = 5.0) -> bool:
     return False
 
 
-def _open_new_page(port: int, abs_html: str) -> bool:
+def _open_new_page(port: int, abs_html: str) -> str:
     opener = _opener_no_proxy()
     enc_url = _url_encode_file(abs_html)
     url = f"http://127.0.0.1:{port}/json/new?{enc_url}"
     req = urlreq.Request(url, data=b"", method="PUT")
     try:
-        with opener.open(req, timeout=2.0):
-            return True
+        with opener.open(req, timeout=2.0) as r:
+            info = json.loads(r.read().decode("utf-8", "replace"))
+            return info.get("id")
     except Exception as e:
         log(f"[!] open page failed: {e}")
-        return False
+        return None
 
+
+def _close_page(port: int, target_id: str) -> None:
+    opener = _opener_no_proxy()
+    try:
+        opener.open(f"http://127.0.0.1:{port}/json/close/{target_id}", timeout=1.0)
+    except Exception:
+        pass
 
 def _kill_process_tree(pid: int, grace_s: float = 0.3) -> None:
     try:
@@ -344,3 +370,49 @@ def _kill_process_tree(pid: int, grace_s: float = 0.3) -> None:
         os.kill(pid, signal.SIGKILL)
     except Exception:
         pass
+
+
+import json, urllib.request
+from websocket import create_connection
+
+def _find_ws_url(port, target_id):
+    with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/list", timeout=1.0) as r:
+        lst = json.loads(r.read().decode())
+    for t in lst:
+        if t.get("id") == target_id:
+            return t.get("webSocketDebuggerUrl")
+    return None
+
+_seq = 0
+def _send(ws, method, params=None):
+    global _seq
+    _seq += 1
+    ws.send(json.dumps({"id": _seq, "method": method, "params": params or {}}))
+    # 如需严格等待返回，可循环 recv() 直到 id 匹配
+
+def clear_storage_via_cdp(port, target_id, origin="file://"):
+    ws_url = _find_ws_url(port, target_id)
+    if not ws_url:
+        return False
+    ws = create_connection(ws_url)
+    try:
+        _send(ws, "Network.setCacheDisabled", {"cacheDisabled": True})
+        _send(ws, "Storage.clearDataForOrigin", {"origin": origin, "storageTypes": "all"})
+        # 双保险：在页面里执行 JS 清理
+        _send(ws, "Runtime.evaluate", {"expression": """
+            (async () => {
+              try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}
+              try {
+                const dbs = await indexedDB.databases();
+                await Promise.all(dbs.map(d => indexedDB.deleteDatabase(d.name)));
+              } catch (e) {}
+              try {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
+              } catch (e) {}
+              return true;
+            })();
+        """, "awaitPromise": True})
+        return True
+    finally:
+        ws.close()
