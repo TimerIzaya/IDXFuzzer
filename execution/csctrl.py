@@ -6,8 +6,6 @@ import signal  # 这个是模块
 import subprocess
 import time
 import urllib
-# ---------------- 每个 worker 独享的 content_shell 控制器 ----------------
-# --- 在 run_inss.py 顶部 imports 里需要多的依赖 ---
 from enum import Enum, auto
 
 import config

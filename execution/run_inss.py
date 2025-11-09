@@ -9,9 +9,8 @@ from typing import Optional, List, Dict, Any
 
 import config
 from IR.generator import gen_case
-from csctrl import CSController
+from execution.csctrl import CSController
 from tool.log import log
-
 
 
 _GLOBAL_STOP_EVENT: Optional[mp.Event] = None # type: ignore
