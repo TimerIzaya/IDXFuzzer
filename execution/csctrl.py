@@ -5,7 +5,8 @@ import shutil
 import signal  # 这个是模块
 import subprocess
 import time
-import urllib
+import urllib.request
+import urllib.parse
 from enum import Enum, auto
 
 import config
@@ -263,7 +264,7 @@ def _opener_no_proxy():
     return opener
 
 
-def _wait_for_devtools(port: int, time, timeout_s: float = 5.0) -> bool:
+def _wait_for_devtools(port: int, timeout_s: float = 5.0) -> bool:
     opener = _opener_no_proxy()
     url = f"http://127.0.0.1:{port}/json/version"
     deadline = time.time() + timeout_s
