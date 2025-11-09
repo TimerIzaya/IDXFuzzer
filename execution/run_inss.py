@@ -1,98 +1,118 @@
 # /timer/index/execution/run_inss.py
 
+from enum import Enum, auto
 import os
 import signal
-import time
+import atexit
 import multiprocessing as mp
 from typing import Optional, List, Dict, Any
 
 import config
 from IR.generator import gen_case
-from execution.exec_case import run_one_case
+from csctrl import CSController
 from tool.log import log
 
-# 全局保存，信号里好用
-_GLOBAL_STOP_EVENT: Optional[mp.Event] = None
-_GLOBAL_PROCS: List[mp.Process] = []
 
+
+_GLOBAL_STOP_EVENT: Optional[mp.Event] = None # type: ignore
+_GLOBAL_PROCS: List[mp.Process] = []
+_WARNED_AFFINITY = False  # 仅打印一次亲和性失败日志
 
 def _pin_to_cpu(cpu_id: int) -> None:
-    """绑核，失败就算了"""
+    """尽力绑定 CPU；失败只告警一次。"""
+    global _WARNED_AFFINITY
     try:
         os.sched_setaffinity(0, {cpu_id})
-    except Exception:
-        pass
+    except Exception as e:
+        if not _WARNED_AFFINITY:
+            log(f"[affinity] warn: setaffinity to cpu {cpu_id} failed: {e}")
+            _WARNED_AFFINITY = True
 
 
-def _worker_main(worker_idx: int, cpu_id: int, stop_event: mp.Event) -> None:
+def _worker_main(worker_idx: int, cpu_id: int, stop_event: mp.Event) -> None: # type: ignore
     _pin_to_cpu(cpu_id)
-    log(f"[worker {os.getpid()}] started on cpu {cpu_id}")
+    pid = os.getpid()
+    log(f"[worker#{worker_idx} pid={pid}] start on cpu {cpu_id}")
+
+    ctrl = CSController(worker_idx, cpu_id)
+    try:
+        ctrl.launch()
+    except Exception as e:
+        log(f"[worker#{worker_idx}] launch content_shell failed: {e}")
+        return
 
     case_id = 0
     executed = 0
+    gen_backoff = 0.05
+    run_backoff = 0.05
+    MAX_BACKOFF = 1.0
 
-    while not stop_event.is_set():
-        # 1) 生成一个 html
-        try:
-            # 你仓库里的 gen_case 要一个 case_id
-            html_path = gen_case(case_id)
-        except Exception as e:
-            log(f"[worker {os.getpid()}] gen_case failed: {e}")
-            time.sleep(0.1)
-            continue
+    def _should_stop(timeout: float) -> bool:
+        return stop_event.wait(timeout)
 
-        # 2) 跑一次，用的是你刚刚那版 exec_case，里面有复用逻辑
-        try:
-            run_one_case(html_path)
-        except Exception as e:
-            log(f"[worker {os.getpid()}] run_one_case failed: {e}")
-            time.sleep(0.05)
+    try:
+        while not stop_event.is_set():
+            # 1) 生成 html（指数退避）
+            try:
+                html_path = gen_case(case_id)
+                gen_backoff = 0.05
+            except Exception as e:
+                log(f"[worker#{worker_idx}] gen_case failed: {e}")
+                if _should_stop(gen_backoff):
+                    break
+                gen_backoff = min(gen_backoff * 2, MAX_BACKOFF)
+                continue
 
-        executed += 1
-        case_id += 1
+            if stop_event.is_set():
+                break
 
-        if executed % 3 == 0:
-            log(f"[worker {os.getpid()}] executed {executed} cases")
+            # 2) 跑一轮：开新页→等待→导出（复用同一个 CS）
+            try:
+                ctrl.run_case_once(html_path)
+                run_backoff = 0.05
+            except Exception as e:
+                log(f"[worker#{worker_idx}] run_case_once failed: {e}")
+                if _should_stop(run_backoff):
+                    break
+                run_backoff = min(run_backoff * 2, MAX_BACKOFF)
+            else:
+                executed += 1
+                case_id += 1
+                if executed % 3 == 0:
+                    log(f"[worker#{worker_idx}] executed={executed} cases")
 
-        # 稍微让出一点时间
-        time.sleep(0.001)
-
-    log(f"[worker {os.getpid()}] stop because event is set")
+            if _should_stop(0.0):
+                break
+    finally:
+        ctrl.stop()
+        log(f"[worker#{worker_idx} pid={pid}] stop: event set or loop exit")
 
 
 def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> List[mp.Process]:
-    """
-    和你 fuzzer.py 的调用保持一致：
-        procs = start_workers(config.NUM_INSTANCES, START_CPU, stop_event)
-    """
     global _GLOBAL_STOP_EVENT, _GLOBAL_PROCS
 
     procs: List[mp.Process] = []
-
     for i in range(num_instances):
         cpu_id = start_cpu + i
         p = mp.Process(
             target=_worker_main,
             args=(i, cpu_id, stop_event),
             name=f"idxf-worker-{i}",
+            daemon=False,
         )
         p.start()
         procs.append(p)
 
     _GLOBAL_STOP_EVENT = stop_event
     _GLOBAL_PROCS = procs
+    atexit.register(stop_workers)  # 兜底
     return procs
 
 
 def stop_workers(
-    stop_event: Optional[mp.Event] = None,
+    stop_event: Optional[mp.Event] = None, # type: ignore
     procs: Optional[List[mp.Process]] = None,
 ) -> None:
-    """
-    可以被：
-      1. fuzzer.py 主线程显式调用
-      2. 信号处理函数间接调用
-    """
     global _GLOBAL_STOP_EVENT, _GLOBAL_PROCS
 
     if stop_event is None:
@@ -103,43 +123,55 @@ def stop_workers(
     if stop_event is not None:
         stop_event.set()
 
-    if procs is None:
+    if not procs:
         return
 
-    # 给他们一点时间自己退
+    # 1) 等自然退出
     for p in procs:
-        p.join(timeout=1.0)
+        p.join(timeout=0.8)
 
-    # 还活着就杀
-    for p in procs:
-        if p.is_alive():
-            try:
-                os.kill(p.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+    # 2) 仍在 → SIGTERM
+    alive = [p for p in procs if p.is_alive()]
+    for p in alive:
+        try:
+            p.terminate()
+        except Exception:
+            pass
+    for p in alive:
+        p.join(timeout=0.8)
+
+    # 3) 仍在 → SIGKILL
+    stubborn = [p for p in procs if p.is_alive()]
+    for p in stubborn:
+        try:
+            os.kill(p.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    for p in stubborn:
+        p.join(timeout=0.5)
 
 
 def install_signal_handlers(
     stop_event_holder: Dict[str, Any],
     procs_holder: Dict[str, Any],
 ) -> None:
-    """
-    你原来的 fuzzer.py 应该是这么写的：
-        stop_event_holder = {"event": stop_event}
-        procs_holder = {"procs": procs}
-        install_signal_handlers(stop_event_holder, procs_holder)
-    我就按这个接口来。
-    """
-
     def _handler(signum, frame):
-        ev = stop_event_holder.get("event")
-        ps = procs_holder.get("procs")
-        stop_workers(ev, ps)
+        try:
+            ev = stop_event_holder.get("event")
+            ps = procs_holder.get("procs")
+            log(f"[signal] caught {signum}, stopping workers...")
+            stop_workers(ev, ps)
+        except Exception as e:
+            log(f"[signal] handler error: {e}")
 
     signal.signal(signal.SIGINT, _handler)
     signal.signal(signal.SIGTERM, _handler)
+    try:
+        signal.signal(signal.SIGHUP, _handler)
+    except Exception:
+        pass
 
 
 def _sigint_handler(signum, frame):
-    """有些地方可能直接 import 这个名字，给个兜底"""
+    """兜底路径：某些老代码 import 这个名字时也能生效。"""
     stop_workers()
