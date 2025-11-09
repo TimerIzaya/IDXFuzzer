@@ -53,3 +53,32 @@ def init_output_dirs() -> None:
         os.makedirs(path, exist_ok=True)
         print(f"recreate path: {path}")
     print("[*] Initialized output directories.]")
+
+
+def _clear_dir_contents(self, d: str) -> None:
+    if not os.path.isdir(d):
+        return
+    for name in os.listdir(d):
+        p = os.path.join(d, name)
+        try:
+            if os.path.isdir(p) and not os.path.islink(p):
+                shutil.rmtree(p, ignore_errors=True)
+            else:
+                os.remove(p)
+        except FileNotFoundError:
+            pass  # 并发或已被清
+
+def _copy_and_truncate(self, src_file: str, dst_file: str) -> str:
+    os.makedirs(os.path.dirname(dst_file), exist_ok=True)
+    # 复制
+    with open(src_file, "rb") as fin, open(dst_file, "wb") as fout:
+        while True:
+            chunk = fin.read(1024 * 1024)
+            if not chunk:
+                break
+            fout.write(chunk)
+        fout.flush(); os.fsync(fout.fileno())
+    # 清空原文件
+    with open(src_file, "r+b") as f:
+        f.truncate(0); f.flush(); os.fsync(f.fileno())
+    return os.path.realpath(dst_file)

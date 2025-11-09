@@ -138,13 +138,49 @@ class CSController:
                 stat_other_error=stat_other_error,
                 stat_semantic_error=stat_semantic_error,
             )
-        """
-        单轮: 开新页→等待→dump→收集产物→解析日志增量→更新全局位图与统计→落盘/搬迁。
-        返回：(exit_status, new_edges)
-        """
+
+        def archiveCase(dst_dir: str):
+            try:
+                # 先处理log
+                log_file = os.path.join(self.logs_dir, "content_shell.log")
+                dst_file = os.path.join(dst_dir, "content_shell.log")
+                os.makedirs(os.path.dirname(dst_file), exist_ok=True)
+                open(dst_file, "ab").close()
+                if not os.path.exists(log_file):
+                    print(1)
+                with open(log_file, "rb+") as src, open(dst_file, "wb") as dst:
+                    shutil.copyfileobj(src, dst, length=1024 * 1024)
+                    src.seek(0)
+                    src.truncate(0)
+                
+                # 移动IR和html
+                ir_path = os.path.join(self.base, os.path.basename(html_path)[:-5] + ".json")
+                shutil.move(ir_path, dst_dir)
+                shutil.move(html_path, dst_dir)
+
+                # 清空profile
+                for name in os.listdir(self.profile_dir):
+                    path = os.path.join(self.profile_dir, name)
+                    if os.path.isfile(path) or os.path.islink(path):
+                        os.remove(path)
+                    else:
+                        shutil.rmtree(path)
+
+                # 移动bin信息
+                bin_foler = os.path.join(dst_dir, "bins")
+                os.makedirs(bin_foler, exist_ok=True)
+                for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
+                    shutil.move(b, bin_foler)
+            except Exception as e:
+                log(f"[!] archiveCase failed: {e}") 
+
+
+        
+        # 开新页→等待→dump→收集产物→解析日志增量→更新全局位图与统计→落盘/搬迁。
         html_path_abs = os.path.realpath(html_path)
 
         case_dir = os.path.dirname(html_path_abs)
+        case_id = os.path.basename(html_path_abs)[:-5]
         tmp_dir = os.path.join(case_dir, "chrome-tmp")
         os.makedirs(tmp_dir, exist_ok=True)
 
@@ -155,7 +191,7 @@ class CSController:
         log(f"[*] Opened: {html_path_abs}")
         _msleep(self.wait_ms)
 
-        # 发送自定义信号获得覆盖
+        # 发送自定义信号获得覆盖 
         if self.pid:
             try:
                 os.kill(self.pid, signal.SIGUSR1)
@@ -167,10 +203,9 @@ class CSController:
         bins = []
         while time.time() < deadline:
             bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
-            if len(bins) >= 2:
+            if len(bins) >= 1:
                 break
             _msleep(50)
-        bin_seen = 1 if len(bins) == 0 else 0
 
         log_chunk = self._read_log_increment()
         semantic_error_seen = ("FUZZ_JS_ERROR" in log_chunk) or ("FUZZ_UNHANDLED_REJECTION" in log_chunk)
@@ -195,11 +230,11 @@ class CSController:
         stat_mark_interesting = new_edges > 0
         stat_semantic_error = semantic_error_seen
         stat_other_error = 0
-        stat_lack_bin = not bin_seen
+        stat_lack_bin = len(bins) == 0
         stat_process_timeout = 0
 
         if pending > 0 or new > 0 or completed > 0 or attachments > 0:
-            shutil.move(case_dir, config.CRASH_ROOT)
+            archiveCase(os.path.join(config.CRASH_ROOT, case_id))
             updateStatThread()
             return
 
@@ -207,33 +242,32 @@ class CSController:
             # “只收 100 个”的逻辑保持：超过就删
             snap = Stats.get()
             if snap.get("stat_semantic_error", 0) < 100:
-                shutil.move(case_dir, config.SEMANTIC_ROOT)
+                archiveCase(os.path.join(config.SEMANTIC_ROOT, case_id))
             else:
                 shutil.rmtree(case_dir, ignore_errors=True)
             updateStatThread()
             return
 
         if stat_other_error:
-            shutil.move(case_dir, config.OTHER_ROOT)
+            archiveCase(os.path.join(config.OTHER_ROOT, case_id))
             updateStatThread()
             return
 
         if stat_process_timeout:
-            shutil.move(case_dir, config.TIMEOUT_ROOT)
+            archiveCase(os.path.join(config.TIMEOUT_ROOT, case_id))
             updateStatThread()
             return
 
         if stat_lack_bin:
-            shutil.move(case_dir, config.NOBIN_ROOT)
+            archiveCase(os.path.join(config.NOBIN_ROOT, case_id))
             updateStatThread()
             return
 
         if new_edges > 0:
-            shutil.move(case_dir, config.CORPUS_ROOT)
+            archiveCase(os.path.join(config.CORPUS_ROOT, case_id))
         else:
             shutil.rmtree(case_dir, ignore_errors=True)
         updateStatThread()
-        return
 
 
 class CSExitStatus(Enum):
