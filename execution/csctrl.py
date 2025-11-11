@@ -21,11 +21,15 @@ DEFAULT_WAIT_MS = 300
 DEFAULT_PORT_BASE = 9300
 
 
+
+
+
+
 class CSController:
     def __init__(self, worker_idx: int, cpu_id: int):
         self.base = os.path.join(config.CS_TMP, str(os.getpid()))
-        self.bin_dir = os.path.join(self.base, "bin")
         self.crash_dir = os.path.join(self.base, "crash")
+        self.bin_dir = os.path.join(self.base, "crash/bin")
         self.profile_dir = os.path.join(self.base, "profile", "ud_1")
         self.logs_dir = os.path.join(self.base, "logs")
         for d in (self.bin_dir, self.crash_dir, self.profile_dir, self.logs_dir):
@@ -38,6 +42,7 @@ class CSController:
 
         self.proc = None
         self.pid = None
+        self.pgid = None
         self.log_path = os.path.join(self.logs_dir, "content_shell.log")
 
         self.env = os.environ.copy()
@@ -59,6 +64,8 @@ class CSController:
             "--disable-gpu", "--use-gl=disabled", "--disable-vulkan",
             "--disable-gpu-compositing", "--disable-accelerated-2d-canvas",
             "--disable-gpu-rasterization", "--disable-software-rasterizer",
+            "--renderer-process-limit=1",
+            "--disable-site-isolation-trials",
             "--in-process-gpu",
             "--disable-features=VizDisplayCompositor,UseSkiaRenderer,CanvasOopRasterization,"
             "AcceleratedVideoDecode,VaapiVideoDecoder,VaapiVideoEncoder,UseSkiaRendererForGL",
@@ -78,8 +85,11 @@ class CSController:
                 stdout=logf,
                 stderr=subprocess.STDOUT,
                 env=self.env,
+                start_new_session=True,
             )
         self.pid = self.proc.pid
+        self.pgid = os.getpgid(self.pid)
+        print(f"[*] Launched content_shell pid={self.pid} pgid={self.pgid} port={self.port}")
 
         if not _wait_for_devtools(self.port, timeout_s=5.0):
             raise RuntimeError(f"DevTools not ready on :{self.port}, see {self.log_path}")
@@ -92,7 +102,8 @@ class CSController:
             _kill_process_tree(self.proc.pid)
         self.proc = None
         self.pid = None
-        log(f"[*] Logs: {self.log_path}")
+        self.pgid = None
+        # log(f"[*] Logs: {self.log_path}")
 
     def _read_log_increment(self) -> str:
         """从上次偏移开始读取 content_shell.log 新增内容，返回增量文本，并推进偏移。"""
@@ -106,25 +117,6 @@ class CSController:
             return data.decode("utf-8", errors="replace")
         except Exception:
             return ""
-
-    def _collect_bins_since(self, since_ts: float, dst_dir: str) -> list[str]:
-        """把 bin_dir 里 mtime >= since_ts 的 sancov bin 移动到 dst_dir，返回目标路径列表。"""
-        os.makedirs(dst_dir, exist_ok=True)
-        moved = []
-        for p in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
-            try:
-                st = os.stat(p)
-            except FileNotFoundError:
-                continue
-            if st.st_mtime >= since_ts - 1e-3:  # 给一点浮动
-                basename = os.path.basename(p)
-                dst = os.path.join(dst_dir, basename)
-                try:
-                    os.replace(p, dst)  # 原子移动
-                except Exception:
-                    continue
-                moved.append(dst)
-        return moved
 
     def run_case_once(self, html_path: str):
         def updateStatThread():
@@ -147,8 +139,6 @@ class CSController:
                 dst_file = os.path.join(dst_dir, "content_shell.log")
                 os.makedirs(os.path.dirname(dst_file), exist_ok=True)
                 open(dst_file, "ab").close()
-                if not os.path.exists(log_file):
-                    print(1)
                 with open(log_file, "rb+") as src, open(dst_file, "wb") as dst:
                     shutil.copyfileobj(src, dst, length=1024 * 1024)
                     src.seek(0)
@@ -164,9 +154,6 @@ class CSController:
                 os.makedirs(bin_foler, exist_ok=True)
                 for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
                     shutil.move(b, bin_foler)
-
-                # 关闭当前tab
-                _close_page(self.port, tab_id)
 
             except Exception as e:
                 log(f"[!] archiveCase failed: {e}") 
@@ -187,106 +174,149 @@ class CSController:
                 # 清空bin
                 for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
                     os.remove(b)
-                # 关闭当前tab
-                _close_page(self.port, tab_id)
 
             except Exception as e:
                 log(f"[!] clearCase failed: {e}")
         
-        # 开新页→等待→dump→收集产物→解析日志增量→更新全局位图与统计→落盘/搬迁。
-        html_path_abs = os.path.realpath(html_path)
 
-        case_dir = os.path.dirname(html_path_abs)
-        case_id = os.path.basename(html_path_abs)[:-5]
-        tmp_dir = os.path.join(case_dir, "chrome-tmp")
-        os.makedirs(tmp_dir, exist_ok=True)
+        def _iter_pids_in_pgid(pgid: int):
+            for name in os.listdir("/proc"):
+                if name.isdigit():
+                    pid = int(name)
+                    try:
+                        if os.getpgid(pid) == pgid:
+                            yield pid
+                    except Exception:
+                        pass
 
-        tab_id = _open_new_page(self.port, html_path_abs)
-        if not tab_id:
-            log("[!] open_new_page failed")
-            return CSExitStatus.OTHER, 0
-
-        log(f"[*] Opened: {html_path_abs}")
-        _msleep(self.wait_ms)
-
-        # 发送自定义信号获得覆盖 
-        if self.pid:
+        def _cmdline(pid: int) -> str:
             try:
-                os.kill(self.pid, signal.SIGUSR1)
+                with open(f"/proc/{pid}/cmdline", "rb") as f:
+                    return f.read().replace(b"\x00", b" ").decode("utf-8", "replace")
             except Exception:
-                pass
+                return ""
 
-        # 等待bin落盘
-        deadline = time.time() + 3.0
-        bins = []
-        while time.time() < deadline:
-            bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
-            if len(bins) >= 1:
-                break
-            _msleep(50)
+        def _classify(cmd: str):
+            is_cs = "content_shell" in cmd
+            if not is_cs: return ("other", False)
+            if "--type=" not in cmd: return ("browser", True)
+            if "--type=zygote" in cmd: return ("zygote", False)
+            if "--type=renderer" in cmd: return ("renderer", True)
+            if "--type=utility" in cmd and "storage.mojom.StorageService" in cmd:
+                return ("storage", True)
+            if "--type=utility" in cmd and "NetworkService" in cmd:
+                return ("network", False)
+            return ("utility_other", False)
 
-        log_chunk = self._read_log_increment()
-        semantic_error_seen = ("FUZZ_JS_ERROR" in log_chunk) or ("FUZZ_UNHANDLED_REJECTION" in log_chunk)
+        def _pids_by_role_in_pgid(pgid: int):
+            roles = {"browser": [], "renderer": [], "storage": [], "others": []}
+            for pid in _iter_pids_in_pgid(pgid):
+                cls, interesting = _classify(_cmdline(pid))
+                if cls in ("browser", "renderer", "storage"):
+                    roles[cls].append(pid)
+                else:
+                    roles["others"].append(pid)
+            return roles
 
-        pending = count_files_in_dir(os.path.join(case_dir, "pending"))
-        new = count_files_in_dir(os.path.join(case_dir, "new"))
-        completed = count_files_in_dir(os.path.join(case_dir, "completed"))
-        attachments = count_files_in_dir(os.path.join(case_dir, "attachments"))
-
-        new_edges = 0
-        global_bitmap = GlobalEdgeBitmap(create=False)
         try:
-            for b in bins:
-                try:
-                    new_edges += global_bitmap.update_from_file(b)
-                finally:
-                    os.remove(b)
-        finally:
-            global_bitmap.close()
+            # 开新页→等待→dump→收集产物→解析日志增量→更新全局位图与统计→落盘/搬迁。
+            html_path_abs = os.path.realpath(html_path)
 
-        stat_timeout = 0
-        stat_mark_interesting = new_edges > 0
-        stat_semantic_error = semantic_error_seen
-        stat_other_error = 0
-        stat_lack_bin = len(bins) == 0
-        stat_process_timeout = 0
+            case_dir = os.path.dirname(html_path_abs)
+            case_id = os.path.basename(html_path_abs)[:-5]
+            tmp_dir = os.path.join(case_dir, "chrome-tmp")
+            os.makedirs(tmp_dir, exist_ok=True)
 
-        if pending > 0 or new > 0 or completed > 0 or attachments > 0:
-            archiveCase(os.path.join(config.CRASH_ROOT, case_id))
-            updateStatThread()
-            return
+            tab_id = _open_new_page(self.port, html_path_abs)
+            if not tab_id:
+                log("[!] open_new_page failed")
+                return CSExitStatus.OTHER, 0
 
-        if stat_semantic_error:
-            # “只收 100 个”的逻辑保持：超过就删
-            snap = Stats.get()
-            if snap.get("stat_semantic_error", 0) < 100:
-                archiveCase(os.path.join(config.SEMANTIC_ROOT, case_id))
+            # log(f"[*] Opened: {html_path_abs}")
+            _msleep(self.wait_ms)
+
+            # 发送自定义信号获得覆盖 
+            _dump_cov_via_sigusr1(self.port)
+
+            # 等待bin落盘
+            ok = wait_min_bins(self.bin_dir, timeout_s=3.0)
+            bins = []
+            if ok:
+                bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
+            else:
+                print("test")
+            log_chunk = self._read_log_increment()
+            semantic_error_seen = ("FUZZ_JS_ERROR" in log_chunk) or ("FUZZ_UNHANDLED_REJECTION" in log_chunk)
+
+            pending = count_files_in_dir(os.path.join(case_dir, "pending"))
+            new = count_files_in_dir(os.path.join(case_dir, "new"))
+            completed = count_files_in_dir(os.path.join(case_dir, "completed"))
+            attachments = count_files_in_dir(os.path.join(case_dir, "attachments"))
+
+            new_edges = 0
+            global_bitmap = GlobalEdgeBitmap(create=False)
+            try:
+                for b in bins:
+                    try:
+                        new_edges += global_bitmap.update_from_file(b)
+                        # print(f"[*] Collected bin: {b}, new edges: {new_edges}")
+                    finally:
+                        pass
+                        # os.remove(b)
+            finally:
+                global_bitmap.close()
+
+            stat_timeout = 0
+            stat_mark_interesting = new_edges > 0
+            stat_semantic_error = semantic_error_seen
+            stat_other_error = 0
+            stat_lack_bin = len(bins) == 0
+            stat_process_timeout = 0
+
+            if pending > 0 or new > 0 or completed > 0 or attachments > 0:
+                archiveCase(os.path.join(config.CRASH_ROOT, case_id))
+                updateStatThread()
+                return
+
+            if stat_semantic_error:
+                # “只收 100 个”的逻辑保持：超过就删
+                snap = Stats.get()
+                if snap.get("stat_semantic_error", 0) < 100:
+                    archiveCase(os.path.join(config.SEMANTIC_ROOT, case_id))
+                else:
+                    clearCase()
+                updateStatThread()
+                return
+
+            if stat_other_error:
+                archiveCase(os.path.join(config.OTHER_ROOT, case_id))
+                updateStatThread()
+                return
+
+            if stat_process_timeout:
+                archiveCase(os.path.join(config.TIMEOUT_ROOT, case_id))
+                updateStatThread()
+                return
+
+            if stat_lack_bin:
+                archiveCase(os.path.join(config.NOBIN_ROOT, case_id))
+                updateStatThread()
+                return
+
+            if new_edges > 0:
+                archiveCase(os.path.join(config.CORPUS_ROOT, case_id))
             else:
                 clearCase()
             updateStatThread()
-            return
-
-        if stat_other_error:
-            archiveCase(os.path.join(config.OTHER_ROOT, case_id))
-            updateStatThread()
-            return
-
-        if stat_process_timeout:
-            archiveCase(os.path.join(config.TIMEOUT_ROOT, case_id))
-            updateStatThread()
-            return
-
-        if stat_lack_bin:
-            archiveCase(os.path.join(config.NOBIN_ROOT, case_id))
-            updateStatThread()
-            return
-
-        if new_edges > 0:
-            archiveCase(os.path.join(config.CORPUS_ROOT, case_id))
-        else:
-            clearCase()
-        updateStatThread()
-
+        except  Exception as e:
+            log(f"[!] run_case_once exception: {e}")
+        finally:
+            try:
+                if tab_id:                # 防止未赋值时报错
+                    _close_page(self.port, tab_id)
+            except Exception:
+                pass
+                
 
 class CSExitStatus(Enum):
     """枚举表示 content_shell 的执行状态。"""
@@ -372,47 +402,142 @@ def _kill_process_tree(pid: int, grace_s: float = 0.3) -> None:
         pass
 
 
-import json, urllib.request
-from websocket import create_connection
 
-def _find_ws_url(port, target_id):
-    with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/list", timeout=1.0) as r:
-        lst = json.loads(r.read().decode())
-    for t in lst:
-        if t.get("id") == target_id:
-            return t.get("webSocketDebuggerUrl")
+
+# ------------------------------ kill 局部插桩进程  ------------------------------
+def _read_cmdline(pid: int) -> str:
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as f:
+            data = f.read().replace(b"\x00", b" ").strip()
+        return data.decode(errors="ignore")
+    except Exception:
+        return ""
+
+def _classify_cmdline(cmd: str) -> str:
+    # 返回: "browser" / "renderer" / "utility_storage" / "utility_network" / "utility_other" / "unknown"
+    if not cmd:
+        return "unknown"
+    if "content_shell" not in cmd:
+        return "unknown"
+    if "--type=" not in cmd:
+        return "browser"
+    if "--type=renderer" in cmd:
+        return "renderer"
+    if "--type=utility" in cmd:
+        if "storage.mojom.StorageService" in cmd:
+            return "utility_storage"
+        if "network.mojom.NetworkService" in cmd:
+            return "utility_network"
+        return "utility_other"
+    return "unknown"
+
+def _find_browser_pid_by_port(port: int) -> int | None:
+    # 先按端口找 browser（最可靠）
+    target = f"--remote-debugging-port={port}"
+    for pid in map(int, filter(str.isdigit, os.listdir("/proc"))):
+        cmd = _read_cmdline(pid)
+        if "content_shell" in cmd and target in cmd and "--type=" not in cmd:
+            return pid
+    # 兜底：找任意没有 --type= 的 content_shell，当且仅当系统里只有一份 content_shell
+    candidates = []
+    for pid in map(int, filter(str.isdigit, os.listdir("/proc"))):
+        cmd = _read_cmdline(pid)
+        if "content_shell" in cmd and "--type=" not in cmd:
+            candidates.append(pid)
+    if len(candidates) == 1:
+        return candidates[0]
     return None
 
-_seq = 0
-def _send(ws, method, params=None):
-    global _seq
-    _seq += 1
-    ws.send(json.dumps({"id": _seq, "method": method, "params": params or {}}))
-    # 如需严格等待返回，可循环 recv() 直到 id 匹配
-
-def clear_storage_via_cdp(port, target_id, origin="file://"):
-    ws_url = _find_ws_url(port, target_id)
-    if not ws_url:
-        return False
-    ws = create_connection(ws_url)
+def _collect_cs_group_pids(browser_pid: int) -> dict:
+    """按 PGID 收集同一组 content_shell 进程，分类返回。"""
     try:
-        _send(ws, "Network.setCacheDisabled", {"cacheDisabled": True})
-        _send(ws, "Storage.clearDataForOrigin", {"origin": origin, "storageTypes": "all"})
-        # 双保险：在页面里执行 JS 清理
-        _send(ws, "Runtime.evaluate", {"expression": """
-            (async () => {
-              try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}
-              try {
-                const dbs = await indexedDB.databases();
-                await Promise.all(dbs.map(d => indexedDB.deleteDatabase(d.name)));
-              } catch (e) {}
-              try {
-                const keys = await caches.keys();
-                await Promise.all(keys.map(k => caches.delete(k)));
-              } catch (e) {}
-              return true;
-            })();
-        """, "awaitPromise": True})
-        return True
-    finally:
-        ws.close()
+        pgid = os.getpgid(browser_pid)
+    except ProcessLookupError:
+        return {}
+    group = {"browser": [], "renderer": [], "utility_storage": [], "utility_network": [], "utility_other": []}
+    for pid in map(int, filter(str.isdigit, os.listdir("/proc"))):
+        try:
+            if os.getpgid(pid) != pgid:
+                continue
+        except ProcessLookupError:
+            continue
+        cmd = _read_cmdline(pid)
+        if "content_shell" not in cmd:
+            continue
+        cls = _classify_cmdline(cmd)
+        if cls == "browser":
+            group["browser"].append(pid)
+        elif cls == "renderer":
+            group["renderer"].append(pid)
+        elif cls == "utility_storage":
+            group["utility_storage"].append(pid)
+        elif cls == "utility_network":
+            group["utility_network"].append(pid)
+        elif cls == "utility_other":
+            group["utility_other"].append(pid)
+    return group
+
+def _dump_cov_via_sigusr1(port: int) -> dict:
+    """
+    给 Browser / Storage utility / Renderer 发 SIGUSR1，触发导出。
+    返回发信统计：{"browser": n, "storage": n, "renderer": n}
+    """
+    stats = {"browser": 0, "storage": 0, "renderer": 0}
+    browser = _find_browser_pid_by_port(port)
+    if not browser:
+        return stats  # 找不到就静默返回，外层走超时等待机制
+
+    group = _collect_cs_group_pids(browser)
+    # 1) Browser（最多 1 个）
+    for pid in group.get("browser", [])[:1]:
+        try:
+            os.kill(pid, signal.SIGUSR1)
+            stats["browser"] += 1
+        except ProcessLookupError:
+            pass
+
+    # 2) Storage utility（可能 0~1 个；全部打）
+    for pid in group.get("utility_storage", []):
+        try:
+            os.kill(pid, signal.SIGUSR1)
+            stats["storage"] += 1
+        except ProcessLookupError:
+            pass
+
+    # 3) Renderer（可能有多个；全部打）
+    for pid in group.get("renderer", []):
+        try:
+            os.kill(pid, signal.SIGUSR1)
+            stats["renderer"] += 1
+        except ProcessLookupError:
+            pass
+
+    return stats
+
+
+def wait_min_bins(bin_dir: str, timeout_s: float = 3.0, poll_s: float = 0.05) -> bool:
+    """
+    等到 bin_dir 下至少出现以下三类 bin 文件各 >= 1 即返回 True：
+      - sancov_bitmap_browser_indexeddb_*.bin
+      - sancov_bitmap_storage_indexeddb_*.bin
+      - sancov_bitmap_blink_indexeddb_*.bin（数量不限制，>=1 即可）
+
+    否则超时返回 False。
+    """
+    pat_browser = os.path.join(bin_dir, "sancov_bitmap_browser_indexeddb_*.bin")
+    pat_storage = os.path.join(bin_dir, "sancov_bitmap_storage_indexeddb_*.bin")
+    pat_blink   = os.path.join(bin_dir, "sancov_bitmap_blink_indexeddb_*.bin")
+
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        has_browser = len(glob.glob(pat_browser)) >= 1
+        has_storage = len(glob.glob(pat_storage)) >= 1
+        has_blink   = len(glob.glob(pat_blink))   >= 1
+
+        if has_browser and has_storage and has_blink:
+            return True
+
+        time.sleep(poll_s)
+
+    return False
+
