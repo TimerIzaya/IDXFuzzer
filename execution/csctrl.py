@@ -117,6 +117,35 @@ class CSController:
             return data.decode("utf-8", errors="replace")
         except Exception:
             return ""
+        
+    def _clear_specific_profile_data(self) -> None:
+        """清理 IndexedDB 和缓存目录，但保留 profile 目录本身。"""
+        # 路径列表，包含需要清除的目录和文件
+        paths_to_clear = [
+            os.path.join(self.profile_dir, "Default", "Local Storage"),
+            os.path.join(self.profile_dir, "Default", "Shared Dictionary"),
+            os.path.join(self.profile_dir, "Default", "blob_storage"),
+            os.path.join(self.profile_dir, "Default", "Code Cache"),
+            os.path.join(self.profile_dir, "Default", "GPUCache"),
+            os.path.join(self.profile_dir, "Default", "DawnGraphiteCache"),
+            os.path.join(self.profile_dir, "Default", "DawnWebGPUCache"),
+            os.path.join(self.profile_dir, "Default", "PersistentOriginTrials"),
+            os.path.join(self.profile_dir, "Default", "shared_proto_db"),
+            # 清理临时文件
+            os.path.join(self.profile_dir, "Default", "DevToolsActivePort"),
+            os.path.join(self.profile_dir, "Default", "DIPS"),
+            os.path.join(self.profile_dir, "Default", "DIPS-wal"),
+
+        ]
+        
+        for path in paths_to_clear:
+            try:
+                if os.path.isdir(path):
+                    shutil.rmtree(path, ignore_errors=True)
+                elif os.path.isfile(path):
+                    os.remove(path)
+            except Exception as e:
+                log(f"[!] Failed to clear {path}: {e}")
 
     def run_case_once(self, html_path: str):
         def updateStatThread():
@@ -208,16 +237,6 @@ class CSController:
                 return ("network", False)
             return ("utility_other", False)
 
-        def _pids_by_role_in_pgid(pgid: int):
-            roles = {"browser": [], "renderer": [], "storage": [], "others": []}
-            for pid in _iter_pids_in_pgid(pgid):
-                cls, interesting = _classify(_cmdline(pid))
-                if cls in ("browser", "renderer", "storage"):
-                    roles[cls].append(pid)
-                else:
-                    roles["others"].append(pid)
-            return roles
-
         try:
             # 开新页→等待→dump→收集产物→解析日志增量→更新全局位图与统计→落盘/搬迁。
             html_path_abs = os.path.realpath(html_path)
@@ -232,7 +251,7 @@ class CSController:
                 log("[!] open_new_page failed")
                 return CSExitStatus.OTHER, 0
 
-            # log(f"[*] Opened: {html_path_abs}")
+            # todo 固定时间，能动态更好
             _msleep(self.wait_ms)
 
             # 发送自定义信号获得覆盖 
@@ -244,7 +263,7 @@ class CSController:
             if ok:
                 bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
             else:
-                print("test")
+                print("lack bin files")
             log_chunk = self._read_log_increment()
             semantic_error_seen = ("FUZZ_JS_ERROR" in log_chunk) or ("FUZZ_UNHANDLED_REJECTION" in log_chunk)
 
@@ -261,8 +280,7 @@ class CSController:
                         new_edges += global_bitmap.update_from_file(b)
                         # print(f"[*] Collected bin: {b}, new edges: {new_edges}")
                     finally:
-                        pass
-                        # os.remove(b)
+                        os.remove(b)
             finally:
                 global_bitmap.close()
 
@@ -312,8 +330,10 @@ class CSController:
             log(f"[!] run_case_once exception: {e}")
         finally:
             try:
-                if tab_id:                # 防止未赋值时报错
+                if tab_id:
                     _close_page(self.port, tab_id)
+                    # 清除所有idb缓存
+                    self._clear_specific_profile_data()
             except Exception:
                 pass
                 
