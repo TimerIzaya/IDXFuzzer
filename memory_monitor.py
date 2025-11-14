@@ -4,7 +4,7 @@ import time
 import sys
 
 BASE_TMP = "/dev/shm/tmp"
-INTERVAL = 2.0  # 秒
+INTERVAL = 5.0  # 默认 5 秒
 
 # ---------- /proc 工具函数 ----------
 
@@ -172,12 +172,15 @@ def snapshot_once(base: str):
     return stats
 
 
-def print_stats(stats: dict):
+def write_stats_to_file(stats: dict, fp):
+    """把统计结果写入指定文件对象 fp。"""
     if not stats:
-        print("(no active instances under /dev/shm/tmp)")
+        fp.write("(no active instances under /dev/shm/tmp)\n")
+        fp.write("\n")
+        fp.flush()
         return
 
-    print(time.strftime("==== %Y-%m-%d %H:%M:%S ===="))
+    fp.write(time.strftime("==== %Y-%m-%d %H:%M:%S ====\n"))
     header = (
         "inst_id  "
         "shm(MB)  "
@@ -185,7 +188,7 @@ def print_stats(stats: dict):
         "cs_total(MB)  "
         "browser  renderer  storage  network  util_oth"
     )
-    print(header)
+    fp.write(header + "\n")
     for inst_id in sorted(stats.keys(), key=lambda x: int(x)):
         s = stats[inst_id]
         shm_mb = s["shm_bytes"] / (1024 * 1024)
@@ -196,14 +199,15 @@ def print_stats(stats: dict):
         st = s["cs_rss_by_role"]["storage"] / 1024
         nw = s["cs_rss_by_role"]["network"] / 1024
         ut = s["cs_rss_by_role"]["utility_other"] / 1024
-        print(
+        fp.write(
             f"{inst_id:>7}  "
             f"{shm_mb:7.1f}  "
             f"{worker_mb:9.1f}  "
             f"{cs_mb:11.1f}  "
-            f"{br:7.1f}  {rd:8.1f}  {st:7.1f}  {nw:7.1f}  {ut:8.1f}"
+            f"{br:7.1f}  {rd:8.1f}  {st:7.1f}  {nw:7.1f}  {ut:8.1f}\n"
         )
-    print()
+    fp.write("\n")
+    fp.flush()
 
 
 def main():
@@ -218,12 +222,17 @@ def main():
         print(f"Base dir not found: {base}")
         sys.exit(1)
 
-    print(f"Monitoring instances under {base}, interval={INTERVAL}s ... (Ctrl-C to stop)")
+    out_path = os.path.join(os.getcwd(), "mem_stat.txt")
+    print(f"Monitoring instances under {base}, interval={INTERVAL}s ...")
+    print(f"Logging to {out_path} (Ctrl-C to stop)")
+
     try:
-        while True:
-            stats = snapshot_once(base)
-            print_stats(stats)
-            time.sleep(INTERVAL)
+        # 追加写入，程序重启时接在已有内容后面
+        with open(out_path, "a", encoding="utf-8") as fp:
+            while True:
+                stats = snapshot_once(base)
+                write_stats_to_file(stats, fp)
+                time.sleep(INTERVAL)
     except KeyboardInterrupt:
         print("Bye.")
 
