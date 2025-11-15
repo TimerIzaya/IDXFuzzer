@@ -49,8 +49,37 @@ class CSController:
 
         self._log_offset = 0
 
+
+        # 实例健康状态文件
+        self.health_file = os.path.join(self.base, "health.json")
+        self.port = DEFAULT_PORT_BASE + worker_idx  # 如果你在别处算 port，就改成实际的
+        self.last_ok_ts = 0.0
+        self.last_error_ts = 0.0
+        self.consecutive_failures = 0
+        self.last_error_reason = ""
+        self._flush_health(status="init")  # 启动时写一条初始状态
+
+
         # 初始化时就启动一条 content_shell
         self.launch()
+
+    def _flush_health(self, status: str) -> None:
+        """把当前健康状态刷到一个 json 文件里，给 stat_worker 读取。"""
+        data = {
+            "pid": os.getpid(),
+            "port": self.port,
+            "status": status,  # "healthy" / "warning" / "dead" / "init"
+            "last_ok_ts": self.last_ok_ts,
+            "last_error_ts": self.last_error_ts,
+            "consecutive_failures": self.consecutive_failures,
+            "last_error_reason": self.last_error_reason,
+        }
+        try:
+            with open(self.health_file, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+        except Exception as e:
+            # 不要让这种错误影响 fuzz 主流程
+            log(f"[health] warn: failed to write {self.health_file}: {e}")
 
     def _is_cs_alive(self) -> bool:
         if self.proc is None or self.pid is None:
@@ -317,35 +346,6 @@ class CSController:
             except Exception as e:
                 log(f"[!] clearCase failed: {e}")
         
-
-        def _iter_pids_in_pgid(pgid: int):
-            for name in os.listdir("/proc"):
-                if name.isdigit():
-                    pid = int(name)
-                    try:
-                        if os.getpgid(pid) == pgid:
-                            yield pid
-                    except Exception:
-                        pass
-
-        def _cmdline(pid: int) -> str:
-            try:
-                with open(f"/proc/{pid}/cmdline", "rb") as f:
-                    return f.read().replace(b"\x00", b" ").decode("utf-8", "replace")
-            except Exception:
-                return ""
-
-        def _classify(cmd: str):
-            is_cs = "content_shell" in cmd
-            if not is_cs: return ("other", False)
-            if "--type=" not in cmd: return ("browser", True)
-            if "--type=zygote" in cmd: return ("zygote", False)
-            if "--type=renderer" in cmd: return ("renderer", True)
-            if "--type=utility" in cmd and "storage.mojom.StorageService" in cmd:
-                return ("storage", True)
-            if "--type=utility" in cmd and "NetworkService" in cmd:
-                return ("network", False)
-            return ("utility_other", False)
 
         tab_id = None 
         try:
