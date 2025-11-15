@@ -456,6 +456,7 @@ class CSController:
         finally:
             if tab_id:
                 _close_page(self.port, tab_id)
+                
 
 class CSExitStatus(Enum):
     """枚举表示 content_shell 的执行状态。"""
