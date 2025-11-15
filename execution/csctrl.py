@@ -388,8 +388,11 @@ def _wait_for_devtools(port: int, timeout_s: float = 10.0) -> bool:
     log(f"[!] DevTools :{port} not ready after {int(timeout_s)}s")
     return False
 
-
 def _open_new_page(port: int, abs_html: str) -> str:
+    import traceback
+    import socket
+    import urllib.error as urlerr
+
     opener = _opener_no_proxy()
     enc_url = _url_encode_file(abs_html)
     url = f"http://127.0.0.1:{port}/json/new?{enc_url}"
@@ -399,7 +402,45 @@ def _open_new_page(port: int, abs_html: str) -> str:
             info = json.loads(r.read().decode("utf-8", "replace"))
             return info.get("id")
     except Exception as e:
-        log(f"[!] open page failed: {e}")
+        # 先打出最基本的信息
+        log("[!] open page failed:")
+        log(f"    url      = {url}")
+        log(f"    port     = {port}")
+        log(f"    html     = {abs_html}")
+        log(f"    exc_type = {type(e).__name__}")
+        log(f"    exc_repr = {repr(e)}")
+
+        # 针对不同类型再细化一下
+        if isinstance(e, urlerr.HTTPError):
+            # HTTPError 是 URLError 的子类
+            log(f"    HTTPError.code   = {e.code}")
+            log(f"    HTTPError.reason = {e.reason!r}")
+            try:
+                body = e.read().decode("utf-8", "replace")
+                log(f"    HTTPError.body (first 512B) = {body[:512]!r}")
+            except Exception:
+                pass
+        elif isinstance(e, urlerr.URLError):
+            log(f"    URLError.reason  = {e.reason!r}")
+            if isinstance(e.reason, socket.timeout):
+                log("    -> socket.timeout: DevTools /json/new 响应超时")
+        else:
+            # 其他乱七八糟的异常，直接把 traceback 打出来
+            tb = traceback.format_exc()
+            log("    traceback:")
+            log(tb)
+
+        # 顺带探测一下 /json/version 状态，看 DevTools 是否还活着
+        try:
+            ver_url = f"http://127.0.0.1:{port}/json/version"
+            with opener.open(ver_url, timeout=1.0) as vr:
+                ver_body = vr.read().decode("utf-8", "replace")
+            log(f"    devtools /json/version OK, body(first 512B)={ver_body[:512]!r}")
+        except Exception as e2:
+            log("    devtools /json/version probe failed:")
+            log(f"        type  = {type(e2).__name__}")
+            log(f"        repr  = {repr(e2)}")
+
         return None
 
 
