@@ -6,6 +6,7 @@ import shutil
 import signal  # 这个是模块
 import subprocess
 import time
+import traceback
 import urllib.request as urlreq
 import urllib.parse as urlparse
 from enum import Enum, auto
@@ -19,10 +20,6 @@ from tool.tool import count_files_in_dir
 DEFAULT_CS = "/timer/chromium/src/out/IndexedDBSanCov/content_shell"
 DEFAULT_WAIT_MS = 300
 DEFAULT_PORT_BASE = 9300
-
-
-
-
 
 
 class CSController:
@@ -51,6 +48,9 @@ class CSController:
         self.env["ASAN_OPTIONS"] = "allow_user_segv_handler=1:fast_unwind_on_fatal=0"
 
         self._log_offset = 0
+
+        # 初始化时就启动一条 content_shell
+        self.launch()
 
     def launch(self) -> None:
         if not os.path.isfile(self.cs_path):
@@ -95,15 +95,30 @@ class CSController:
             raise RuntimeError(f"DevTools not ready on :{self.port}, see {self.log_path}")
 
     def stop(self) -> None:
-        # 新架构：正常情况下**不**主动清理 CS（让上层 stop_workers 统一回收）
-        # 但如果你确实要在 worker 结束时关掉本 worker 的 CS，这里保留优雅退出：
+        # 正常情况下由 stop_workers 统一收尾，这里提供“优雅关闭本 worker 的 CS”
         if self.proc and self.proc.poll() is None:
             log(f"[*] Kill content_shell pid={self.pid}")
             _kill_process_tree(self.proc.pid)
         self.proc = None
         self.pid = None
         self.pgid = None
-        # log(f"[*] Logs: {self.log_path}")
+
+    def restart_cs(self) -> None:
+        """重启当前 controller 绑定的 content_shell 进程。"""
+        log(f"[*] Restart content_shell on :{self.port}")
+        try:
+            # 先尽量停掉当前这条 content_shell
+            self.stop()
+        except Exception as e:
+            log(f"[!] CSController.stop() failed during restart: {e!r}")
+
+        # 再拉起一条新的 content_shell
+        try:
+            self.launch()
+        except Exception as e:
+            # 这里抛出去，让上层感知到这条 worker 的 CS 崩坏
+            log(f"[!] CSController.launch() failed during restart: {e!r}")
+            raise
 
     def _read_log_increment(self) -> str:
         """从上次偏移开始读取 content_shell.log 新增内容，返回增量文本，并推进偏移。"""
@@ -120,7 +135,6 @@ class CSController:
         
     def _clear_specific_profile_data(self) -> None:
         """清理 IndexedDB 和缓存目录，但保留 profile 目录本身。"""
-        # 路径列表，包含需要清除的目录和文件
         paths_to_clear = [
             os.path.join(self.profile_dir, "Default", "Local Storage"),
             os.path.join(self.profile_dir, "Default", "Shared Dictionary"),
@@ -131,11 +145,9 @@ class CSController:
             os.path.join(self.profile_dir, "Default", "DawnWebGPUCache"),
             os.path.join(self.profile_dir, "Default", "PersistentOriginTrials"),
             os.path.join(self.profile_dir, "Default", "shared_proto_db"),
-            # 清理临时文件
             os.path.join(self.profile_dir, "Default", "DevToolsActivePort"),
             os.path.join(self.profile_dir, "Default", "DIPS"),
             os.path.join(self.profile_dir, "Default", "DIPS-wal"),
-
         ]
         
         for path in paths_to_clear:
@@ -238,7 +250,6 @@ class CSController:
             return ("utility_other", False)
 
         try:
-            # 开新页→等待→dump→收集产物→解析日志增量→更新全局位图与统计→落盘/搬迁。
             html_path_abs = os.path.realpath(html_path)
 
             case_dir = os.path.dirname(html_path_abs)
@@ -251,13 +262,10 @@ class CSController:
                 log("[!] open_new_page failed")
                 return CSExitStatus.OTHER, 0
 
-            # todo 固定时间，能动态更好
             _msleep(self.wait_ms)
 
-            # 发送自定义信号获得覆盖 
             _dump_cov_via_sigusr1(self.port)
 
-            # 等待bin落盘
             ok = wait_min_bins(self.bin_dir, timeout_s=3.0)
             bins = []
             if ok:
@@ -274,15 +282,13 @@ class CSController:
 
             new_edges = 0
             global_bitmap = GlobalEdgeBitmap(create=False)
-            try:
-                for b in bins:
-                    try:
-                        new_edges += global_bitmap.update_from_file(b)
-                        # print(f"[*] Collected bin: {b}, new edges: {new_edges}")
-                    finally:
-                        os.remove(b)
-            finally:
-                global_bitmap.close()
+            for b in bins:
+                try:
+                    new_edges += global_bitmap.update_from_file(b)
+                except Exception as e:
+                    log(f"[!] update_from_file failed for {b}: {e}")
+                finally:
+                    os.remove(b)
 
             stat_timeout = 0
             stat_mark_interesting = new_edges > 0
@@ -297,7 +303,6 @@ class CSController:
                 return
 
             if stat_semantic_error:
-                # “只收 100 个”的逻辑保持：超过就删
                 snap = Stats.get()
                 if snap.get("stat_semantic_error", 0) < 100:
                     archiveCase(os.path.join(config.SEMANTIC_ROOT, case_id))
@@ -327,15 +332,19 @@ class CSController:
                 clearCase()
             updateStatThread()
         except Exception as e:
-            # 一定要清理现场
-            clearCase()
-            log(f"[!] run_case_once exception: {e}")
+            try:
+                clearCase()
+            except Exception as ee:
+                log(f"[!] clearCase failed inside exception handler: {ee}")
+
+            tb = traceback.format_exc()
+            log(f"[!] run_case_once exception: {e}\n{tb}")
         finally:
             if tab_id:
                 _close_page(self.port, tab_id)
                 # 清除所有idb缓存
                 self._clear_specific_profile_data()
-                
+
 
 class CSExitStatus(Enum):
     """枚举表示 content_shell 的执行状态。"""
@@ -401,6 +410,7 @@ def _close_page(port: int, target_id: str) -> None:
     except Exception:
         pass
 
+
 def _kill_process_tree(pid: int, grace_s: float = 0.3) -> None:
     try:
         os.kill(pid, signal.SIGTERM)
@@ -421,8 +431,6 @@ def _kill_process_tree(pid: int, grace_s: float = 0.3) -> None:
         pass
 
 
-
-
 # ------------------------------ kill 局部插桩进程  ------------------------------
 def _read_cmdline(pid: int) -> str:
     try:
@@ -431,6 +439,7 @@ def _read_cmdline(pid: int) -> str:
         return data.decode(errors="ignore")
     except Exception:
         return ""
+
 
 def _classify_cmdline(cmd: str) -> str:
     # 返回: "browser" / "renderer" / "utility_storage" / "utility_network" / "utility_other" / "unknown"
@@ -450,6 +459,7 @@ def _classify_cmdline(cmd: str) -> str:
         return "utility_other"
     return "unknown"
 
+
 def _find_browser_pid_by_port(port: int) -> int | None:
     # 先按端口找 browser（最可靠）
     target = f"--remote-debugging-port={port}"
@@ -466,6 +476,7 @@ def _find_browser_pid_by_port(port: int) -> int | None:
     if len(candidates) == 1:
         return candidates[0]
     return None
+
 
 def _collect_cs_group_pids(browser_pid: int) -> dict:
     """按 PGID 收集同一组 content_shell 进程，分类返回。"""
@@ -495,6 +506,7 @@ def _collect_cs_group_pids(browser_pid: int) -> dict:
         elif cls == "utility_other":
             group["utility_other"].append(pid)
     return group
+
 
 def _dump_cov_via_sigusr1(port: int) -> dict:
     """
@@ -559,4 +571,3 @@ def wait_min_bins(bin_dir: str, timeout_s: float = 3.0, poll_s: float = 0.05) ->
         time.sleep(poll_s)
 
     return False
-

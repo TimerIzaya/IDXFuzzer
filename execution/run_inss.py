@@ -1,5 +1,3 @@
-# /timer/index/execution/run_inss.py
-
 from enum import Enum, auto
 import os
 import signal
@@ -13,9 +11,13 @@ from execution.csctrl import CSController
 from tool.log import log
 
 
-_GLOBAL_STOP_EVENT: Optional[mp.Event] = None # type: ignore
+_GLOBAL_STOP_EVENT: Optional[mp.Event] = None  # type: ignore
 _GLOBAL_PROCS: List[mp.Process] = []
 _WARNED_AFFINITY = False  # 仅打印一次亲和性失败日志
+
+# 每个 content_shell 连续执行多少个用例之后重启一次
+MAX_CASES_PER_CS = 100
+
 
 def _pin_to_cpu(cpu_id: int) -> None:
     """尽力绑定 CPU；失败只告警一次。"""
@@ -28,17 +30,19 @@ def _pin_to_cpu(cpu_id: int) -> None:
             _WARNED_AFFINITY = True
 
 
-def _worker_main(worker_idx: int, cpu_id: int, stop_event: mp.Event) -> None: # type: ignore
+def _worker_main(worker_idx: int, cpu_id: int, stop_event: mp.Event) -> None:  # type: ignore
     _pin_to_cpu(cpu_id)
     pid = os.getpid()
     log(f"[worker#{worker_idx} pid={pid}] start on cpu {cpu_id}")
 
-    ctrl = CSController(worker_idx, cpu_id)
+    # 创建 controller 的同时就会启动一条 content_shell
     try:
-        ctrl.launch()
+        ctrl = CSController(worker_idx, cpu_id)
     except Exception as e:
-        log(f"[worker#{worker_idx}] launch content_shell failed: {e}")
+        log(f"[worker#{worker_idx}] init CSController / launch content_shell failed: {e}")
         return
+
+    cases_since_restart = 0
 
     try:
         while not stop_event.is_set():
@@ -52,6 +56,22 @@ def _worker_main(worker_idx: int, cpu_id: int, stop_event: mp.Event) -> None: # 
                 ctrl.run_case_once(html_path)
             except Exception as e:
                 log(f"[worker#{worker_idx}] run_case_once failed: {e}")
+            else:
+                # 只有 run_case_once 正常返回时才累计
+                cases_since_restart += 1
+
+                if cases_since_restart >= MAX_CASES_PER_CS:
+                    log(
+                        f"[worker#{worker_idx}] reached {MAX_CASES_PER_CS} cases, "
+                        f"restart content_shell"
+                    )
+                    try:
+                        ctrl.restart_cs()
+                    except Exception as e2:
+                        log(f"[worker#{worker_idx}] restart_cs failed: {e2}")
+                        # 重启失败就直接退出该 worker，让上层重启
+                        break
+                    cases_since_restart = 0
     finally:
         ctrl.stop()
         log(f"[worker#{worker_idx} pid={pid}] stop: event set or loop exit")
@@ -79,7 +99,7 @@ def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> L
 
 
 def stop_workers(
-    stop_event: Optional[mp.Event] = None, # type: ignore
+    stop_event: Optional[mp.Event] = None,  # type: ignore
     procs: Optional[List[mp.Process]] = None,
 ) -> None:
     global _GLOBAL_STOP_EVENT, _GLOBAL_PROCS
@@ -139,6 +159,3 @@ def install_signal_handlers(
         signal.signal(signal.SIGHUP, _handler)
     except Exception:
         pass
-
-
-

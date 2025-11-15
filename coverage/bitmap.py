@@ -31,17 +31,6 @@ class GlobalEdgeBitmap:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
                     cls._instance_create_flag = create
-        else:
-            # 如果后续调用的 create 标志和第一次不一致，给个提示（不抛错）
-            if create != cls._instance_create_flag:
-                try:
-                    log(
-                        f"[GlobalEdgeBitmap] singleton already created with create="
-                        f"{cls._instance_create_flag}, ignore new create={create}"
-                    )
-                except Exception:
-                    # 万一 log 不可用就悄悄吞掉
-                    pass
 
         return cls._instance
 

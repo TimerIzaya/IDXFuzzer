@@ -20,7 +20,7 @@ def stat_worker(bitmap: GlobalEdgeBitmap,
         if stop_event is not None and stop_event.is_set():
             break
 
-        time.sleep(60)  # 每 60 秒打印一次
+        time.sleep(config.STAT_SHOW_INTERVAL)  # 每 60 秒打印一次
         now = time.time()
         elapsed = int(now - start_ts)
         h, rem = divmod(elapsed, 3600)
