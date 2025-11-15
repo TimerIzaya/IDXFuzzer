@@ -55,7 +55,8 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
                 break
 
             out_dir = os.path.join(config.CS_TMP, str(os.getpid()))
-            html_path = gen_case(out_dir)
+            # html_path = gen_case(out_dir)
+            html_path = "test/t0/t0.html"
 
             try:
                 ctrl.run_case_once(html_path)

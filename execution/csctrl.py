@@ -353,6 +353,7 @@ class CSController:
 
             case_dir = os.path.dirname(html_path_abs)
             case_id = os.path.basename(html_path_abs)[:-5]
+            crash_dir = os.path.join(self.crash_dir, case_id)
             tmp_dir = os.path.join(case_dir, "chrome-tmp")
             os.makedirs(tmp_dir, exist_ok=True)
 
@@ -376,19 +377,16 @@ class CSController:
 
             ok = wait_min_bins(self.bin_dir, timeout_s=3.0)
             bins = []
+            # 没有bin可能是crash哦
             if ok:
                 bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
-            else:
-                log("lack bin files, sleep")
-                while True:
-                    _msleep(100)
             log_chunk = self._read_log_increment()
             semantic_error_seen = ("FUZZ_JS_ERROR" in log_chunk) or ("FUZZ_UNHANDLED_REJECTION" in log_chunk)
 
-            pending = count_files_in_dir(os.path.join(case_dir, "pending"))
-            new = count_files_in_dir(os.path.join(case_dir, "new"))
-            completed = count_files_in_dir(os.path.join(case_dir, "completed"))
-            attachments = count_files_in_dir(os.path.join(case_dir, "attachments"))
+            pending = count_files_in_dir(os.path.join(crash_dir, "pending"))
+            new = count_files_in_dir(os.path.join(crash_dir, "new"))
+            completed = count_files_in_dir(os.path.join(crash_dir, "completed"))
+            attachments = count_files_in_dir(os.path.join(crash_dir, "attachments"))
 
             new_edges = 0
             global_bitmap = GlobalEdgeBitmap(create=False)
@@ -420,6 +418,7 @@ class CSController:
             elif stat_process_timeout:
                 archiveCase(os.path.join(config.TIMEOUT_ROOT, case_id))
             elif stat_lack_bin:
+                # 这里是真的没有触发crash的nobin，理论上不可能出现
                 archiveCase(os.path.join(config.NOBIN_ROOT, case_id))
             elif new_edges > 0:
                 archiveCase(os.path.join(config.CORPUS_ROOT, case_id))
