@@ -378,7 +378,7 @@ class CSController:
 
             _dump_cov_via_sigusr1(self.port)
 
-            ok = wait_min_bins(self.bin_dir, timeout_s=3.0)
+            ok = wait_min_bins(self.bin_dir, timeout_s=10.0)
             bins = []
             # 没有bin可能是crash哦
             if ok:
@@ -436,21 +436,23 @@ class CSController:
             # 最近有成功 + 没连续失败，就是 healthy
             self._flush_health(status="healthy")
         except TimeoutError as e:
-            print("[!] run_case_once exception".join(traceback.format_exception(e)))
+            err = "[!] run_case_once exception".join(traceback.format_exception(e))
+            print(err)
             archiveCase(os.path.join(config.TIMEOUT_ROOT, case_id))
             # 打开 / 关闭 / 执行过程中超时
             self.last_error_ts = time.time()
             self.consecutive_failures += 1
-            self.last_error_reason = f"Timeout: {e}"
+            self.last_error_reason = f"Timeout: {err}"
             status = "warning" if self.consecutive_failures < 3 else "dead"
             self._flush_health(status=status)
         except Exception as e:
-            print("[!] run_case_once exception".join(traceback.format_exception(e)))
+            err = "[!] run_case_once exception".join(traceback.format_exception(e))
+            print(err)            
             archiveCase(os.path.join(config.OTHER_ROOT, case_id))
             # 其它错误
             self.last_error_ts = time.time()
             self.consecutive_failures += 1
-            self.last_error_reason = f"Error: {e}"
+            self.last_error_reason = f"Timeout: {err}"
             status = "warning" if self.consecutive_failures < 3 else "dead"
             self._flush_health(status=status)
         finally:
