@@ -1,6 +1,6 @@
 import os
 
-NUM_INSTANCES = 10
+NUM_INSTANCES =  20
 
 SHARE = "/dev/shm/"
 

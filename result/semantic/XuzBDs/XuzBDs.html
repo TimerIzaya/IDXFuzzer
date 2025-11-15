@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB</title></head>
+<body><script>
+(function(){
+  function p(m){ try{ console.error(m); } catch(_){} }
+  window.addEventListener('error', function(e){
+    var stack = (e.error && e.error.stack) ? ('\n' + e.error.stack) : '';
+    p('FUZZ_JS_ERROR: ' + (e.message || 'unknown') + ' @ ' + (e.filename || 'inline') + ':' + (e.lineno||0) + ':' + (e.colno||0) + stack);
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e.reason; var msg = (r && (r.stack||r.message)) ? (r.stack||r.message) : String(r);
+    p('FUZZ_UNHANDLED_REJECTION: ' + msg);
+  }, true);
+})();
+let db_580;
+const openRequest_580 = window.indexedDB.open('str_180', 4261516640353006)
+openRequest_580.onupgradeneeded = (event) => {
+    console.log('db onupgraded trigered');
+    db_580 = event.target.result;
+    var objectStore_0 = db_580.createObjectStore('objectStore_3062', {autoIncrement: false});
+    var index_2446 = objectStore_0.createIndex('index_2446', 'test');
+    var index_2447 = objectStore_0.createIndex('index_2447', 'test', {unique: false, multiEntry: true});
+    var clear_0 = objectStore_0.clear();
+    var clear_1 = objectStore_0.clear();
+    var put_0 = objectStore_0.put({f0_n: 'OuffKuWG', f1_w: 'NfZtdOVxNYvtoUWOyhyqqWtYIicceIM', f2_h: true, f3_y: true}, 'HPXHOaIeydWHqztoQ');
+    var count_0;
+    try{
+        KeyRange_0 = IDBKeyRange.only('HPXHOaIeydWHqztoQ');
+        count_0 = objectStore_0.count(KeyRange_0);
+    }
+    catch (e){
+    }
+
+    var clear_2 = objectStore_0.clear();
+    var getAll_0 = objectStore_0.getAll('HWnjdq', 3476665001);
+    var getAllKeys_0 = objectStore_0.getAllKeys();
+    var getAll_1;
+    try{
+        KeyRange_2 = IDBKeyRange.bound('HPXHOaIeydWHqztoQ', 'HPXHOaIeydWHqztoQ', true, false);
+        getAll_1 = objectStore_0.getAll(KeyRange_2);
+    }
+    catch (e){
+    }
+
+    var get_0 = objectStore_0.get(5990436231);
+    var count_1;
+    try{
+        KeyRange_4 = IDBKeyRange.upperBound('HPXHOaIeydWHqztoQ', true);
+        count_1 = objectStore_0.count(KeyRange_4);
+    }
+    catch (e){
+    }
+
+    var count_2 = objectStore_0.count();
+    var getAll_2;
+    try{
+        KeyRange_6 = IDBKeyRange.only('HPXHOaIeydWHqztoQ');
+        getAll_2 = objectStore_0.getAll(KeyRange_6);
+    }
+    catch (e){
+    }
+
+    var count_3 = objectStore_0.count('kxaiOHYSgFDYXSaXaZByNtSdaswfj');
+    var delete_0;
+    try{
+        KeyRange_8 = IDBKeyRange.bound('HPXHOaIeydWHqztoQ', 'HPXHOaIeydWHqztoQ', true, false);
+        delete_0 = objectStore_0.delete(KeyRange_8);
+    }
+    catch (e){
+    }
+
+    db_580.deleteObjectStore('objectStore_3062')
+};
+openRequest_580.onsuccess = (event) => {
+    console.log('db onsuccess triggered')
+    db_580 = openRequest_580.result;
+    db_580.onversionchange = (event) => {
+        console.log('The version of this database has changed, release this connection');
+        db_580.close()
+    };
+    db_580.onclose = (event) => {
+        console.log('The database connection is unexpectedly closed');
+    };
+};
+openRequest_580.onerror = (event) => {
+    console.log('open db onerror triggered')
+    var errorResult;
+    errorResult = event.target.error;
+    console.log(errorResult.message)
+    console.log(errorResult.name)
+};
+openRequest_580.onblocked = (event) => {
+    console.log('open db blocked triggered')
+};
+const deleteRequest_580 = indexedDB.deleteDatabase('str_8416')</script></body></html>
