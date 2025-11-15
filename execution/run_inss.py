@@ -15,8 +15,7 @@ _GLOBAL_STOP_EVENT: Optional[mp.Event] = None  # type: ignore
 _GLOBAL_PROCS: List[mp.Process] = []
 _WARNED_AFFINITY = False  # 仅打印一次亲和性失败日志
 
-# 每个 content_shell 连续执行多少个用例之后重启一次
-MAX_CASES_PER_CS = 100
+ 
 
 
 def _pin_to_cpu(cpu_id: int) -> None:
@@ -60,9 +59,9 @@ def _worker_main(worker_idx: int, cpu_id: int, stop_event: mp.Event) -> None:  #
                 # 只有 run_case_once 正常返回时才累计
                 cases_since_restart += 1
 
-                if cases_since_restart >= MAX_CASES_PER_CS:
+                if cases_since_restart >= config.MAX_CASES_PER_CS:
                     log(
-                        f"[worker#{worker_idx}] reached {MAX_CASES_PER_CS} cases, "
+                        f"[worker#{worker_idx}] reached {config.MAX_CASES_PER_CS} cases, "
                         f"restart content_shell"
                     )
                     try:
