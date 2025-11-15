@@ -369,6 +369,9 @@ class CSController:
                         log(f"[!] restart_cs failed after open_new_page error: {e!r}")
                 else:
                     log(f"[!] open_new_page failed but CS still alive, treat as transient error")
+
+                # 这个case也要归档，防止是真的big crash
+                archiveCase(os.path.join(config.CRASH_ROOT, case_id))
                 return CSExitStatus.OTHER, 0
             
             _msleep(self.wait_ms)
@@ -434,7 +437,7 @@ class CSController:
             self._flush_health(status="healthy")
         except TimeoutError as e:
             print("[!] run_case_once exception".join(traceback.format_exception(e)))
-            clearCase()
+            archiveCase(os.path.join(config.TIMEOUT_ROOT, case_id))
             # 打开 / 关闭 / 执行过程中超时
             self.last_error_ts = time.time()
             self.consecutive_failures += 1
@@ -443,7 +446,7 @@ class CSController:
             self._flush_health(status=status)
         except Exception as e:
             print("[!] run_case_once exception".join(traceback.format_exception(e)))
-            clearCase()
+            archiveCase(os.path.join(config.OTHER_ROOT, case_id))
             # 其它错误
             self.last_error_ts = time.time()
             self.consecutive_failures += 1
