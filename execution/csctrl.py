@@ -52,6 +52,103 @@ class CSController:
         # 初始化时就启动一条 content_shell
         self.launch()
 
+    def _is_cs_alive(self) -> bool:
+        if self.proc is None or self.pid is None:
+            return False
+
+        # 先看 Popen 的 returncode
+        rc = self.proc.poll()
+        if rc is not None:
+            # 已有退出码 -> 进程已经退出
+            return False
+
+        # 再用 kill(pid, 0) 双重确认
+        try:
+            os.kill(self.pid, 0)
+            return True
+        except ProcessLookupError:
+            # 进程确实不存在了
+            return False
+        except Exception as e:
+            # 其他异常（比如权限），保守认为“还活着”，避免误杀
+            log(f"[CS] _is_cs_alive kill(0) probe error: {e!r}")
+            return True
+
+    def _log_cs_exit_reason(self) -> None:
+        """在怀疑 CS 死了/异常时，把能拿到的信息都打到日志里。"""
+        log("[CS] ===== content_shell 状态诊断开始 =====")
+        log(f"[CS] port={self.port} pid={self.pid} pgid={self.pgid}")
+
+        # 1) Popen 状态
+        if self.proc is None:
+            log("[CS] proc 对象为 None（可能尚未 launch 或已被 stop() 清理）")
+        else:
+            rc = self.proc.poll()
+            if rc is None:
+                log("[CS] proc.poll(): 进程仍在运行（returncode=None）")
+            else:
+                log(f"[CS] proc.poll(): 进程已退出，returncode={rc}")
+
+        # 2) /proc/<pid>/status & cmdline
+        if self.pid is not None:
+            status_path = f"/proc/{int(self.pid)}/status"
+            try:
+                with open(status_path, "r") as f:
+                    lines = f.readlines()
+                # 只挑关键几行打
+                keys = (
+                    "Name:", "State:", "Tgid:", "Pid:", "PPid:",
+                    "Threads:", "SigCgt:", "SigPnd:", "SigBlk:", "SigIgn:", "SigQ:"
+                )
+                for key in keys:
+                    for line in lines:
+                        if line.startswith(key):
+                            log(f"[CS] {line.rstrip()}")
+                            break
+            except FileNotFoundError:
+                log(f"[CS] /proc/{self.pid}/status 不存在，说明进程已经完全消失")
+            except Exception as e:
+                log(f"[CS] 读取 {status_path} 失败: {e!r}")
+
+            try:
+                with open(f"/proc/{int(self.pid)}/cmdline", "rb") as f:
+                    cmd = f.read().replace(b"\x00", b" ").decode("utf-8", "replace")
+                log(f"[CS] cmdline = {cmd}")
+            except FileNotFoundError:
+                log(f"[CS] /proc/{self.pid}/cmdline 不存在")
+            except Exception as e:
+                log(f"[CS] 读取 cmdline 失败: {e!r}")
+
+        # 3) content_shell.log 尾部
+        try:
+            if os.path.isfile(self.log_path):
+                with open(self.log_path, "rb") as f:
+                    f.seek(0, io.SEEK_END)
+                    size = f.tell()
+                    back = 32 * 1024  # 往回最多 32KB
+                    f.seek(max(0, size - back), io.SEEK_SET)
+                    tail = f.read().decode("utf-8", "replace")
+                log("[CS] ---- content_shell.log tail (last ~100 lines) ----")
+                for line in tail.splitlines()[-100:]:
+                    log("[CS] " + line)
+                log("[CS] -------- end of content_shell.log tail ---------")
+            else:
+                log(f"[CS] log 文件不存在: {self.log_path}")
+        except Exception as e:
+            log(f"[CS] dump content_shell.log tail 失败: {e!r}")
+
+        # 4) crash 目录
+        try:
+            if os.path.isdir(self.crash_dir):
+                files = sorted(os.listdir(self.crash_dir))
+                log(f"[CS] crash_dir={self.crash_dir}, files={files}")
+            else:
+                log(f"[CS] crash_dir 不存在: {self.crash_dir}")
+        except Exception as e:
+            log(f"[CS] 列出 crash_dir 失败: {e!r}")
+
+        log("[CS] ===== content_shell 状态诊断结束 =====")
+
     def launch(self) -> None:
         if not os.path.isfile(self.cs_path):
             raise FileNotFoundError(f"content_shell not found: {self.cs_path}")
@@ -250,6 +347,7 @@ class CSController:
                 return ("network", False)
             return ("utility_other", False)
 
+        tab_id = None 
         try:
             html_path_abs = os.path.realpath(html_path)
 
@@ -361,7 +459,7 @@ class CSExitStatus(Enum):
     NORMAL_EXIT = auto()  # 正常退出
     PROCESS_TIMEOUT = auto()  # 程序崩溃（如 SegFault）
     SEMANTIC_ERROR = auto()  # 语义错误（如 JS 逻辑错误、UnhandledRejection）
-    LACK_BIN = auto  # 没有覆盖率文件
+    LACK_BIN = auto()  # 没有覆盖率文件
     OTHER = auto()
 
     def __str__(self):
