@@ -343,7 +343,7 @@ class CSController:
             if tab_id:
                 _close_page(self.port, tab_id)
                 # 清除所有idb缓存
-                self._clear_specific_profile_data()
+                # self._clear_specific_profile_data()
 
 
 class CSExitStatus(Enum):
