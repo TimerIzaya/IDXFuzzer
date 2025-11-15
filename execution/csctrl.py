@@ -382,6 +382,9 @@ class CSController:
             bins = []
             # 没有bin可能是crash哦
             if ok:
+                # 检测bin的逻辑是只要检测到一个就算有，防止有些情况没有render或者storage的bin
+                # 等待一小会儿让bin文件都落地
+                _msleep(50)
                 bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
             log_chunk = self._read_log_increment()
             semantic_error_seen = ("FUZZ_JS_ERROR" in log_chunk) or ("FUZZ_UNHANDLED_REJECTION" in log_chunk)
@@ -721,7 +724,7 @@ def wait_min_bins(bin_dir: str, timeout_s: float = 3.0, poll_s: float = 0.05) ->
         has_storage = len(glob.glob(pat_storage)) >= 1
         has_blink   = len(glob.glob(pat_blink))   >= 1
 
-        if has_browser and has_storage and has_blink:
+        if has_browser or has_storage or has_blink:
             return True
 
         time.sleep(poll_s)
