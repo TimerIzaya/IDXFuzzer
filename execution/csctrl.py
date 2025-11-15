@@ -379,7 +379,7 @@ class CSController:
             if ok:
                 bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
             else:
-                print("lack bin files, sleep")
+                log("lack bin files, sleep")
                 while True:
                     _msleep(100)
             log_chunk = self._read_log_increment()
