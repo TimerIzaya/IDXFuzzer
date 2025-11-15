@@ -379,7 +379,9 @@ class CSController:
             if ok:
                 bins = glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin"))
             else:
-                print("lack bin files")
+                print("lack bin files, sleep")
+                while True:
+                    _msleep(100)
             log_chunk = self._read_log_increment()
             semantic_error_seen = ("FUZZ_JS_ERROR" in log_chunk) or ("FUZZ_UNHANDLED_REJECTION" in log_chunk)
 
@@ -560,7 +562,7 @@ def _close_page(port: int, target_id: str) -> None:
     except Exception:
         pass
 
-
+ 
 def _kill_process_tree(pid: int, grace_s: float = 0.3) -> None:
     try:
         os.kill(pid, signal.SIGTERM)
