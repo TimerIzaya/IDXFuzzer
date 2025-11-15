@@ -91,7 +91,8 @@ class CSController:
         self.pgid = os.getpgid(self.pid)
         print(f"[*] Launched content_shell pid={self.pid} pgid={self.pgid} port={self.port}")
 
-        if not _wait_for_devtools(self.port, timeout_s=5.0):
+        # 30s起不来再说，实例太多很正常慢
+        if not _wait_for_devtools(self.port, timeout_s=30.0):
             raise RuntimeError(f"DevTools not ready on :{self.port}, see {self.log_path}")
 
     def stop(self) -> None:
@@ -407,7 +408,8 @@ def _open_new_page(port: int, abs_html: str) -> str:
     url = f"http://127.0.0.1:{port}/json/new?{enc_url}"
     req = urlreq.Request(url, data=b"", method="PUT")
     try:
-        with opener.open(req, timeout=2.0) as r:
+        # 10s 没法打开tab再说！
+        with opener.open(req, timeout=10.0) as r:
             info = json.loads(r.read().decode("utf-8", "replace"))
             return info.get("id")
     except Exception as e:
