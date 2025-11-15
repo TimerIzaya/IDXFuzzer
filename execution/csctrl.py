@@ -326,16 +326,15 @@ class CSController:
             else:
                 clearCase()
             updateStatThread()
-        except  Exception as e:
+        except Exception as e:
+            # 一定要清理现场
+            clearCase()
             log(f"[!] run_case_once exception: {e}")
         finally:
-            try:
-                if tab_id:
-                    _close_page(self.port, tab_id)
-                    # 清除所有idb缓存
-                    self._clear_specific_profile_data()
-            except Exception:
-                pass
+            if tab_id:
+                _close_page(self.port, tab_id)
+                # 清除所有idb缓存
+                self._clear_specific_profile_data()
                 
 
 class CSExitStatus(Enum):
