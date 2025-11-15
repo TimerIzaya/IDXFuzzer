@@ -259,9 +259,18 @@ class CSController:
 
             tab_id = _open_new_page(self.port, html_path_abs)
             if not tab_id:
-                log("[!] open_new_page failed")
+                # 这里检查一下 CS 是不是已经死了
+                if not self._is_cs_alive():
+                    self._log_cs_exit_reason()
+                    log(f"[!] open_new_page failed and CS seems dead on port={self.port}, restarting")
+                    try:
+                        self.restart_cs()
+                    except Exception as e:
+                        log(f"[!] restart_cs failed after open_new_page error: {e!r}")
+                else:
+                    log(f"[!] open_new_page failed but CS still alive, treat as transient error")
                 return CSExitStatus.OTHER, 0
-
+            
             _msleep(self.wait_ms)
 
             _dump_cov_via_sigusr1(self.port)
