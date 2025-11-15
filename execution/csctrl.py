@@ -409,52 +409,51 @@ class CSController:
 
             if pending > 0 or new > 0 or completed > 0 or attachments > 0:
                 archiveCase(os.path.join(config.CRASH_ROOT, case_id))
-                updateStatThread()
-                return
-
-            if stat_semantic_error:
+            elif stat_semantic_error:
                 snap = Stats.get()
                 if snap.get("stat_semantic_error", 0) < 100:
                     archiveCase(os.path.join(config.SEMANTIC_ROOT, case_id))
                 else:
                     clearCase()
-                updateStatThread()
-                return
-
-            if stat_other_error:
+            elif stat_other_error:
                 archiveCase(os.path.join(config.OTHER_ROOT, case_id))
-                updateStatThread()
-                return
-
-            if stat_process_timeout:
+            elif stat_process_timeout:
                 archiveCase(os.path.join(config.TIMEOUT_ROOT, case_id))
-                updateStatThread()
-                return
-
-            if stat_lack_bin:
+            elif stat_lack_bin:
                 archiveCase(os.path.join(config.NOBIN_ROOT, case_id))
-                updateStatThread()
-                return
-
-            if new_edges > 0:
+            elif new_edges > 0:
                 archiveCase(os.path.join(config.CORPUS_ROOT, case_id))
             else:
                 clearCase()
             updateStatThread()
-        except Exception as e:
-            try:
-                clearCase()
-            except Exception as ee:
-                log(f"[!] clearCase failed inside exception handler: {ee}")
 
-            tb = traceback.format_exc()
-            log(f"[!] run_case_once exception: {e}\n{tb}")
+            # 假设到这里都没抛异常，就算成功
+            self.last_ok_ts = time.time()
+            self.consecutive_failures = 0
+            self.last_error_reason = ""
+            # 最近有成功 + 没连续失败，就是 healthy
+            self._flush_health(status="healthy")
+        except TimeoutError as e:
+            print("[!] run_case_once exception".join(traceback.format_exception(e)))
+            clearCase()
+            # 打开 / 关闭 / 执行过程中超时
+            self.last_error_ts = time.time()
+            self.consecutive_failures += 1
+            self.last_error_reason = f"Timeout: {e}"
+            status = "warning" if self.consecutive_failures < 3 else "dead"
+            self._flush_health(status=status)
+        except Exception as e:
+            print("[!] run_case_once exception".join(traceback.format_exception(e)))
+            clearCase()
+            # 其它错误
+            self.last_error_ts = time.time()
+            self.consecutive_failures += 1
+            self.last_error_reason = f"Error: {e}"
+            status = "warning" if self.consecutive_failures < 3 else "dead"
+            self._flush_health(status=status)
         finally:
             if tab_id:
                 _close_page(self.port, tab_id)
-                # 清除所有idb缓存
-                # self._clear_specific_profile_data()
-
 
 class CSExitStatus(Enum):
     """枚举表示 content_shell 的执行状态。"""
