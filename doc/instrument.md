@@ -6,6 +6,7 @@ gn gen out/IndexedDBSanCov
 
 ```
 ninja -C out/IndexedDBSanCov content_shell
+autoninja -C out/IndexedDBSanCov content_shell
 ```
 
 ```
@@ -91,13 +92,73 @@ nohup python3 -u fuzzer.py > fuzzer.log 2>&1 &
 查看所有python3的句柄数量
 
 ```
-
 for p in $(pgrep -f python3); do     pipe_cnt=$(ls -l /proc/$p/fd 2>/dev/null \
         | awk '{print $NF}' \
         | grep -E "^pipe:\[" \
         | wc -l);     fd_cnt=$(ls /proc/$p/fd 2>/dev/null | wc -l);     cmdline=$(tr '\0' ' ' < /proc/$p/cmdline 2>/dev/null);     echo "$pipe_cnt pipes | $fd_cnt FDs | PID $p | $cmdline"; done | sort -nr
 
 ```
+
+
+
+查看cs的进程数量
+
+```
+pgrep -f content_shell | wc -l
+```
+
+
+
+查看cs进程细节
+
+```
+ps -o pid,ppid,pgid,cmd -C content_shell | sed '1p;2,$s/ \{1,\}/ /g'
+```
+
+
+
+
+
+查看cs进程树结构
+
+```
+ps -o pid=,ppid=,pgid=,args= -C content_shell | awk '
+BEGIN { print "  PID    PPID    PGID  CMD" }
+{
+  pid=$1; ppid=$2; pgid=$3
+  prog=$4; gsub(".*/","",prog)              # 取 basename
+  rest=""
+  for(i=5;i<=NF;i++) rest=rest" "$i
+
+  role="Browser"
+  if (rest ~ /--type=zygote/)      role="zygote"
+  else if (rest ~ /--type=renderer/) role="renderer"
+  else if (rest ~ /--type=utility/) {
+    subr=""
+    if (rest ~ /--utility-sub-type=storage/) subr="storage"
+    else if (rest ~ /--utility-sub-type=network/) subr="network"
+    role = (subr=="" ? "utility" : "utility (" subr ")")
+  }
+
+  typeflag=""
+  if (match(rest,/--type=[^ ]+/)) typeflag=substr(rest,RSTART,RLENGTH)
+
+  short=prog
+  if (typeflag!="") short=short" "typeflag
+
+  printf("%6s %7s %7s  %-14s <- %s\n", pid, ppid, pgid, short, role)
+}'
+
+```
+
+
+
+
+
+
+
+
+
 
 
 # 目标插桩模块

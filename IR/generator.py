@@ -53,3 +53,7 @@ def gen_case(out_dir: str):
     html_path = f"{out_dir}/{case_id}.html"
     wrap_js_in_html(js_code, html_path, case_id=case_id)
     return html_path
+
+
+def gen_stable_case():
+    return "expscript/sample/N6CW9z.html"
