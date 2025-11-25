@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import shutil
 import string
 
 import config
@@ -55,5 +56,11 @@ def gen_case(out_dir: str):
     return html_path
 
 
-def gen_stable_case():
-    return "expscript/sample/N6CW9z.html"
+def gen_stable_case(out_dir: str):
+    os.makedirs(out_dir, exist_ok=True)
+
+    shutil.copy("expscript/sample/N6CW9z.html", f"{out_dir}")
+    html_path = f"{out_dir}/N6CW9z.html"
+    open(f"{out_dir}/N6CW9z.json", "w").close()
+
+    return html_path
