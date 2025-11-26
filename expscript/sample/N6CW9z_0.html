@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>IndexedDB CRUD Demo</title>
+</head>
+<body>
+  <h1>IndexedDB CRUD 示例</h1>
+
+  <button onclick="createData()">新增（Create）</button>
+  <button onclick="readData()">查询（Read）</button>
+  <button onclick="updateData()">更新（Update）</button>
+  <button onclick="deleteData()">删除（Delete）</button>
+  <pre id="log"></pre>
+
+  <script>
+    const DB_NAME = 'IDB_CRUD_DEMO';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'users';
+    let db = null;
+
+    function log(msg) {
+      const el = document.getElementById('log');
+      el.textContent += msg + '\n';
+    }
+
+    // 打开 / 初始化数据库
+    const openReq = indexedDB.open(DB_NAME, DB_VERSION);
+
+    openReq.onupgradeneeded = function (event) {
+      const db = event.target.result;
+      // 如果不存在就创建对象仓库
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        const store = db.createObjectStore(STORE_NAME, {
+          keyPath: 'id',
+          autoIncrement: true
+        });
+        // 建一个简单索引（可选）
+        store.createIndex('by_name', 'name', { unique: false });
+      }
+      log('onupgradeneeded: 数据库结构已创建/更新');
+    };
+
+    openReq.onsuccess = function (event) {
+      db = event.target.result;
+      log('数据库打开成功');
+    };
+
+    openReq.onerror = function (event) {
+      log('数据库打开失败: ' + event.target.error);
+    };
+
+    // C: 新增
+    function createData() {
+      if (!db) return log('db 未就绪');
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+
+      const user = {
+        name: 'Alice',
+        age: Math.floor(Math.random() * 20) + 20,
+        createdAt: new Date().toISOString()
+      };
+
+      const req = store.add(user);
+      req.onsuccess = (e) => {
+        log('新增成功，id=' + e.target.result);
+      };
+      req.onerror = (e) => {
+        log('新增失败: ' + e.target.error);
+      };
+    }
+
+    // R: 查询（简单示例：遍历全部）
+    function readData() {
+      if (!db) return log('db 未就绪');
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.openCursor();
+
+      log('开始遍历所有记录:');
+      req.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          log('id=' + cursor.key + ' value=' + JSON.stringify(cursor.value));
+          cursor.continue();
+        } else {
+          log('遍历结束');
+        }
+      };
+      req.onerror = (e) => {
+        log('读取失败: ' + e.target.error);
+      };
+    }
+
+    // U: 更新（示例：把 id=1 的 name 改掉）
+    function updateData() {
+      if (!db) return log('db 未就绪');
+      const targetId = 1; // 示意：更新 id=1
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+
+      const getReq = store.get(targetId);
+      getReq.onsuccess = (e) => {
+        const record = e.target.result;
+        if (!record) {
+          log('找不到要更新的记录，id=' + targetId);
+          return;
+        }
+        record.name = 'UpdatedName-' + Date.now();
+        const putReq = store.put(record);
+        putReq.onsuccess = () => {
+          log('更新成功: id=' + targetId + ' value=' + JSON.stringify(record));
+        };
+        putReq.onerror = (err) => {
+          log('更新失败: ' + err.target.error);
+        };
+      };
+      getReq.onerror = (e) => {
+        log('读取待更新记录失败: ' + e.target.error);
+      };
+    }
+
+    // D: 删除（示例：删除 id=1）
+    function deleteData() {
+      if (!db) return log('db 未就绪');
+      const targetId = 1;
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const delReq = store.delete(targetId);
+
+      delReq.onsuccess = () => {
+        log('删除成功，id=' + targetId);
+      };
+      delReq.onerror = (e) => {
+        log('删除失败: ' + e.target.error);
+      };
+    }
+  </script>
+</body>
+</html>

@@ -1,3 +1,38 @@
+# 思考记录
+
+单次执行
+```bash
+/timer/chromium/src/out/IndexedDBSanCov/content_shell \
+  --no-sandbox \
+  --headless=new --ozone-platform=headless \
+  --no-first-run --test-type --no-proxy-server \
+  --disable-gpu --use-gl=disabled --disable-vulkan \
+  --disable-gpu-compositing \
+  --disable-accelerated-2d-canvas \
+  --disable-gpu-rasterization --disable-software-rasterizer \
+  --renderer-process-limit=1 \
+  --disable-site-isolation-trials \
+  --in-process-gpu \
+  --disable-features=VizDisplayCompositor,UseSkiaRenderer,CanvasOopRasterization,AcceleratedVideoDecode,VaapiVideoDecoder,VaapiVideoEncoder,UseSkiaRendererForGL \
+  --remote-debugging-port=9300 \
+  --enable-logging=stderr \
+  --enable-crash-reporter \
+  --crash-dumps-dir=/timer/IDXFuzzer/tmp/crash \
+  --user-data-dir=/timer/IDXFuzzer/tmp/profile/ \
+  file:///timer/IDXFuzzer/expscript/sample/N6CW9z.html
+```
+
+
+
+
+
+
+
+
+
+
+
+
 # Out of semantically well-formed
 
 这里指纯靠静态分析无法解决的地方，必须要加try来兜底
