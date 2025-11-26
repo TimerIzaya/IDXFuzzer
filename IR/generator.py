@@ -59,9 +59,9 @@ def gen_case(out_dir: str):
 
 def gen_stable_case(out_dir: str):
     os.makedirs(out_dir, exist_ok=True)
-    ts = int(time.time())
-    shutil.copy("expscript/sample/N6CW9z.html", f"{out_dir}")
-    html_path = f"{out_dir}/N6CW9z_{ts}.html"
-    open(f"{out_dir}/N6CW9z_{ts}.json", "w").close()
+    postfix = fetch_case_id()
+    shutil.copy("expscript/sample/N6CW9z.html", f"{out_dir}/N6CW9z_{postfix}.html")
+    html_path = f"{out_dir}/N6CW9z_{postfix}.html"
+    open(f"{out_dir}/N6CW9z_{postfix}.json", "w").close()
 
     return html_path
