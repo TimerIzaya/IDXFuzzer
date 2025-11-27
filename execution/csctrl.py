@@ -61,7 +61,7 @@ class CSController:
         self.base = os.path.join(config.CS_TMP, str(os.getpid()))
         self.crash_dir = os.path.join(self.base, "crash")
         self.bin_dir = os.path.join(self.base, "crash/bin")
-        self.profile_dir = os.path.join(self.base, "profile", "ud_1")
+        self.profile_dir = os.path.join(self.base, "profile")
         self.logs_dir = os.path.join(self.base, "logs")
 
         for d in (self.bin_dir, self.crash_dir, self.profile_dir, self.logs_dir):
@@ -173,7 +173,7 @@ class CSController:
                 log(f"[!] clearCase failed: {e}")
 
         tab_id: str | None = None
-
+        case_id = -1
         try:
             html_path_abs = os.path.realpath(html_path)
             case_dir = os.path.dirname(html_path_abs)
