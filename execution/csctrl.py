@@ -178,7 +178,7 @@ class CSController:
             html_path_abs = os.path.realpath(html_path)
             case_dir = os.path.dirname(html_path_abs)
             case_id = os.path.basename(html_path_abs)[:-5]
-            crash_dir = os.path.join(self.crash_dir, case_id)
+            crash_dir = self.crash_dir
             tmp_dir = os.path.join(case_dir, "chrome-tmp")
             os.makedirs(tmp_dir, exist_ok=True)
 
@@ -205,7 +205,7 @@ class CSController:
             # 触发 SanCov 导出
             _dump_cov_via_sigusr1(self.port)
 
-            ok = wait_min_bins(self.bin_dir, timeout_s=10.0)
+            ok = wait_min_bins(self.bin_dir, timeout_s=5.0)
             if ok:
                 # 只要有任何一个 bin 就算有覆盖率；再等一小会儿让 bin 落地
                 _msleep(50)
