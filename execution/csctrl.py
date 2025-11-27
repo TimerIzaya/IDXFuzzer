@@ -507,30 +507,6 @@ class CSController:
             # 抛出去，让上层感知到这条 worker 的 CS 崩坏
             raise
 
-    def _clear_specific_profile_data(self) -> None:
-        """清理 IndexedDB 和缓存目录，但保留 profile 目录本身。"""
-        paths_to_clear = [
-            os.path.join(self.profile_dir, "Default", "Local Storage"),
-            os.path.join(self.profile_dir, "Default", "Shared Dictionary"),
-            os.path.join(self.profile_dir, "Default", "blob_storage"),
-            os.path.join(self.profile_dir, "Default", "Code Cache"),
-            os.path.join(self.profile_dir, "Default", "GPUCache"),
-            os.path.join(self.profile_dir, "Default", "DawnGraphiteCache"),
-            os.path.join(self.profile_dir, "Default", "DawnWebGPUCache"),
-            os.path.join(self.profile_dir, "Default", "PersistentOriginTrials"),
-            os.path.join(self.profile_dir, "Default", "shared_proto_db"),
-            os.path.join(self.profile_dir, "Default", "DevToolsActivePort"),
-            os.path.join(self.profile_dir, "Default", "DIPS"),
-            os.path.join(self.profile_dir, "Default", "DIPS-wal"),
-        ]
 
-        for path in paths_to_clear:
-            try:
-                if os.path.isdir(path):
-                    shutil.rmtree(path, ignore_errors=True)
-                elif os.path.isfile(path):
-                    os.remove(path)
-            except Exception as e:
-                log(f"[!] Failed to clear {path}: {e}")
 
 
