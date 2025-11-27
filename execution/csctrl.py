@@ -3,12 +3,9 @@ import io
 import json
 import os
 import shutil
-import signal
 import subprocess
 import time
 import traceback
-import urllib.parse as urlparse
-import urllib.request as urlreq
 from enum import Enum, auto
 
 import config
