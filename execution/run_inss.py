@@ -55,15 +55,14 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
         while not stop_event.is_set():
             out_dir = os.path.join(config.CS_TMP, str(os.getpid()))
 
-            # html_path = gen_case(out_dir)
-            html_path = gen_stable_case(out_dir)
+            html_path = gen_case(out_dir)
+            # html_path = gen_stable_case(out_dir)
             try:
                 ctrl.run_case_once(html_path)
             except Exception as e:
                 log(f"[worker#{worker_idx}] run_case_once failed: {e}")
                 # 出错就不累计 cases_since_restart
                 continue
-            time.sleep(555555)  # 避免过快循环
             # 只有 run_case_once 正常返回时才累计
             cases_since_restart += 1
             if cases_since_restart >= config.MAX_CASES_PER_CS:
