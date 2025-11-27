@@ -125,7 +125,7 @@ class CSController:
                 stat_semantic_error=stat_semantic_error,
             )
 
-        def archive_case(dst_dir: str) -> None:
+        def archive_case(dst_dir: str, need_pfsp: bool = False) -> None:
             try:
                 # 1) 复制并清空 content_shell.log
                 log_file = os.path.join(self.logs_dir, "content_shell.log")
@@ -147,11 +147,18 @@ class CSController:
                 os.makedirs(bin_folder, exist_ok=True)
                 for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
                     shutil.move(b, bin_folder)
+
+                # 4) 移动 profile snapshot, 如果不有趣，说明有意外了
+                if need_pfsp:
+                    profile_snapshot_dir = os.path.join(self.base, f"profile_before_{case_id}")
+                    if os.path.exists(profile_snapshot_dir):
+                        shutil.move(profile_snapshot_dir, os.path.join(dst_dir, "profile_snapshot"))
+
             except Exception as e:
                 log(f"[!] archiveCase failed: {e}")
 
         def clear_case() -> None:
-            """不需要归档的 case：清空 log / IR / html / bin。"""
+            """清理dev/shm环境"""
             try:
                 # 清空 log
                 log_file = os.path.join(self.logs_dir, "content_shell.log")
@@ -169,6 +176,11 @@ class CSController:
                 # 删除所有 bin
                 for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
                     os.remove(b)
+
+                # 删除profile snapshot
+                profile_snapshot_dir = os.path.join(self.base, f"profile_before_{case_id}")
+                if os.path.exists(profile_snapshot_dir):
+                    shutil.rmtree(profile_snapshot_dir)
             except Exception as e:
                 log(f"[!] clearCase failed: {e}")
 
@@ -181,6 +193,13 @@ class CSController:
             crash_dir = self.crash_dir
             tmp_dir = os.path.join(case_dir, "chrome-tmp")
             os.makedirs(tmp_dir, exist_ok=True)
+
+            # 打开新tab之前先记录已有的profile上文用于复现crash
+            profile_snapshot_dir = os.path.join(self.base, f"profile_before_{case_id}")
+            if os.path.exists(profile_snapshot_dir):
+                shutil.rmtree(profile_snapshot_dir)
+            shutil.copytree(self.profile_dir, profile_snapshot_dir)
+
 
             # 打开新 tab
             tab_id = _open_new_page(self.port, html_path_abs)
@@ -197,7 +216,7 @@ class CSController:
                     log(f"[!] open_new_page failed but CS still alive, treat as transient error")
 
                 # 这个 case 也要归档，防止是真的 big crash
-                archive_case(os.path.join(config.CRASH_ROOT, case_id))
+                archive_case(os.path.join(config.CRASH_ROOT, case_id), need_pfsp=True)
                 return
 
             _msleep(self.wait_ms)
@@ -205,7 +224,7 @@ class CSController:
             # 触发 SanCov 导出
             _dump_cov_via_sigusr1(self.port)
 
-            ok = wait_min_bins(self.bin_dir, timeout_s=5.0)
+            ok = wait_min_bins(self.bin_dir, timeout_s=10.0)
             if ok:
                 # 只要有任何一个 bin 就算有覆盖率；再等一小会儿让 bin 落地
                 _msleep(50)
@@ -246,39 +265,35 @@ class CSController:
             stat_lack_bin = len(bins) == 0
             stat_process_timeout = 0
 
-            # 决定归档路径
             if pending > 0 or new > 0 or completed > 0 or attachments > 0:
-                archive_case(os.path.join(config.CRASH_ROOT, case_id))
+                archive_case(os.path.join(config.CRASH_ROOT, case_id), need_pfsp=True)
             elif stat_semantic_error:
+                # 留100个语义错误case拿来后期研究
                 snap = Stats.get()
                 if snap.get("stat_semantic_error", 0) < 100:
                     archive_case(os.path.join(config.SEMANTIC_ROOT, case_id))
                 else:
                     clear_case()
             elif stat_other_error:
-                archive_case(os.path.join(config.OTHER_ROOT, case_id))
+                archive_case(os.path.join(config.OTHER_ROOT, case_id), need_pfsp=True)
             elif stat_process_timeout:
-                archive_case(os.path.join(config.TIMEOUT_ROOT, case_id))
+                archive_case(os.path.join(config.TIMEOUT_ROOT, case_id), need_pfsp=True)
             elif stat_lack_bin:
                 # 理论上不该出现：没有 crash 却完全没有 bin
-                archive_case(os.path.join(config.NOBIN_ROOT, case_id))
+                archive_case(os.path.join(config.NOBIN_ROOT, case_id), need_pfsp=True)
             elif new_edges > 0:
                 archive_case(os.path.join(config.CORPUS_ROOT, case_id))
             else:
+                # 无事发生，清理环境，准备下次执行
                 clear_case()
 
             update_stat_thread()
             self._mark_success()
 
-        except TimeoutError as e:
-            err = "[!] run_case_once exception".join(traceback.format_exception(e))
-            print(err)
-            archive_case(os.path.join(config.TIMEOUT_ROOT, case_id))
-            self._mark_error(f"Timeout: {err}")
         except Exception as e:
             err = "[!] run_case_once exception".join(traceback.format_exception(e))
-            print(err)
-            archive_case(os.path.join(config.OTHER_ROOT, case_id))
+            log(err)
+            archive_case(os.path.join(config.OTHER_ROOT, case_id), need_pfsp=True)
             self._mark_error(f"Error: {err}")
         finally:
             if tab_id:
