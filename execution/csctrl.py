@@ -363,7 +363,7 @@ class CSController:
             log(f"[CS] _is_cs_alive kill(0) probe error: {e!r}")
             return True  # 保守认为活着
 
-    def _dump_log_tail(self, max_bytes: int = 32 * 1024, max_lines: int = 100) -> None:
+    def _dump_log_tail(self, max_bytes: int = 32 * 1024, max_lines: int = 1000) -> None:
         """打印 content_shell.log 文件的尾部，方便诊断。"""
         try:
             if not os.path.isfile(self.log_path):
