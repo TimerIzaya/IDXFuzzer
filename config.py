@@ -1,6 +1,6 @@
 import os
 
-NUM_INSTANCES = 16
+NUM_INSTANCES = 15
 
 SHARE = "/dev/shm/"
 
@@ -71,4 +71,4 @@ MODE_MUT = False
 
 
 STAT_SHOW_INTERVAL = 10  # 多少秒打印一次统计信息
-MAX_CASES_PER_CS = 50 ## 每个 content_shell 连续执行多少个用例之后重启一次
+MAX_CASES_PER_CS = 100 ## 每个 content_shell 连续执行多少个用例之后重启一次

@@ -2,6 +2,8 @@ import atexit
 import multiprocessing as mp
 import os
 import signal
+import time
+import traceback
 from typing import Any, Dict, List, Optional, Union
 import config
 from IR.generator import gen_case
@@ -41,41 +43,37 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
     # 为了兼容现有 CSController 接口，这里仍然传第一个 CPU
     cpu_for_ctrl = cpu_ids[0] if cpu_ids else 0
 
+    # 初始化cs
     ctrl = None
-    try:
-        # 创建 controller 的同时就会启动一条 content_shell
-        ctrl = CSController(worker_idx, cpu_for_ctrl)
-    except Exception as e:
-        log(f"[worker#{worker_idx}] init CSController / launch content_shell failed: {e}")
-        return
 
-    cases_since_restart = 0
-
+    # 无限执行
     try:
         while not stop_event.is_set():
-            out_dir = os.path.join(config.CS_TMP, str(os.getpid()))
+            try:
+                # 创建 controller 的同时就会启动一条 content_shell
+                ctrl = CSController(worker_idx, cpu_for_ctrl)
+            except Exception as e:
+                log(f"[worker#{worker_idx}] init CSController / launch content_shell failed: {e}")
+                return
 
+            out_dir = os.path.join(config.CS_TMP, str(os.getpid()))
             for exec_no in range(config.MAX_CASES_PER_CS):
                 html_path = gen_case(out_dir)
                 try:
                     ctrl.run_case_once(html_path, exec_no)
                 except Exception as e:
-                    log(f"[worker#{worker_idx}] run_case_once failed: {e}")
+                    log(f"[worker#{worker_idx}] run_case_once failed: {traceback.format_exc()}")
                     continue
             log(
                 f"[worker#{worker_idx}] reached {config.MAX_CASES_PER_CS} cases, "
                 f"restart content_shell"
             )
-            try:
-                ctrl.restart_cs()
-            except Exception as e2:
-                log(f"[worker#{worker_idx}] restart_cs failed: {e2}")
+            ctrl.stop()
     finally:
         try:
             ctrl.stop()
         except Exception as e:
             log(f"[worker#{worker_idx}] ctrl.stop() failed: {e}")
-        log(f"[worker#{worker_idx} pid={pid}] stop: event set or loop exit")
 
 
 def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> List[mp.Process]:

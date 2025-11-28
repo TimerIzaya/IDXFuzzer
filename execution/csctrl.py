@@ -1,3 +1,4 @@
+from curses.ascii import ctrl
 import glob
 import io
 import json
@@ -63,7 +64,7 @@ class CSController:
         self.logs_dir = os.path.join(self.base, "logs")
         self.batch_dir = os.path.join(self.base, "batch")
 
-        for d in (self.bin_dir, self.crash_dir, self.profile_dir, self.logs_dir):
+        for d in (self.bin_dir, self.crash_dir, self.profile_dir, self.logs_dir, self.batch_dir):
             os.makedirs(d, exist_ok=True)
 
         # 端口 / 等待时间 / content_shell 路径
@@ -94,7 +95,7 @@ class CSController:
         self.consecutive_failures = 0
         self.last_error_reason = ""
         self._flush_health(status="init")  # 启动时写一条初始状态
-
+        
         # 尝试多次启动
         attempt = 5
         while True:
@@ -170,8 +171,8 @@ class CSController:
                     src.seek(0)
                     src.truncate(0)
                 # 删除 IR  HTML bins
-                shutil.rmtree(ir_path)
-                shutil.rmtree(html_path)
+                os.remove(ir_path)
+                os.remove(html_path)
                 shutil.rmtree(self.bin_dir)
                 os.makedirs(self.bin_dir, exist_ok=True)
             except Exception as e:
@@ -447,10 +448,6 @@ class CSController:
     # ------------------------------------------------------------------ #
 
     def launch(self) -> bool:
-        # 启动之前清空整个环境，主要是profile
-        shutil.rmtree(self.base)
-        os.makedirs(self.base, exist_ok=True)
-
         args = [
             self.cs_path,
             "--no-sandbox",
@@ -509,6 +506,9 @@ class CSController:
         self.proc = None
         self.pid = None
         self.pgid = None
+
+        # 删除整个basefolder
+        shutil.rmtree(self.base)
 
     def restart_cs(self) -> None:
         """重启当前 controller 绑定的 content_shell 进程。"""
