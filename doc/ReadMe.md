@@ -14,12 +14,12 @@
   --disable-site-isolation-trials \
   --in-process-gpu \
   --disable-features=VizDisplayCompositor,UseSkiaRenderer,CanvasOopRasterization,AcceleratedVideoDecode,VaapiVideoDecoder,VaapiVideoEncoder,UseSkiaRendererForGL \
-  --remote-debugging-port=9300 \
+  --remote-debugging-port=12349 \
   --enable-logging=stderr \
   --enable-crash-reporter \
   --crash-dumps-dir=/timer/IDXFuzzer/tmp/crash \
-  --user-data-dir=/timer/IDXFuzzer/tmp/profile/ \
-  file:///timer/IDXFuzzer/expscript/sample/N6CW9z.html
+  --user-data-dir=/timer/IDXFuzzer/result/other/thVUj8/profile_snapshot \
+  file:///timer/IDXFuzzer/result/other/thVUj8/thVUj8.html
 ```
 
 
