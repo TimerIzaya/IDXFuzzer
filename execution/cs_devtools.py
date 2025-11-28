@@ -1,6 +1,7 @@
 # execution/cs_devtools.py
 import json
 import os
+import shutil
 import time
 import traceback
 import socket
@@ -111,3 +112,30 @@ def _close_page(port: int, target_id: str) -> None:
         opener.open(f"http://127.0.0.1:{port}/json/close/{target_id}", timeout=1.0)
     except Exception:
         pass
+
+
+def safe_copytree(src: str, dst: str) -> None:
+    """
+    类似 shutil.copytree，但如果在复制过程中某些文件已经被删除，
+    就静默忽略这些 FileNotFoundError，不让整个过程失败。
+    """
+    for root, dirs, files in os.walk(src):
+        rel = os.path.relpath(root, src)
+        dst_root = os.path.join(dst, rel) if rel != "." else dst
+        os.makedirs(dst_root, exist_ok=True)
+
+        # 复制子目录（os.walk 已经帮你递归，这里主要保证目录存在）
+        for d in dirs:
+            os.makedirs(os.path.join(dst_root, d), exist_ok=True)
+
+        # 复制文件，忽略复制时的 ENOENT
+        for f in files:
+            src_file = os.path.join(root, f)
+            dst_file = os.path.join(dst_root, f)
+            try:
+                shutil.copy2(src_file, dst_file)
+            except FileNotFoundError:
+                # 文件在这一步已经被 LevelDB 删除 / 轮转，跳过即可
+                # 如果你想调试，可以打印一行 log
+                # log(f"[safe_copytree] skip missing file: {src_file}")
+                continue

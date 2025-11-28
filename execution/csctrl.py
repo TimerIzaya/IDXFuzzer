@@ -17,7 +17,7 @@ from execution.cs_devtools import (
     _msleep,
     _wait_for_devtools,
     _open_new_page,
-    _close_page,
+    _close_page, safe_copytree,
 )
 from execution.cs_sancov import (
     _kill_process_tree,
@@ -184,7 +184,6 @@ class CSController:
                     os.remove(b)
 
                 # 删除profile snapshot
-                profile_snapshot_dir = os.path.join(self.base, f"profile_before_{case_id}")
                 if os.path.exists(profile_snapshot_dir):
                     shutil.rmtree(profile_snapshot_dir)
             except Exception as e:
@@ -204,7 +203,8 @@ class CSController:
             profile_snapshot_dir = os.path.join(self.base, f"profile_before_{case_id}")
             if os.path.exists(profile_snapshot_dir):
                 shutil.rmtree(profile_snapshot_dir)
-            shutil.copytree(self.profile_dir, profile_snapshot_dir)
+            # 防止过程中有文件变动
+            safe_copytree(self.profile_dir, profile_snapshot_dir)
 
             # 打开新 tab
             tab_id = _open_new_page(self.port, html_path_abs)
