@@ -58,7 +58,7 @@ def _open_new_page(port: int, abs_html: str) -> str | None:
 
     try:
         # 10s 没法打开 tab 再说！
-        with opener.open(req, timeout=10.0) as r:
+        with opener.open(req, timeout=30.0) as r:
             info = json.loads(r.read().decode("utf-8", "replace"))
             return info.get("id")
     except Exception as e:
