@@ -156,9 +156,9 @@ class CSController:
 
                 # 4) 移动 profile snapshot, 如果不有趣，说明有意外了
                 if need_pfsp:
-                    profile_snapshot_dir = os.path.join(self.base, f"profile_before_{case_id}")
-                    if os.path.exists(profile_snapshot_dir):
-                        shutil.move(profile_snapshot_dir, os.path.join(dst_dir, "profile_snapshot"))
+                    shutil.move(profile_snapshot_dir, dst_dir)
+                else:
+                    shutil.rmtree(profile_snapshot_dir)
 
             except Exception as e:
                 log(f"[!] archiveCase failed: {e}")
