@@ -3,9 +3,8 @@ import multiprocessing as mp
 import os
 import signal
 from typing import Any, Dict, List, Optional, Union
-import time 
 import config
-from IR.generator import gen_case, gen_stable_case
+from IR.generator import gen_case
 from execution.csctrl import CSController
 from tool.log import log
 
@@ -42,6 +41,7 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
     # 为了兼容现有 CSController 接口，这里仍然传第一个 CPU
     cpu_for_ctrl = cpu_ids[0] if cpu_ids else 0
 
+    ctrl = None
     try:
         # 创建 controller 的同时就会启动一条 content_shell
         ctrl = CSController(worker_idx, cpu_for_ctrl)

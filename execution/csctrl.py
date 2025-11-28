@@ -25,8 +25,6 @@ from execution.cs_sancov import (
     wait_min_bins,
 )
 
-
-
 DEFAULT_CS = "/timer/chromium/src/out/IndexedDBSanCov/content_shell"
 DEFAULT_WAIT_MS = 300
 DEFAULT_PORT_BASE = 9300
@@ -96,12 +94,19 @@ class CSController:
         self.last_error_reason = ""
         self._flush_health(status="init")  # 启动时写一条初始状态
 
-        # 初始化时就启动一条 content_shell
-        self.launch()
+        # 尝试多次启动
+        attempt = 5
+        while True:
+            try:
+                self.launch()
+                break  # 成功
+            except Exception as e:
+                attempt -= 1
+                log(f"[!] launch failed, remaining {attempt} attempts: {e!r}")
+                if attempt <= 0:
+                    raise  # 让外层感知彻底失败
+                time.sleep(2)
 
-        # ------------------------------------------------------------------ #
-        # 用例执行主流程
-        # ------------------------------------------------------------------ #
 
     def run_case_once(self, html_path: str) -> None:
         """
@@ -112,6 +117,7 @@ class CSController:
           - 根据 pending/new/completed/attachments/semantic_error 等情况归档
           - 更新统计信息与健康状态
         """
+
         def update_stat_thread() -> None:
             Stats.update(
                 timeout=stat_timeout,
@@ -199,7 +205,6 @@ class CSController:
             if os.path.exists(profile_snapshot_dir):
                 shutil.rmtree(profile_snapshot_dir)
             shutil.copytree(self.profile_dir, profile_snapshot_dir)
-
 
             # 打开新 tab
             tab_id = _open_new_page(self.port, html_path_abs)
@@ -454,7 +459,7 @@ class CSController:
     # content_shell 启停
     # ------------------------------------------------------------------ #
 
-    def launch(self) -> None:
+    def launch(self) -> bool:
         """启动一条新的 content_shell 实例并等待 DevTools 就绪。"""
         if not os.path.isfile(self.cs_path):
             raise FileNotFoundError(f"content_shell not found: {self.cs_path}")
@@ -496,6 +501,17 @@ class CSController:
 
         # DevTools 最多等 30 秒，实例多的时候稍微慢点正常
         if not _wait_for_devtools(self.port, timeout_s=30.0):
+            # 这里务必清理半启动进程
+            try:
+                log(f"[!] DevTools not ready on :{self.port}, killing half-started CS")
+                if self.proc and self.proc.poll() is None:
+                    _kill_process_tree(self.proc.pid)
+            except Exception as e:
+                log(f"[!] failed to kill half-started CS: {e!r}")
+            finally:
+                self.proc = None
+                self.pid = None
+                self.pgid = None
             raise RuntimeError(f"DevTools not ready on :{self.port}, see {self.log_path}")
 
     def stop(self) -> None:
@@ -510,18 +526,19 @@ class CSController:
     def restart_cs(self) -> None:
         """重启当前 controller 绑定的 content_shell 进程。"""
         log(f"[*] Restart content_shell on :{self.port}")
-        try:
-            self.stop()
-        except Exception as e:
-            log(f"[!] CSController.stop() failed during restart: {e!r}")
 
-        try:
-            self.launch()
-        except Exception as e:
-            log(f"[!] CSController.launch() failed during restart: {e!r}")
-            # 抛出去，让上层感知到这条 worker 的 CS 崩坏
-            raise
-
-
-
-
+        attempts = 3
+        while True:
+            try:
+                try:
+                    self.stop()
+                except Exception as e:
+                    log(f"[!] CSController.stop() failed during restart: {e!r}")
+                self.launch()
+                break
+            except Exception as e:
+                attempts -= 1
+                log(f"[!] restart launch failed on :{self.port}, remaining {attempts} attempts: {e!r}")
+                if attempts <= 0:
+                    raise
+                time.sleep(2)
