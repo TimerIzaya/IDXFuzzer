@@ -55,28 +55,21 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
         while not stop_event.is_set():
             out_dir = os.path.join(config.CS_TMP, str(os.getpid()))
 
-            html_path = gen_case(out_dir)
-            # html_path = gen_stable_case(out_dir)
-            try:
-                ctrl.run_case_once(html_path)
-            except Exception as e:
-                log(f"[worker#{worker_idx}] run_case_once failed: {e}")
-                # 出错就不累计 cases_since_restart
-                continue
-            # 只有 run_case_once 正常返回时才累计
-            cases_since_restart += 1
-            if cases_since_restart >= config.MAX_CASES_PER_CS:
-                log(
-                    f"[worker#{worker_idx}] reached {config.MAX_CASES_PER_CS} cases, "
-                    f"restart content_shell"
-                )
+            for exec_no in range(config.MAX_CASES_PER_CS):
+                html_path = gen_case(out_dir)
                 try:
-                    ctrl.restart_cs()
-                except Exception as e2:
-                    log(f"[worker#{worker_idx}] restart_cs failed: {e2}")
-                    # 重启失败就直接退出该 worker，让上层重启
-                    break
-                cases_since_restart = 0
+                    ctrl.run_case_once(html_path, exec_no)
+                except Exception as e:
+                    log(f"[worker#{worker_idx}] run_case_once failed: {e}")
+                    continue
+            log(
+                f"[worker#{worker_idx}] reached {config.MAX_CASES_PER_CS} cases, "
+                f"restart content_shell"
+            )
+            try:
+                ctrl.restart_cs()
+            except Exception as e2:
+                log(f"[worker#{worker_idx}] restart_cs failed: {e2}")
     finally:
         try:
             ctrl.stop()

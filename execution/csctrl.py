@@ -61,6 +61,7 @@ class CSController:
         self.bin_dir = os.path.join(self.base, "crash/bin")
         self.profile_dir = os.path.join(self.base, "profile")
         self.logs_dir = os.path.join(self.base, "logs")
+        self.batch_dir = os.path.join(self.base, "batch")
 
         for d in (self.bin_dir, self.crash_dir, self.profile_dir, self.logs_dir):
             os.makedirs(d, exist_ok=True)
@@ -108,7 +109,7 @@ class CSController:
                 time.sleep(2)
 
 
-    def run_case_once(self, html_path: str) -> None:
+    def run_case_once(self, html_path: str, exec_no: int) -> None:
         """
         针对单个 HTML 用例完整跑一遍：
           - 打开页面、执行 JS
@@ -131,9 +132,9 @@ class CSController:
                 stat_semantic_error=stat_semantic_error,
             )
 
-        def archive_case(dst_dir: str, need_pfsp: bool = False) -> None:
+        def archive_case(dst_dir: str, wired: bool = False) -> None:
             try:
-                # 1) 复制并清空 content_shell.log
+                # 复制并清空 content_shell.log
                 log_file = os.path.join(self.logs_dir, "content_shell.log")
                 dst_file = os.path.join(dst_dir, "content_shell.log")
                 os.makedirs(os.path.dirname(dst_file), exist_ok=True)
@@ -143,54 +144,47 @@ class CSController:
                     src.seek(0)
                     src.truncate(0)
 
-                # 2) 移动 IR 和 HTML
-                ir_path = os.path.join(self.base, os.path.basename(html_path)[:-5] + ".json")
+                # 移动 IR 和 HTML
                 shutil.move(ir_path, dst_dir)
                 shutil.move(html_path, dst_dir)
 
-                # 3) 移动 bin 信息
+                # 移动 bin 信息
                 bin_folder = os.path.join(dst_dir, "bins")
                 os.makedirs(bin_folder, exist_ok=True)
-                for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
-                    shutil.move(b, bin_folder)
+                for bf in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
+                    shutil.move(bf, bin_folder)
 
-                # 4) 移动 profile snapshot, 如果不有趣，说明有意外了
-                if need_pfsp:
-                    shutil.move(profile_snapshot_dir, dst_dir)
-                else:
-                    shutil.rmtree(profile_snapshot_dir)
+                # 异常发生 保留完整batch
+                if wired:
+                    shutil.move(self.batch_dir, dst_dir)
 
             except Exception as e:
                 log(f"[!] archiveCase failed: {e}")
 
+        # 除了profile全给清理了
         def clear_case() -> None:
-            """清理dev/shm环境"""
             try:
                 # 清空 log
                 log_file = os.path.join(self.logs_dir, "content_shell.log")
                 with open(log_file, "rb+") as src:
                     src.seek(0)
                     src.truncate(0)
-
-                # 删除 IR 和 HTML
-                ir_path = os.path.join(self.base, os.path.basename(html_path)[:-5] + ".json")
-                if os.path.exists(ir_path):
-                    os.remove(ir_path)
-                if os.path.exists(html_path):
-                    os.remove(html_path)
-
-                # 删除所有 bin
-                for b in glob.glob(os.path.join(self.bin_dir, "sancov_bitmap_*.bin")):
-                    os.remove(b)
-
-                # 删除profile snapshot
-                if os.path.exists(profile_snapshot_dir):
-                    shutil.rmtree(profile_snapshot_dir)
+                # 删除 IR  HTML bins
+                shutil.rmtree(ir_path)
+                shutil.rmtree(html_path)
+                shutil.rmtree(self.bin_dir)
+                os.makedirs(self.bin_dir, exist_ok=True)
             except Exception as e:
                 log(f"[!] clearCase failed: {e}")
 
+
+        # 执行之前 把html复制一份到batch 带上编号用于复现
+        shutil.copyfile(html_path, os.path.join(self.batch_dir, f"{exec_no}_{os.path.basename(html_path)}.html"))
+
+        # 开始扔html给cs
         tab_id: str | None = None
         case_id = -1
+        ir_path = os.path.join(self.base, os.path.basename(html_path)[:-5] + ".json")
         try:
             html_path_abs = os.path.realpath(html_path)
             case_dir = os.path.dirname(html_path_abs)
@@ -198,13 +192,6 @@ class CSController:
             crash_dir = self.crash_dir
             tmp_dir = os.path.join(case_dir, "chrome-tmp")
             os.makedirs(tmp_dir, exist_ok=True)
-
-            # 打开新tab之前先记录已有的profile上文用于复现crash
-            profile_snapshot_dir = os.path.join(self.base, f"profile_before_{case_id}")
-            if os.path.exists(profile_snapshot_dir):
-                shutil.rmtree(profile_snapshot_dir)
-            # 防止过程中有文件变动
-            safe_copytree(self.profile_dir, profile_snapshot_dir)
 
             # 打开新 tab
             tab_id = _open_new_page(self.port, html_path_abs)
@@ -221,7 +208,7 @@ class CSController:
                     log(f"[!] open_new_page failed but CS still alive, treat as transient error")
 
                 # 这个 case 也要归档，防止是真的 big crash
-                archive_case(os.path.join(config.CRASH_ROOT, case_id), need_pfsp=True)
+                archive_case(os.path.join(config.CRASH_ROOT, case_id), wired=True)
                 return
 
             _msleep(self.wait_ms)
@@ -271,7 +258,7 @@ class CSController:
             stat_process_timeout = 0
 
             if pending > 0 or new > 0 or completed > 0 or attachments > 0:
-                archive_case(os.path.join(config.CRASH_ROOT, case_id), need_pfsp=True)
+                archive_case(os.path.join(config.CRASH_ROOT, case_id), wired=True)
             elif stat_semantic_error:
                 # 留100个语义错误case拿来后期研究
                 snap = Stats.get()
@@ -280,12 +267,12 @@ class CSController:
                 else:
                     clear_case()
             elif stat_other_error:
-                archive_case(os.path.join(config.OTHER_ROOT, case_id), need_pfsp=True)
+                archive_case(os.path.join(config.OTHER_ROOT, case_id), wired=True)
             elif stat_process_timeout:
-                archive_case(os.path.join(config.TIMEOUT_ROOT, case_id), need_pfsp=True)
+                archive_case(os.path.join(config.TIMEOUT_ROOT, case_id), wired=True)
             elif stat_lack_bin:
                 # 理论上不该出现：没有 crash 却完全没有 bin
-                archive_case(os.path.join(config.NOBIN_ROOT, case_id), need_pfsp=True)
+                archive_case(os.path.join(config.NOBIN_ROOT, case_id), wired=True)
             elif new_edges > 0:
                 archive_case(os.path.join(config.CORPUS_ROOT, case_id))
             else:
@@ -298,7 +285,7 @@ class CSController:
         except Exception as e:
             err = "[!] run_case_once exception".join(traceback.format_exception(e))
             log(err)
-            archive_case(os.path.join(config.OTHER_ROOT, case_id), need_pfsp=True)
+            archive_case(os.path.join(config.OTHER_ROOT, case_id), wired=True)
             self._mark_error(f"Error: {err}")
         finally:
             if tab_id:
@@ -460,9 +447,9 @@ class CSController:
     # ------------------------------------------------------------------ #
 
     def launch(self) -> bool:
-        """启动一条新的 content_shell 实例并等待 DevTools 就绪。"""
-        if not os.path.isfile(self.cs_path):
-            raise FileNotFoundError(f"content_shell not found: {self.cs_path}")
+        # 启动之前清空整个环境，主要是profile
+        shutil.rmtree(self.base)
+        os.makedirs(self.base, exist_ok=True)
 
         args = [
             self.cs_path,
