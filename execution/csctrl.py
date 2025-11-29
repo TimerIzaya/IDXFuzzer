@@ -134,6 +134,8 @@ class CSController:
             )
 
         def archive_case(dst_dir: str, wired: bool = False) -> None:
+            if wired:
+                config.LOCAL_PROCESS[self.pid] = {"status": "wired"}
             try:
                 # 复制并清空 content_shell.log
                 log_file = os.path.join(self.logs_dir, "content_shell.log")
@@ -180,7 +182,7 @@ class CSController:
 
 
         # 执行之前 把html复制一份到batch 带上编号用于复现
-        shutil.copyfile(html_path, os.path.join(self.batch_dir, f"{exec_no}_{os.path.basename(html_path)}.html"))
+        shutil.copyfile(html_path, os.path.join(self.batch_dir, f"{exec_no}_{os.path.basename(html_path)}"))
 
         # 开始扔html给cs
         tab_id: str | None = None

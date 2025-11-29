@@ -1,4 +1,5 @@
 import atexit
+import glob
 import multiprocessing as mp
 import os
 import signal
@@ -57,7 +58,12 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
                 return
 
             out_dir = os.path.join(config.CS_TMP, str(os.getpid()))
+            config.LOCAL_PROCESS[os.getpid()]["status"] = "normal"
             for exec_no in range(config.MAX_CASES_PER_CS):
+                # 找到wired case，这轮就别跑了
+                if config.LOCAL_PROCESS.get(os.getpid(), {}).get("status") == "wired":
+                    log(f"[worker#{worker_idx}] found wired case, stopping this round")
+                    break
                 html_path = gen_case(out_dir)
                 try:
                     ctrl.run_case_once(html_path, exec_no)
@@ -106,7 +112,7 @@ def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> L
         p = mp.Process(
             target=_worker_main,
             args=(i, group, stop_event),
-            name=f"idxf-worker-{i}",
+            name=f"idx-worker-{i}",
             daemon=False,
         )
         p.start()
@@ -126,6 +132,48 @@ def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> L
     atexit.register(stop_workers)
 
     return procs
+
+
+def start_workers_repeat_batch():
+    def _worker_main_repeat_batch() -> None:  # type: ignore
+        # 用一个cpu就够了
+        _pin_to_cpus([0, 1])
+
+        pid = os.getpid()
+        log(f"[worker#{0} pid={pid}] start on cpu 0 1")
+
+        ctrl = CSController(0, 0)
+
+        if config.BATCH_DIR_TEST is None:
+            raise ValueError("BATCH_DIR_TEST is not set in config")
+        
+        base_folder = config.BATCH_DIR_TEST
+        batch_folder = os.path.join(base_folder, "batch")
+        # 遍历batchFoler里所有html文件，每个文件都是number_xxx.html.html，number从0开始，最多到100，如果不到100则break
+        for i in range(100):
+            pattern = os.path.join(batch_folder, f"{i}_*.html.html")
+            html_files = sorted(glob.glob(pattern))
+            if len(html_files) == 0:
+                break
+            html_path = html_files[0]
+            try:
+                log(f"[worker#{0}] running case {html_path}")
+                ctrl.run_case_once(html_path, i)
+            except Exception as e:
+                log(f"[worker#{0}] run_case_once failed: {traceback.format_exc()}")
+                continue
+        ctrl.stop()
+
+    p = mp.Process(
+        target=_worker_main_repeat_batch,
+        args=(),
+        name=f"idx-repeat-batch",
+        daemon=False,
+    )
+    p.start()
+
+    return [p]
+
 
 
 def _normalize_stop_args(

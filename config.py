@@ -1,6 +1,6 @@
 import os
 
-NUM_INSTANCES = 15
+NUM_INSTANCES = 1
 
 SHARE = "/dev/shm/"
 
@@ -72,3 +72,11 @@ MODE_MUT = False
 
 STAT_SHOW_INTERVAL = 10  # 多少秒打印一次统计信息
 MAX_CASES_PER_CS = 100 ## 每个 content_shell 连续执行多少个用例之后重启一次
+
+
+
+BATCH_DIR_TEST = "test/003ljB"
+
+
+# 查看各个进程的基本信息 LOCAL_PROCESS[PID][K] = V
+LOCAL_PROCESS = {}

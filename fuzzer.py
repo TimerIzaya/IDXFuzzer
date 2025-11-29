@@ -12,7 +12,6 @@ from tool.tool import init_output_dirs
 
 
 # 在主入口处注册
-
 if __name__ == '__main__':
     # 初始化文件夹、shared bitmap、Stats、统计线程
     init_output_dirs()
