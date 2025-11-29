@@ -1,6 +1,6 @@
 import os
 
-NUM_INSTANCES = 1
+NUM_INSTANCES = 5
 
 SHARE = "/dev/shm/"
 
@@ -77,6 +77,11 @@ MAX_CASES_PER_CS = 100 ## 每个 content_shell 连续执行多少个用例之后
 
 BATCH_DIR_TEST = "test/003ljB"
 
+class LocalProcess(dict):
+    def __missing__(self, pid):
+        value = {}
+        self[pid] = value
+        return value
 
 # 查看各个进程的基本信息 LOCAL_PROCESS[PID][K] = V
-LOCAL_PROCESS = {}
+LOCAL_PROCESS = LocalProcess()
