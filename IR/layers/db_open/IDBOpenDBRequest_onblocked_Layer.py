@@ -1,0 +1,29 @@
+from IR.IRNodes import AssignmentExpression, FunctionExpression, Identifier, MemberExpression, CallExpression, Literal
+from IR.layers.Global import Global
+from IR.layers.Layer import Layer, LayerType
+from IR.layers.LayerBuilder import LayerBuilder
+from IR.type.IDBType import IDBType
+
+
+class IDBOpenDBRequest_onblocked_Layer(LayerBuilder):
+
+    name = "IDBOpenDBRequest_onblocked_Layer"
+    layer_type = LayerType.REGISTER
+
+    @staticmethod
+    def build():
+        body = [
+            CallExpression(Identifier("console"), "log", [Literal("open db blocked triggered")])
+        ]
+
+        open_request_id = Global.irctx.getIdentifierByType(IDBType.IDBOpenDBRequest)
+        handler = AssignmentExpression(
+            left=MemberExpression(open_request_id, "onblocked"),
+            right=FunctionExpression([Identifier("event")], body)
+        )
+
+        return Layer(
+            IDBOpenDBRequest_onblocked_Layer.name,
+            ir_nodes=[handler],
+            layer_type=IDBOpenDBRequest_onblocked_Layer.layer_type
+        )

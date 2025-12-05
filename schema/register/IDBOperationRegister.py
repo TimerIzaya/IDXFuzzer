@@ -16,7 +16,6 @@ IF = InterfaceEnum
 
 
 
-
 # ----- Operation instances -----
 OPEN = Operation(
     id=OperationEnum.OPEN,
