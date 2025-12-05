@@ -3,6 +3,7 @@ import glob
 import multiprocessing as mp
 import os
 import signal
+import threading
 import time
 import traceback
 from typing import Any, Dict, List, Optional, Union
@@ -19,7 +20,6 @@ _GLOBAL_STOP_EVENT: Optional[mp.Event] = None  # type: ignore
 _GLOBAL_PROCS: List[mp.Process] = []
 _WARNED_AFFINITY = False  # 仅打印一次亲和性失败日志
 
-
 def _pin_to_cpus(cpu_ids: List[int]) -> None:
     """尽力把当前进程绑到指定一组 CPU；失败只告警一次，不中断执行。"""
     global _WARNED_AFFINITY
@@ -32,8 +32,12 @@ def _pin_to_cpus(cpu_ids: List[int]) -> None:
             log(f"[affinity] warn: setaffinity to cpus {cpu_ids} failed: {e}")
             _WARNED_AFFINITY = True
 
-
-def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> None:  # type: ignore
+def _worker_main(
+    worker_idx: int,
+    cpu_ids: List[int],
+    stop_event: mp.Event,
+    max_rss_bytes: Optional[int] = None,   # <<< 新增参数：本 worker 的 RSS 上限
+) -> None:  # type: ignore
     """单个 worker 进程的主循环：负责生成用例并驱动 CSController。"""
     _pin_to_cpus(cpu_ids)
 
@@ -41,11 +45,19 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
     cpu_desc = ",".join(str(c) for c in cpu_ids) if cpu_ids else "none"
     log(f"[worker#{worker_idx} pid={pid}] start on cpu(s) {cpu_desc}")
 
+    # 日志提示一下当前 worker 的内存上限（方便检查配置是否合理）
+    if max_rss_bytes is not None:
+        limit_gib = max_rss_bytes / (1024**3)
+        log(f"[worker#{worker_idx}] RSS hard limit ~= {limit_gib:.2f} GiB")
+
     # 为了兼容现有 CSController 接口，这里仍然传第一个 CPU
     cpu_for_ctrl = cpu_ids[0] if cpu_ids else 0
 
     # 初始化cs
     ctrl = None
+
+    # 用于统计本 worker 已经执行了多少个 case（仅用于日志 / 调试，可选）
+    total_cases = 0
 
     # 无限执行
     try:
@@ -59,17 +71,41 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
 
             out_dir = os.path.join(config.CS_TMP, str(os.getpid()))
             config.LOCAL_PROCESS[os.getpid()]["status"] = "normal"
+
             for exec_no in range(config.MAX_CASES_PER_CS):
                 # 找到wired case，这轮就别跑了
                 if config.LOCAL_PROCESS.get(os.getpid(), {}).get("status") == "wired":
                     log(f"[worker#{worker_idx}] found wired case, stopping this round")
                     break
+
                 html_path = gen_case(out_dir)
+                total_cases += 1
+
+                # -------------------- 新增：每隔 N 个 case 检查一次 RSS -------------------- #
+                if max_rss_bytes is not None and (total_cases % 100 == 0):
+                    rss = _get_self_rss_bytes()
+                    if rss > max_rss_bytes:
+                        rss_gib = rss / (1024**3)
+                        limit_gib = max_rss_bytes / (1024**3)
+                        log(
+                            f"[worker#{worker_idx}] RSS {rss_gib:.2f} GiB "
+                            f"> limit {limit_gib:.2f} GiB, "
+                            f"total_cases={total_cases}, exiting worker..."
+                        )
+                        # 尽量优雅地停掉当前 content_shell，然后结束整个 worker 进程
+                        try:
+                            ctrl.stop()
+                        except Exception as e:
+                            log(f"[worker#{worker_idx}] ctrl.stop() in RSS-limit exit failed: {e!r}")
+                        return
+                # -------------------------------------------------------------------------- #
+
                 try:
                     ctrl.run_case_once(html_path, exec_no)
                 except Exception as e:
                     log(f"[worker#{worker_idx}] run_case_once failed: {traceback.format_exc()}")
                     continue
+
             log(
                 f"[worker#{worker_idx}] reached {config.MAX_CASES_PER_CS} cases, "
                 f"restart content_shell"
@@ -81,6 +117,39 @@ def _worker_main(worker_idx: int, cpu_ids: List[int], stop_event: mp.Event) -> N
         except Exception as e:
             log(f"[worker#{worker_idx}] ctrl.stop() failed: {e}")
 
+def _supervisor_loop(
+    stop_event: mp.Event,
+    worker_specs: List[tuple[int, List[int]]],
+    procs: List[mp.Process],
+    max_rss_bytes: Optional[int],
+) -> None:
+    """
+    后台监督线程：如果发现某个 worker 退出了（例如因为 RSS 超限自己 return 掉了），
+    且 stop_event 还没被置位，则在同样的 CPU 组上重启一个新的 worker。
+    """
+    while not stop_event.is_set():
+        for i, (worker_idx, cpu_ids) in enumerate(worker_specs):
+            if i >= len(procs):
+                continue
+            p = procs[i]
+            if p.is_alive():
+                continue
+
+            # 走到这里说明该 worker 已经挂了（可能是正常退出，也可能是 RSS 超限）
+            exitcode = p.exitcode
+            log(f"[supervisor] worker#{worker_idx} died (exitcode={exitcode}), restarting...")
+
+            # 重启同一个 worker_idx，同一组 CPU
+            new_p = mp.Process(
+                target=_worker_main,
+                args=(worker_idx, cpu_ids, stop_event, max_rss_bytes),
+                name=f"idx-worker-{worker_idx}",
+                daemon=False,
+            )
+            new_p.start()
+            procs[i] = new_p
+
+        time.sleep(1.0)
 
 def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> List[mp.Process]:
     """
@@ -98,8 +167,24 @@ def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> L
         # 没有可用 CPU，就让 OS 自己调度
         all_cpus = list(range(total_cpus))
 
+    # -------------------- 新增：计算每个 worker 的 RSS 上限 -------------------- #
+    total_mem_bytes = _get_total_mem_bytes()
+    if total_mem_bytes is not None:
+        denom = max(num_instances + 5, 1)   # 给系统和别的进程留点余量
+        max_rss_bytes = total_mem_bytes // denom
+        log(
+            f"[workers] total_mem ~= {total_mem_bytes / (1024**3):.2f} GiB, "
+            f"num_instances={num_instances}, "
+            f"per-worker RSS limit ~= {max_rss_bytes / (1024**3):.2f} GiB"
+        )
+    else:
+        max_rss_bytes = None
+        log("[workers] warn: failed to get total mem, per-worker RSS limit disabled")
+    # ------------------------------------------------------------------ #
+
     procs: List[mp.Process] = []
     cpu_pos = 0
+    worker_specs: List[tuple[int, List[int]]] = []   # <<< 新增：记录每个 worker 的 (idx, cpu_ids)
 
     for i in range(num_instances):
         if cpu_pos >= len(all_cpus):
@@ -109,9 +194,11 @@ def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> L
         group = all_cpus[cpu_pos: cpu_pos + _INS_CPUS]
         cpu_pos += len(group)
 
+        worker_specs.append((i, group))  # <<< 记录这个 worker 的 CPU 组
+
         p = mp.Process(
             target=_worker_main,
-            args=(i, group, stop_event),
+            args=(i, group, stop_event, max_rss_bytes),  # <<< 把 limit 传进去
             name=f"idx-worker-{i}",
             daemon=False,
         )
@@ -127,6 +214,18 @@ def start_workers(num_instances: int, start_cpu: int, stop_event: mp.Event) -> L
 
     _GLOBAL_STOP_EVENT = stop_event
     _GLOBAL_PROCS = procs
+
+    # -------------------- 新增：启动监督线程，负责“重启”死掉的 worker -------------------- #
+    if worker_specs and procs:
+        supervisor = threading.Thread(
+            target=_supervisor_loop,
+            args=(stop_event, worker_specs, procs, max_rss_bytes),
+            name="idx-supervisor",
+            daemon=True,
+        )
+        supervisor.start()
+        log("[workers] supervisor thread started")
+    # ------------------------------------------------------------------ #
 
     # 兜底：万一主进程异常退出，也尽可能收拾一下子进程
     atexit.register(stop_workers)
@@ -287,3 +386,44 @@ def install_signal_handlers(
         signal.signal(signal.SIGHUP, _handler)
     except Exception:
         pass
+
+
+
+
+
+# -------------------- 新增：内存相关工具函数 -------------------- #
+
+def _get_total_mem_bytes() -> Optional[int]:
+    """
+    从 /proc/meminfo 读取 MemTotal（总物理内存，单位 bytes）。
+    失败时返回 None。
+    """
+    try:
+        with open("/proc/meminfo", "r") as f:
+            for line in f:
+                if line.startswith("MemTotal:"):
+                    parts = line.split()
+                    # 一般格式: MemTotal:  114700640 kB
+                    kb = int(parts[1])
+                    return kb * 1024
+    except Exception as e:
+        log(f"[mem] warn: failed to read /proc/meminfo: {e!r}")
+    return None
+
+
+_PAGE_SIZE = os.sysconf("SC_PAGE_SIZE")
+
+
+def _get_self_rss_bytes() -> int:
+    """
+    从 /proc/self/statm 读取当前进程 RSS（驻留集大小，单位 bytes）。
+    """
+    try:
+        with open("/proc/self/statm", "r") as f:
+            parts = f.read().split()
+        # statm[1] 是 RSS 的页数
+        rss_pages = int(parts[1])
+        return rss_pages * _PAGE_SIZE
+    except Exception:
+        # 出错就返回 0，防止影响主流程
+        return 0
